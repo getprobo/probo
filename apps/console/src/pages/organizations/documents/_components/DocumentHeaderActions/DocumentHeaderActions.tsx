@@ -29,7 +29,7 @@ import { graphql, useFragment, useQueryLoader } from "react-relay";
 import type { DocumentHeaderActions_document$key } from "#/__generated__/core/DocumentHeaderActions_document.graphql";
 import type { DocumentPublishReviewCalloutQuery } from "#/__generated__/core/DocumentPublishReviewCalloutQuery.graphql";
 
-import { useDocumentVersionParam } from "../../_lib/useDocumentVersionParam";
+import { useDocumentSearch } from "../../_lib/useDocumentSearch";
 import { documentHeaderActions } from "../../variants";
 
 import { DocumentActionsMenu } from "./DocumentActionsMenu";
@@ -64,7 +64,7 @@ export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProp
   const [reviewQueryRef, loadReview] = useQueryLoader<DocumentPublishReviewCalloutQuery>(
     documentPublishReviewCalloutQuery,
   );
-  const { versionId } = useDocumentVersionParam();
+  const { versionId } = useDocumentSearch();
   const { root } = documentHeaderActions();
   const canPublish = document.canPublish
     && document.pendingApprovalCount.totalCount === 0

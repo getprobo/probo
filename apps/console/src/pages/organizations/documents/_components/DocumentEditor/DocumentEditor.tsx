@@ -41,8 +41,10 @@ import {
   documentPagesHeight,
   documentPageSize,
 } from "../../_lib/documentPageLayout";
+import { type DocumentColumn, withDocumentColumn } from "../../_lib/documentSearch";
 import { useDocumentCollaboration } from "../../_lib/useDocumentCollaboration";
 import type { DocumentMode } from "../../_lib/useDocumentModes";
+import { useDocumentSearch } from "../../_lib/useDocumentSearch";
 import { useElementHeight } from "../../_lib/useElementHeight";
 import { usePageScale } from "../../_lib/usePageScale";
 import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTextDrop";
@@ -107,14 +109,22 @@ export function DocumentEditor({
       setCommentDraft(null);
     }
   }, []);
+  const { column, update } = useDocumentSearch();
+  const selectColumn = useCallback(
+    (next: DocumentColumn) => update(params => withDocumentColumn(params, next)),
+    [update],
+  );
+  const reviewView: DocumentReviewView = column === "all" ? "all" : "open";
   // Comment and suggestion cards being written only show in the open view.
-  const [reviewView, setReviewView] = useState<DocumentReviewView>("open");
-  const showOpenReview = useCallback(() => setReviewView("open"), []);
+  const showOpenReview = useCallback(
+    () => update(params => withDocumentColumn(params, "open"), { replace: true }),
+    [update],
+  );
   const startCommentDraft = useCallback((draft: DocumentCommentDraft) => {
     setActiveKey(null);
     setCommentDraft(draft);
-    setReviewView("open");
-  }, []);
+    selectColumn("open");
+  }, [selectColumn]);
   const [editor, setEditorInstance] = useState<Editor | null>(null);
   const [pageCount, setPageCount] = useState(1);
   const [toolbarEl, setToolbarEl] = useState<HTMLDivElement | null>(null);
@@ -132,14 +142,13 @@ export function DocumentEditor({
   const [reviewElement, setReviewElement] = useState<HTMLDivElement | null>(null);
   const [switchContainer, setSwitchContainer] = useState<HTMLDivElement | null>(null);
   const [switchBox, setSwitchBox] = useState<{ left: number; width: number } | null>(null);
-  const [versionsOpen, setVersionsOpen] = useState(versionId != null);
   const [versionListQueryRef, loadVersionList]
     = useQueryLoader<DocumentVersionListQuery>(documentVersionListQuery);
   const [versionOrientation, setVersionOrientation] = useState<string | null>(null);
   const viewing = mode === "viewing";
   const viewingVersion = viewing && versionId != null;
   const showingVersion = viewingVersion && versionQueryRef != null;
-  const showVersions = versionsOpen;
+  const showVersions = column === "versions";
   const versionListLoaded = versionListQueryRef != null;
   useEffect(() => {
     if (showVersions && !versionListLoaded) {
@@ -240,31 +249,16 @@ export function DocumentEditor({
 
   const showLatest = useCallback(() => onVersionChange(null), [onVersionChange]);
 
-  // Past versions only show while viewing.
-  function selectVersion(next: string | null) {
-    if (next != null && !viewing) {
-      onModeChange("viewing");
-    }
-    onVersionChange(next);
-  }
-
-  function changeMode(next: DocumentMode) {
-    if (next !== "viewing") {
-      setVersionsOpen(false);
-    }
-    onModeChange(next);
-  }
-
   return (
     <>
       <DocumentEditorToolbar
         mode={mode}
         modes={modes}
-        onModeChange={changeMode}
+        onModeChange={onModeChange}
         collaborationHandle={handle}
         onControlsElement={setToolbarEl}
         versionsOpen={showVersions}
-        onVersionsOpenChange={setVersionsOpen}
+        onVersionsOpenChange={open => selectColumn(open ? "versions" : "open")}
         versionQueryRef={viewing ? versionQueryRef : null}
         onShowLatest={showLatest}
       />
@@ -340,7 +334,7 @@ export function DocumentEditor({
                     collaborationHandle={handle}
                     switchContainer={switchContainer}
                     view={reviewView}
-                    onViewChange={setReviewView}
+                    onViewChange={selectColumn}
                     activeKey={activeKey}
                     onActiveChange={activate}
                     commentDraft={commentDraft}
@@ -354,8 +348,8 @@ export function DocumentEditor({
                 <DocumentVersionList
                   queryRef={versionListQueryRef}
                   activeVersionId={viewing ? versionId : null}
-                  onSelect={selectVersion}
-                  onClose={() => setVersionsOpen(false)}
+                  onSelect={onVersionChange}
+                  onClose={() => selectColumn("open")}
                 />
               </div>
             )}

@@ -18,10 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 import { graphql, useFragment } from "react-relay";
 
 import type { useDocumentModes_document$key } from "#/__generated__/core/useDocumentModes_document.graphql";
+
+import { normalizeDocumentSearch, withDocumentMode } from "./documentSearch";
+import { useDocumentSearch } from "./useDocumentSearch";
 
 export type DocumentMode = "viewing" | "editing" | "suggesting";
 
@@ -39,27 +42,34 @@ const documentModesFragment = graphql`
 
 export function useDocumentModes(documentKey: useDocumentModes_document$key) {
   const document = useFragment(documentModesFragment, documentKey);
+  const { searchParams, mode: requested, update } = useDocumentSearch();
   const locked = document.status === "ARCHIVED"
     || document.writeMode === "GENERATED"
     || document.pendingApprovalCount.totalCount > 0;
-  const modes: DocumentMode[] = ["viewing"];
-  if (document.canUpdate && !locked) {
-    modes.push("editing");
-  }
-  if (document.canSuggest && !locked) {
-    modes.push("suggesting");
-  }
-  const [mode, setMode] = useState<DocumentMode>("viewing");
+  const canEdit = document.canUpdate && !locked;
+  const canSuggest = document.canSuggest && !locked;
+  const modes = useMemo(() => {
+    const allowed: DocumentMode[] = ["viewing"];
+    if (canEdit) {
+      allowed.push("editing");
+    }
+    if (canSuggest) {
+      allowed.push("suggesting");
+    }
+    return allowed;
+  }, [canEdit, canSuggest]);
+  const mode = modes.includes(requested) ? requested : "viewing";
 
-  // Permissions can change while a mode is selected, for example when an
-  // approval starts. Drop back to viewing before the forbidden mode renders.
-  if (!modes.includes(mode)) {
-    setMode("viewing");
-  }
+  // A link can ask for a mode the viewer may not use, and permissions can
+  // change while a mode is selected, for example when an approval starts.
+  // The page falls back to viewing, and the URL follows.
+  useEffect(() => {
+    update(params => normalizeDocumentSearch(params, modes), { replace: true });
+  }, [modes, searchParams, update]);
 
   function selectMode(next: DocumentMode) {
     if (modes.includes(next)) {
-      setMode(next);
+      update(params => withDocumentMode(params, next));
     }
   }
 

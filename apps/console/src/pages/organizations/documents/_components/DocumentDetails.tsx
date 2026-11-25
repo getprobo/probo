@@ -23,7 +23,7 @@ import { CaretLeftIcon, SidebarSimpleIcon } from "@phosphor-icons/react";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
@@ -31,8 +31,9 @@ import type { DocumentDetails_document$key } from "#/__generated__/core/Document
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
 
-import { type DocumentMode, useDocumentModes } from "../_lib/useDocumentModes";
-import { useDocumentVersionParam } from "../_lib/useDocumentVersionParam";
+import { withDocumentVersion } from "../_lib/documentSearch";
+import { useDocumentModes } from "../_lib/useDocumentModes";
+import { useDocumentSearch } from "../_lib/useDocumentSearch";
 import { documentDetailsPage } from "../variants";
 
 import { DocumentControlsSection } from "./DocumentControlsSection";
@@ -73,16 +74,12 @@ export function DocumentDetails({
   const document = useFragment(documentDetailsFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const { mode, selectMode, modes } = useDocumentModes(document);
-  const { versionId, selectVersion } = useDocumentVersionParam();
+  const { versionId, update } = useDocumentSearch();
   const viewingVersion = mode === "viewing" && versionId != null;
-
-  // Edits always apply to the live document.
-  function changeMode(next: DocumentMode) {
-    if (next !== "viewing" && versionId != null) {
-      selectVersion(null);
-    }
-    selectMode(next);
-  }
+  const selectVersion = useCallback(
+    (next: string | null) => update(params => withDocumentVersion(params, next)),
+    [update],
+  );
   const [cardsOpen, setCardsOpen] = useState(true);
   const {
     root, main, backRow, backActions, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
@@ -134,7 +131,7 @@ export function DocumentDetails({
           onVersionChange={selectVersion}
           mode={mode}
           modes={modes}
-          onModeChange={changeMode}
+          onModeChange={selectMode}
         />
       </div>
       <div className={sideFrame()} inert={cardsOpen ? undefined : true}>

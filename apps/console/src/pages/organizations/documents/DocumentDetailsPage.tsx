@@ -30,7 +30,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { DocumentDetails } from "./_components/DocumentDetails";
-import { documentListSearch } from "./_lib/useDocumentVersionParam";
+import { documentListSearch } from "./_lib/documentSearch";
 
 export const documentDetailsPageQuery = graphql`
   query DocumentDetailsPageQuery($documentId: ID!) {

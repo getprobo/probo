@@ -28,14 +28,14 @@ import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentV
 
 import { documentReviewListQuery } from "./_components/DocumentReviewList/DocumentReviewList";
 import { documentVersionContentQuery } from "./_components/DocumentVersionList/DocumentVersionContent";
-import { documentVersionParam } from "./_lib/useDocumentVersionParam";
+import { readDocumentVersion } from "./_lib/documentSearch";
 import { DocumentDetailsPage, documentDetailsPageQuery } from "./DocumentDetailsPage";
 import { DocumentDetailsPageSkeleton } from "./DocumentDetailsPageSkeleton";
 
 export default function DocumentDetailsPageLoader() {
   const { documentId } = useParams<{ documentId: string }>();
   const [searchParams] = useSearchParams();
-  const versionId = searchParams.get(documentVersionParam);
+  const versionId = readDocumentVersion(searchParams);
   const [queryRef, loadQuery]
     = useQueryLoader<DocumentDetailsPageQuery>(documentDetailsPageQuery);
   const [reviewQueryRef, loadReviewQuery]

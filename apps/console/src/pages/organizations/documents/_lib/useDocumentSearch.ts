@@ -1,0 +1,53 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { useCallback, useLayoutEffect, useRef } from "react";
+import { type NavigateOptions, useSearchParams } from "react-router";
+
+import { readDocumentColumn, readDocumentMode, readDocumentVersion } from "./documentSearch";
+
+type DocumentSearchChange = (params: URLSearchParams) => URLSearchParams;
+
+export function useDocumentSearch() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const latest = useRef({ searchParams, setSearchParams });
+  useLayoutEffect(() => {
+    latest.current = { searchParams, setSearchParams };
+  }, [searchParams, setSearchParams]);
+
+  // Stable, and a no-op when the search stays the same: suggestions call it on
+  // each edit. Each call navigates from the last rendered search, so a change
+  // touching several params goes through one call.
+  const update = useCallback((change: DocumentSearchChange, options?: NavigateOptions) => {
+    const { searchParams: current, setSearchParams: set } = latest.current;
+    const next = change(current);
+    if (next.toString() !== current.toString()) {
+      set(next, options);
+    }
+  }, []);
+
+  return {
+    searchParams,
+    versionId: readDocumentVersion(searchParams),
+    mode: readDocumentMode(searchParams),
+    column: readDocumentColumn(searchParams),
+    update,
+  };
+}
