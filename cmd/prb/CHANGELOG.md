@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.276.0] - 2026-11-25
+
+### Added
+
+- `third-party agreement upload`, `list`, `view`, `update` and
+  `delete` manage any number of agreements per third party, with a
+  type, title, validity dates and a PDF file
+
 ## [0.275.0] - 2026-11-24
 
 ### Added
