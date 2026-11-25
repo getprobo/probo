@@ -610,3 +610,46 @@ func TestAccessSourceSyncRuns_LoadLatestBySourceIDs(t *testing.T) {
 	_, hasEmpty := bySource[emptySourceID]
 	assert.False(t, hasEmpty)
 }
+
+func TestAccessSourceSyncRun_LoadLatestSuccessfulBySourceID(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedAccessInventoryFixture(t, ctx, client)
+
+	olderAt := time.Now().UTC().Add(-time.Minute)
+	newerAt := olderAt.Add(30 * time.Second)
+	successID := insertAccessSourceSyncRun(
+		t,
+		ctx,
+		client,
+		fx,
+		coredata.AccessSourceSyncRunStatusSuccess,
+		olderAt,
+	)
+	_ = insertAccessSourceSyncRun(
+		t,
+		ctx,
+		client,
+		fx,
+		coredata.AccessSourceSyncRunStatusFailed,
+		newerAt,
+	)
+
+	var latest coredata.AccessSourceSyncRun
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return latest.LoadLatestSuccessfulBySourceID(ctx, conn, fx.scope, fx.sourceID)
+	}))
+	assert.Equal(t, successID, latest.ID)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusSuccess, latest.Status)
+
+	empty := seedAccessInventoryFixture(t, ctx, client)
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		missing := &coredata.AccessSourceSyncRun{}
+
+		return missing.LoadLatestSuccessfulBySourceID(ctx, conn, empty.scope, empty.sourceID)
+	})
+	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
+}

@@ -189,6 +189,12 @@ func NewService(
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	// One-shot seed must not block workers or crash probod: a sticky org
+	// failure would otherwise restart-loop the whole process.
+	if _, err := s.BackfillAllInventoryFromLatestCampaignEntries(ctx); err != nil {
+		s.logger.ErrorCtx(ctx, "campaign inventory backfill failed", log.Error(err))
+	}
+
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(

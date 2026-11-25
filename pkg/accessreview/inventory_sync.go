@@ -93,13 +93,26 @@ func (s *Service) SyncInventorySource(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			// Serialize with campaign dual-write and campaign→inventory
+			// backfill on the same source row so concurrent writers cannot
+			// invent false APPEARED events from a stale absent read.
+			locked := &coredata.AccessReviewSource{}
+			if err := locked.LoadByIDForUpdate(
+				ctx,
+				tx,
+				scope,
+				run.AccessReviewSourceID,
+			); err != nil {
+				return fmt.Errorf("cannot lock access source: %w", err)
+			}
+
 			observedAt := time.Now()
 
 			upserted, err := s.applyInventoryRoster(
 				ctx,
 				tx,
 				scope,
-				source,
+				locked,
 				run,
 				accounts,
 				observedAt,
@@ -119,7 +132,7 @@ func (s *Service) SyncInventorySource(
 				return fmt.Errorf("cannot mark sync run success: %w", err)
 			}
 
-			if err := s.scheduleInventorySyncAfterSuccess(ctx, tx, scope, source, completedAt); err != nil {
+			if err := s.scheduleInventorySyncAfterSuccess(ctx, tx, scope, locked, completedAt); err != nil {
 				return err
 			}
 
