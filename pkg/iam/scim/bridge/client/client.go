@@ -23,6 +23,7 @@ package scimclient
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,6 +56,12 @@ type (
 		UserType               string `json:"-"`
 		ManagerValue           string `json:"-"`
 		PreferredLanguage      string `json:"-"`
+		PhotoETag              string `json:"-"`
+		// PhotoETagKnown reports that PhotoETag was read from the directory;
+		// an empty PhotoETag is a removed picture only when it is true.
+		PhotoETagKnown bool   `json:"-"`
+		Photo          []byte `json:"-"`
+		PhotoMIME      string `json:"-"`
 	}
 
 	Users []User
@@ -130,19 +137,19 @@ func (c *Client) listUsersPage(ctx context.Context, startIndex, count int) (User
 	return listResp.Resources, listResp.TotalResults, nil
 }
 
-func (c *Client) CreateUser(ctx context.Context, user *User) error {
+func (c *Client) CreateUser(ctx context.Context, user *User) (string, error) {
 	payload := buildUserPayload(user)
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("cannot marshal user: %w", err)
+		return "", fmt.Errorf("cannot marshal user: %w", err)
 	}
 
 	reqURL := fmt.Sprintf("%s/Users", c.endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("cannot create request: %w", err)
+		return "", fmt.Errorf("cannot create request: %w", err)
 	}
 
 	c.setHeaders(req)
@@ -150,17 +157,29 @@ func (c *Client) CreateUser(ctx context.Context, user *User) error {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot create user: %w", err)
+		return "", fmt.Errorf("cannot create user: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("SCIM API error: status %d, body: %s", resp.StatusCode, string(respBody))
+		return "", fmt.Errorf("SCIM API error: status %d, body: %s", resp.StatusCode, string(respBody))
 	}
 
-	return nil
+	var created struct {
+		ID string `json:"id"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
+		return "", fmt.Errorf("cannot decode created user: %w", err)
+	}
+
+	if created.ID == "" {
+		return "", fmt.Errorf("created user has no id")
+	}
+
+	return created.ID, nil
 }
 
 func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) error {
@@ -235,7 +254,28 @@ func buildUserPayload(user *User) map[string]any {
 		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterprise,
 	}
 
+	if len(user.Photo) > 0 {
+		payload["photos"] = []map[string]any{
+			{
+				"value":   photoDataURI(user.PhotoMIME, user.Photo),
+				"type":    "photo",
+				"primary": true,
+			},
+		}
+	}
+
 	return payload
+}
+
+// photoDataURI labels anything but PNG as JPEG. Probo ignores the label and
+// detects the real format from the bytes, so it only has to be a plausible
+// image type.
+func photoDataURI(mime string, body []byte) string {
+	if mime != "image/png" {
+		mime = "image/jpeg"
+	}
+
+	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(body)
 }
 
 func (c *Client) DeactivateUser(ctx context.Context, userID string) error {

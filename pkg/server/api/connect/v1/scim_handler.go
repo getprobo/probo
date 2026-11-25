@@ -316,12 +316,14 @@ func bodyOrNil(body []byte) *string {
 	return &s
 }
 
-// redactSCIMCredentials strips credentials from a captured SCIM body. The core
-// User schema defines a write-only "password" attribute that provisioning
-// clients may send even though SCIM-managed profiles never carry one, and a
-// stored credential would turn the audit trail into a breach.
+// redactSCIMCredentials strips credentials and photos from a captured SCIM
+// body. The core User schema defines a write-only "password" attribute that
+// provisioning clients may send even though SCIM-managed profiles never carry
+// one, and a stored credential would turn the audit trail into a breach. The
+// "photos" attribute carries image data that does not belong in the audit
+// trail either.
 //
-// A body that carries no credential is returned untouched, so it stays
+// A body that carries neither is returned untouched, so it stays
 // byte-identical to the wire. Redacting one requires re-serializing, which
 // reorders object keys.
 func redactSCIMCredentials(body []byte) []byte {
@@ -363,8 +365,19 @@ func redactSCIMCredentials(body []byte) []byte {
 func redactSCIMValue(value any, redacted *bool) any {
 	switch v := value.(type) {
 	case map[string]any:
+		// A PATCH op names its target in "path" and carries "value"; clients
+		// send those keys in either case.
+		var sensitivePath bool
+
 		for key, nested := range v {
-			if isSCIMPasswordAttribute(key) {
+			if path, ok := nested.(string); ok && strings.EqualFold(key, "path") {
+				sensitivePath = sensitivePath || isSCIMPasswordAttribute(path) || scimPathTargetsPhoto(path)
+			}
+		}
+
+		for key, nested := range v {
+			if isSCIMPasswordAttribute(key) || scimPathTargetsPhoto(key) ||
+				(sensitivePath && strings.EqualFold(key, "value")) {
 				v[key] = scimRedactedValue
 				*redacted = true
 
@@ -372,15 +385,6 @@ func redactSCIMValue(value any, redacted *bool) any {
 			}
 
 			v[key] = redactSCIMValue(nested, redacted)
-		}
-
-		// A PATCH operation carries its target in "path" and the credential in
-		// "value", so the attribute name never appears as a key.
-		if path, ok := v["path"].(string); ok && isSCIMPasswordAttribute(path) {
-			if _, ok := v["value"]; ok {
-				v["value"] = scimRedactedValue
-				*redacted = true
-			}
 		}
 
 		return v
@@ -393,6 +397,25 @@ func redactSCIMValue(value any, redacted *bool) any {
 	default:
 		return value
 	}
+}
+
+// scimPathTargetsPhoto reports whether an attribute name or PATCH path
+// addresses photos, ignoring "[" filters and schema URN prefixes.
+func scimPathTargetsPhoto(path string) bool {
+	attr := path
+	if i := strings.Index(attr, "["); i >= 0 {
+		attr = attr[:i]
+	}
+
+	if i := strings.LastIndex(attr, ":"); i >= 0 {
+		attr = attr[i+1:]
+	}
+
+	if i := strings.Index(attr, "."); i >= 0 {
+		attr = attr[:i]
+	}
+
+	return strings.EqualFold(strings.TrimSpace(attr), "photos")
 }
 
 // isSCIMPasswordAttribute reports whether an attribute name or PATCH path

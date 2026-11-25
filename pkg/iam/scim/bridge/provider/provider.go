@@ -28,7 +28,18 @@ import (
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 )
 
-type Provider interface {
-	Name() string
-	ListUsers(ctx context.Context) (scimclient.Users, error)
-}
+type (
+	// Photo is one user's directory picture. Absent clears the stored
+	// version; a zero Photo with a nil error keeps it.
+	Photo struct {
+		Body   []byte
+		MIME   string
+		Absent bool
+	}
+
+	Provider interface {
+		Name() string
+		ListUsers(ctx context.Context) (scimclient.Users, error)
+		UserPhoto(ctx context.Context, user scimclient.User) (Photo, error)
+	}
+)
