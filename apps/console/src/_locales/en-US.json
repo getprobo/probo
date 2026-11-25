@@ -1292,10 +1292,8 @@
   "newOrganizationPage": {
     "title": "Create Organization",
     "description": "Create a new organization to manage your compliance and security needs.",
-    "details": "Organization Details",
-    "detailsDescription": "Enter the basic information about your organization.",
     "messages": { "created": "Organization has been created successfully" },
-    "errors": { "nameRequired": "Name is required", "create": "Failed to create organization" },
+    "errors": { "create": "Failed to create organization" },
     "fields": { "name": "Organization name", "nameHelp": "The name of your organization as it will appear throughout the platform." },
     "actions": { "back": "Back", "create": "Create Organization" }
   },

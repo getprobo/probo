@@ -21,7 +21,6 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
-import { CenteredLayout } from "@probo/ui";
 import { Fragment, use } from "react";
 import { createBrowserRouter, Navigate, redirect } from "react-router";
 
@@ -162,15 +161,10 @@ const routes = [
             ),
           },
           {
-            Component: CenteredLayout,
-            children: [
-              {
-                path: "organizations/new",
-                Component: lazy(
-                  () => import("./pages/iam/organizations/NewOrganizationPage"),
-                ),
-              },
-            ],
+            path: "organizations/new",
+            Component: lazy(
+              () => import("./pages/iam/organizations/NewOrganizationPage"),
+            ),
           },
         ],
       },

@@ -1966,13 +1966,10 @@
   "newOrganizationPage": {
     "title": "Créer une organisation",
     "description": "Créez une nouvelle organisation pour gérer vos besoins en matière de conformité et de sécurité.",
-    "details": "Détails de l’organisation",
-    "detailsDescription": "Saisissez les informations de base sur votre organisation.",
     "messages": {
       "created": "L’organisation a été créée avec succès"
     },
     "errors": {
-      "nameRequired": "Le nom est requis",
       "create": "Échec de la création de l’organisation"
     },
     "fields": {

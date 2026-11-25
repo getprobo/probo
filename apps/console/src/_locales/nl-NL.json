@@ -1965,13 +1965,10 @@
   "newOrganizationPage": {
     "title": "Organisatie aanmaken",
     "description": "Maak een nieuwe organisatie aan om uw compliance- en beveiligingsbehoeften te beheren.",
-    "details": "Organisatiegegevens",
-    "detailsDescription": "Voer de basisinformatie over uw organisatie in.",
     "messages": {
       "created": "Organisatie is succesvol aangemaakt"
     },
     "errors": {
-      "nameRequired": "Naam is verplicht",
       "create": "Aanmaken van organisatie mislukt"
     },
     "fields": {

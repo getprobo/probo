@@ -18,30 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { Form } from "@base-ui/react/form";
+import { formatError, toFieldErrors } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { MembershipRequiredError } from "@probo/relay";
-import {
-  Button,
-  Card,
-  Field,
-  IconChevronLeft,
-  PageHeader,
-} from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import type { FormEventHandler } from "react";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useMutation } from "react-relay";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { graphql } from "relay-runtime";
 
 import type { NewOrganizationPageMutation } from "#/__generated__/iam/NewOrganizationPageMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
+
+import { newOrganizationPage } from "./variants";
 
 const createOrganizationMutation = graphql`
   mutation NewOrganizationPageMutation($input: CreateOrganizationInput!) {
     createOrganization(input: $input) {
       organization {
         id
-        name
       }
     }
   }
@@ -52,46 +56,41 @@ function NewOrganizationPageInner() {
   const navigate = useNavigate();
   const toast = useToast();
   const { t } = useTranslation();
+  const slots = newOrganizationPage();
+  const nameHelpId = useId();
+  const [name, setName] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [createOrganization, isCreating]
-    = useMutation<NewOrganizationPageMutation>(createOrganizationMutation);
+  usePageTitle(t("newOrganizationPage.title"));
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") ? (formData.get("name") as string).toString() : "";
-    if (!name) {
-      toast.add({
-        title: t("common.error"), description: t("newOrganizationPage.errors.nameRequired"),
-        type: "error",
-      });
-      return;
-    }
+  const createError = t("newOrganizationPage.errors.create");
+  const [createOrganization, isCreating] = useMutation<NewOrganizationPageMutation>(
+    createOrganizationMutation,
+    {
+      successMessage: t("newOrganizationPage.messages.created"),
+      errorToast: false,
+    },
+  );
 
+  function handleSubmit() {
     void createOrganization({
-      variables: {
-        input: {
-          name,
-        },
-      },
-      onCompleted: (r, e) => {
-        if (e) {
-          toast.add({
-            title: t("common.error"), description: formatError(t("newOrganizationPage.errors.create"), e),
-            type: "error",
-          });
+      variables: { input: { name: name.trim() } },
+      onCompleted(_response, payloadErrors) {
+        const fieldErrors = toFieldErrors(payloadErrors);
+        if (fieldErrors != null) {
+          setErrors(fieldErrors);
           return;
         }
-
-        const org = r.createOrganization!.organization;
-        void navigate(`/organizations/${org!.id}`);
-        toast.add({
-          title: t("common.success"), description: t("newOrganizationPage.messages.created"),
-          type: "success",
-        });
+        if (payloadErrors != null && payloadErrors.length > 0) {
+          toast.add({
+            title: t("common.error"),
+            description: formatError(createError, payloadErrors),
+            type: "error",
+          });
+        }
       },
-      onError: (e) => {
-        if (e instanceof MembershipRequiredError) {
+      onError(error) {
+        if (error instanceof MembershipRequiredError) {
           toast.add({
             title: t("noOrganizationAccess.title"),
             description: t("noOrganizationAccess.description"),
@@ -99,51 +98,68 @@ function NewOrganizationPageInner() {
           });
           return;
         }
-
         toast.add({
           title: t("common.error"),
-          description: e.message,
+          description: formatError(createError, error),
           type: "error",
         });
       },
+    }).then((response) => {
+      const organizationId = response.createOrganization?.organization?.id;
+      if (organizationId != null) {
+        void navigate(`/organizations/${organizationId}`);
+      }
+    }).catch(() => {
+      // Field errors stay on the form; other failures toast above.
     });
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      <Link
-        to={(location.state as { from: string })?.from ?? "/"}
-        className="mb-4 inline-flex gap-2 items-center"
-      >
-        <IconChevronLeft size={16} />
-        {t("newOrganizationPage.actions.back")}
-      </Link>
-      <PageHeader
-        title={t("newOrganizationPage.title")}
-        description={t("newOrganizationPage.description")}
-      />
-      <Card padded asChild>
-        <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-          <h2 className="text-xl font-semibold mb-1">
-            {t("newOrganizationPage.details")}
-          </h2>
-          <p className="text-txt-tertiary text-sm mb-4">
-            {t("newOrganizationPage.detailsDescription")}
-          </p>
-          <Field
-            required
-            name="name"
-            type="text"
-            placeholder={t("newOrganizationPage.fields.name")}
-            label={t("newOrganizationPage.fields.name")}
-            help={t("newOrganizationPage.fields.nameHelp")}
-          />
-          <Button disabled={isCreating} type="submit" className="w-full">
-            {t("newOrganizationPage.actions.create")}
-          </Button>
-        </form>
+    <main className={slots.root()}>
+      <Heading level={1} size={6} weight="medium" highContrast>
+        {t("newOrganizationPage.title")}
+      </Heading>
+      <Card padding={2} variant="soft">
+        <Form className={slots.form()} errors={errors} onFormSubmit={handleSubmit}>
+          <Text size={2} color="faint">
+            {t("newOrganizationPage.description")}
+          </Text>
+          <div className={slots.field()}>
+            <Field required label={t("newOrganizationPage.fields.name")} error={errors.name}>
+              <TextField
+                size={2}
+                name="name"
+                required
+                aria-describedby={nameHelpId}
+                value={name}
+                disabled={isCreating}
+                placeholder={t("newOrganizationPage.fields.name")}
+                onValueChange={(value) => {
+                  setName(value);
+                  setErrors({});
+                }}
+              />
+            </Field>
+            <Text id={nameHelpId} size={1} color="faint">
+              {t("newOrganizationPage.fields.nameHelp")}
+            </Text>
+          </div>
+          <div className={slots.actions()}>
+            <Button type="submit" size={2} loading={isCreating}>
+              {t("newOrganizationPage.actions.create")}
+            </Button>
+            <ButtonLink
+              to={(location.state as { from?: string } | null)?.from ?? "/"}
+              size={2}
+              variant="soft"
+              color="neutral"
+            >
+              {t("newOrganizationPage.actions.back")}
+            </ButtonLink>
+          </div>
+        </Form>
       </Card>
-    </div>
+    </main>
   );
 }
 
