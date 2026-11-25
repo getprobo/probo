@@ -200,11 +200,11 @@ func (s *Service) dualWriteInventoryFromCampaignFetch(
 	observedAt time.Time,
 ) error {
 	source := &coredata.AccessReviewSource{}
-	err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID)
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil
-	}
-	if err != nil {
+	if err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
 		return fmt.Errorf("cannot lock access source: %w", err)
 	}
 
@@ -213,7 +213,8 @@ func (s *Service) dualWriteInventoryFromCampaignFetch(
 	}
 
 	existing := &coredata.AccessSourceSyncRun{}
-	err = existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
+
+	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
 	if err == nil {
 		return nil
 	}

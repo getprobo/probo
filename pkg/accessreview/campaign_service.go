@@ -755,6 +755,7 @@ func (s *Service) enqueueSourceFetches(
 	// share sources cannot deadlock (campaign sources load ORDER BY name).
 	sourceIDs := make([]gid.GID, 0, len(campaignSources))
 	seen := make(map[gid.GID]struct{}, len(campaignSources))
+
 	for _, campaignSource := range campaignSources {
 		if campaignSource.AccessReviewSourceID == nil {
 			continue
@@ -775,13 +776,13 @@ func (s *Service) enqueueSourceFetches(
 
 	for _, sourceID := range sourceIDs {
 		source := &coredata.AccessReviewSource{}
-		err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID)
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			// Source deleted after campaign snapshot — still queue the
-			// campaign fetch attempt; skip inventory enqueue only.
-			continue
-		}
-		if err != nil {
+		if err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				// Source deleted after campaign snapshot — still queue the
+				// campaign fetch attempt; skip inventory enqueue only.
+				continue
+			}
+
 			return fmt.Errorf(
 				"cannot lock access source %s for inventory sync: %w",
 				sourceID,

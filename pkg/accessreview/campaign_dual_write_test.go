@@ -53,6 +53,7 @@ func TestFetchSource_DualWritesInventory(t *testing.T) {
 	require.NoError(t, err)
 
 	campaignSource := &coredata.AccessReviewCampaignSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return campaignSource.LoadByID(ctx, conn, fx.scope, fx.campaignSourceID)
 	}))
@@ -62,8 +63,10 @@ func TestFetchSource_DualWritesInventory(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	var entries coredata.AccessReviewEntries
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var err error
+
 		count, err = entries.CountByCampaignID(
 			ctx,
 			conn,
@@ -122,6 +125,7 @@ func TestFetchSource_SkipsDualWriteWhenSyncInFlight(t *testing.T) {
 	require.NoError(t, err)
 
 	campaignSource := &coredata.AccessReviewCampaignSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return campaignSource.LoadByID(ctx, conn, fx.scope, fx.campaignSourceID)
 	}))
@@ -172,6 +176,7 @@ func TestStartCampaign_EnqueuesInventorySync(t *testing.T) {
 	assert.Equal(t, fx.sourceID, run.AccessReviewSourceID)
 
 	var attempts coredata.AccessReviewCampaignSourceFetchAttempts
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		cursor := page.NewCursor(
 			10,
@@ -205,6 +210,7 @@ func TestEnqueueSourceFetches_SkipsInventoryWhenSourceDeleted(t *testing.T) {
 	// in memory while deleting — same race StartCampaign / retry hit when a
 	// concurrent delete lands between LoadByCampaignID and LoadByIDForUpdate.
 	var campaignSources coredata.AccessReviewCampaignSources
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return campaignSources.LoadByCampaignID(ctx, conn, fx.scope, fx.campaignID)
 	}))
@@ -225,6 +231,7 @@ func TestEnqueueSourceFetches_SkipsInventoryWhenSourceDeleted(t *testing.T) {
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
 	var attempts coredata.AccessReviewCampaignSourceFetchAttempts
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		cursor := page.NewCursor(
 			10,
