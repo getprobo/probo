@@ -1612,7 +1612,7 @@ func (impl *Implm) Run(
 	wg.Go(
 		func() {
 			if err := accessReviewService.Run(accessReviewWorkerCtx); err != nil {
-				cancel(fmt.Errorf("access review source fetcher crashed: %w", err))
+				cancel(fmt.Errorf("access review workers crashed: %w", err))
 			}
 		},
 	)

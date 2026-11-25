@@ -286,6 +286,11 @@ WHERE
 // background worker claims the next available sync run regardless of tenant.
 // The caller builds a Scope with NewScope(run.ID.TenantID(), ...) for later
 // scoped writes.
+//
+// Only one run may be in flight per access_review_source_id: a queued row is
+// skipped while another run for that source is RUNNING, or while an older
+// QUEUED row for the same source still exists (so concurrent workers cannot
+// claim two queued runs for one source).
 func (r *AccessSourceSyncRun) LoadNextQueuedForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
@@ -302,14 +307,29 @@ SELECT
     completed_at,
     created_at,
     updated_at
-FROM access_source_sync_runs
-WHERE status = @status
-ORDER BY created_at ASC, id ASC
+FROM access_source_sync_runs candidate
+WHERE
+    candidate.status = @queued_status
+    AND NOT EXISTS (
+        SELECT 1
+        FROM access_source_sync_runs other
+        WHERE
+            other.access_review_source_id = candidate.access_review_source_id
+            AND (
+                other.status = @running_status
+                OR (
+                    other.status = @queued_status
+                    AND (other.created_at, other.id) < (candidate.created_at, candidate.id)
+                )
+            )
+    )
+ORDER BY candidate.created_at ASC, candidate.id ASC
 LIMIT 1
-FOR UPDATE SKIP LOCKED
+FOR UPDATE OF candidate SKIP LOCKED
 `
 	args := pgx.StrictNamedArgs{
-		"status": AccessSourceSyncRunStatusQueued,
+		"queued_status":  AccessSourceSyncRunStatusQueued,
+		"running_status": AccessSourceSyncRunStatusRunning,
 	}
 
 	rows, err := conn.Query(ctx, q, args)
