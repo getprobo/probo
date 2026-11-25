@@ -35,10 +35,12 @@ import { documentCommentHistoryConnectionId, type DocumentThreadConnections } fr
 import type { ThreadAnchorSource } from "../../_lib/reviewAnchors";
 import type { ReviewHistoryTarget } from "../../_lib/reviewHistoryTarget";
 import { scrollToReviewAnchor, scrollToReviewPosition } from "../../_lib/scrollToReviewAnchor";
+import { suggestionCardSlot } from "../../_lib/suggestionCardSlots";
 import { useDismissActiveReview } from "../../_lib/useDismissActiveReview";
 import { useReviewAnchors } from "../../_lib/useReviewAnchors";
 import type { ReviewCardAnchor } from "../../_lib/useReviewCardTops";
 import { useReviewHighlights } from "../../_lib/useReviewHighlights";
+import { isLocalSuggestionId } from "../../_lib/useSuggestionController";
 import { documentReviewPanel } from "../../variants";
 
 import { DocumentCommentDraftCard } from "./DocumentCommentDraftCard";
@@ -47,6 +49,7 @@ import { DocumentCommentThreadListItem } from "./DocumentCommentThreadListItem";
 import { DocumentReviewListColumn } from "./DocumentReviewListColumn";
 import { type DocumentReviewView, DocumentReviewViewSwitch } from "./DocumentReviewViewSwitch";
 import { DocumentSuggestionListItem } from "./DocumentSuggestionListItem";
+import { DocumentSuggestionPendingListItem } from "./DocumentSuggestionPendingListItem";
 
 const reviewPageSize = 50;
 
@@ -194,7 +197,11 @@ export function DocumentReviewPanel({
     }
     for (const suggestionId of suggestionThreads.keys()) {
       const anchor = anchors.suggestions.get(suggestionId);
-      if (anchor) list.push({ key: suggestionId, pos: anchor.from });
+      if (anchor) list.push({ key: suggestionId, slot: suggestionCardSlot(suggestionId), pos: anchor.from });
+    }
+    // A suggestion just started still carries its local id and has no thread.
+    for (const anchor of anchors.suggestions.values()) {
+      if (isLocalSuggestionId(anchor.id)) list.push({ key: anchor.id, pos: anchor.from });
     }
     if (commentDraft != null) {
       list.push({ key: documentCommentDraftKey, pos: commentDraft.pos });
@@ -282,6 +289,15 @@ export function DocumentReviewPanel({
     }
     const suggestionThread = suggestionThreads.get(key);
     const anchor = anchors.suggestions.get(key);
+    if (anchor != null && isLocalSuggestionId(key)) {
+      return (
+        <DocumentSuggestionPendingListItem
+          anchor={anchor}
+          active={activeKey === key}
+          onActivate={() => onActiveChange(key)}
+        />
+      );
+    }
     if (suggestionThread == null || anchor == null) {
       return null;
     }

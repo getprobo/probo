@@ -25,6 +25,9 @@ import { placeReviewCards, type ReviewCardSize } from "./reviewCardLayout";
 
 export type ReviewCardAnchor = {
   key: string;
+  // The column element the card renders in, when it differs from the key. A
+  // card whose key changes keeps its element, place, and height this way.
+  slot?: string;
   pos: number;
 };
 
@@ -38,10 +41,36 @@ const emptyLayout: ReviewCardLayout = { tops: {}, height: 0 };
 // An unmeasured card still needs a height so the cards below it can be placed.
 const estimatedCardHeight = 96;
 
+export function reviewCardSlot(anchor: ReviewCardAnchor): string {
+  return anchor.slot ?? anchor.key;
+}
+
+// Tops are keyed by slot. A card without a measured height yet is placed with
+// an estimate.
+export function layoutReviewCards(
+  anchors: ReadonlyArray<ReviewCardAnchor>,
+  activeKey: string | null,
+  anchorTop: (pos: number) => number | null,
+  cardHeight: (slot: string) => number | undefined,
+): ReviewCardLayout {
+  const sizes: ReviewCardSize[] = [];
+  let activeSlot: string | null = null;
+  for (const anchor of anchors) {
+    const slot = reviewCardSlot(anchor);
+    if (anchor.key === activeKey) activeSlot = slot;
+    const top = anchorTop(anchor.pos);
+    if (top == null) continue;
+    sizes.push({ key: slot, anchor: top, height: cardHeight(slot) ?? estimatedCardHeight });
+  }
+  const tops = placeReviewCards(sizes, activeSlot);
+  const height = sizes.reduce((max, size) => Math.max(max, tops[size.key] + size.height), 0);
+  return { tops, height };
+}
+
 // useReviewCardTops places each card beside its anchor. The column must share
 // the scroll container with the text, so tops never change on scroll and only
 // a document, card height, or width change measures again. `anchors` must be
-// memoized. Each card element carries its key in `data-review-card`.
+// memoized. Each card element carries its slot in `data-review-card`.
 export function useReviewCardTops(
   editor: Editor | null,
   anchors: ReadonlyArray<ReviewCardAnchor>,
@@ -72,18 +101,12 @@ export function useReviewCardTops(
       if (editor.isDestroyed || !editorDom(editor)?.isConnected) return;
       const { anchors, activeKey } = inputs.current;
       const origin = column.getBoundingClientRect().top;
-      const sizes: ReviewCardSize[] = [];
-      for (const anchor of anchors) {
-        const top = anchorTop(editor, anchor.pos, origin);
-        if (top == null) continue;
-        sizes.push({
-          key: anchor.key,
-          anchor: top,
-          height: cardNodes.current.get(anchor.key)?.offsetHeight ?? estimatedCardHeight,
-        });
-      }
-      const tops = placeReviewCards(sizes, activeKey);
-      const height = sizes.reduce((max, size) => Math.max(max, tops[size.key] + size.height), 0);
+      const { tops, height } = layoutReviewCards(
+        anchors,
+        activeKey,
+        pos => anchorTop(editor, pos, origin),
+        slot => cardNodes.current.get(slot)?.offsetHeight,
+      );
       setLayout(current => sameLayout(current, tops, height) ? current : { tops, height });
     };
 

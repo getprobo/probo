@@ -38,10 +38,17 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { CurrentUser } from "#/providers/CurrentUser";
 
 import { documentCommentHistoryConnectionId, documentOpenThreadsConnectionId } from "./documentThreadConnections";
+import { noteSuggestionCardSlot } from "./suggestionCardSlots";
 import type { DocumentMode } from "./useDocumentModes";
 
 const blockedToastIntervalMs = 3_000;
 const blockedToastOptions = { leading: true, trailing: false };
+const localSuggestionIdPrefix = "local:";
+
+// The id the editor marks a suggestion with until the server assigns one.
+export function isLocalSuggestionId(id: string): boolean {
+  return id.startsWith(localSuggestionIdPrefix);
+}
 
 // The suggestion's thread carries every field the review column reads, so
 // its card appears without a refetch. It is appended to the open threads,
@@ -176,7 +183,7 @@ export function useSuggestionController(
         return Promise.resolve(current.suggestionId);
       }
 
-      const localId = `local:${crypto.randomUUID()}`;
+      const localId = `${localSuggestionIdPrefix}${crypto.randomUUID()}`;
       current.suggestionId = localId;
       ownedIds.current.add(localId);
 
@@ -220,6 +227,7 @@ export function useSuggestionController(
             }
             const id = response.startDocumentSuggestion.documentSuggestionEdge.node.id;
             ownedIds.current.add(id);
+            noteSuggestionCardSlot(localId, id);
             if (editor) {
               reassignSuggestionId(editor, localId, id);
             }

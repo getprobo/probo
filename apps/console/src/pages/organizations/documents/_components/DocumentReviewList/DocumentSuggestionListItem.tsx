@@ -18,20 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { DocumentSuggestionListItem_thread$key } from "#/__generated__/core/DocumentSuggestionListItem_thread.graphql";
 
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
-import { documentSuggestionListItem } from "../../variants";
 
 import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
-import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
+import { DocumentSuggestionAnchorChanges } from "./DocumentSuggestionAnchorChanges";
 import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
 const documentSuggestionListItemFragment = graphql`
@@ -66,13 +63,10 @@ export function DocumentSuggestionListItem({
   onActivate,
 }: DocumentSuggestionListItemProps) {
   const thread = useFragment(documentSuggestionListItemFragment, threadKey);
-  const { t } = useTranslation("organizations/documents");
-  const { changes } = documentSuggestionListItem();
   const suggestion = thread.suggestion;
   if (suggestion == null) {
     return null;
   }
-  const hidden = anchor.changeCount - anchor.changes.length;
 
   return (
     <DocumentReviewItem kind="suggestion" active={active} onActivate={onActivate}>
@@ -84,18 +78,7 @@ export function DocumentSuggestionListItem({
           ? <DocumentSuggestionDecisions suggestionKey={suggestion} threadConnections={threadConnections} />
           : undefined}
       />
-      <div className={changes()}>
-        {anchor.changes.map((change, index) => (
-          // The list is rebuilt from the document on every change and has
-          // no stable identity beyond its order.
-          <DocumentSuggestionChange key={index} change={change} />
-        ))}
-        {hidden > 0 && (
-          <Text size={1} color="faint">
-            {t("details.review.changes.moreChanges", { count: hidden })}
-          </Text>
-        )}
-      </div>
+      <DocumentSuggestionAnchorChanges anchor={anchor} />
       <DocumentReviewThread
         threadKey={thread}
         threadConnections={threadConnections}

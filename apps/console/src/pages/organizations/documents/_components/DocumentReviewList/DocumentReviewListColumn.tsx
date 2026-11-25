@@ -21,7 +21,7 @@
 import type { Editor } from "@tiptap/core";
 import { type ReactNode, useEffect, useState } from "react";
 
-import { type ReviewCardAnchor, useReviewCardTops } from "../../_lib/useReviewCardTops";
+import { type ReviewCardAnchor, reviewCardSlot, useReviewCardTops } from "../../_lib/useReviewCardTops";
 import { documentReviewList } from "../../variants";
 
 interface DocumentReviewListColumnProps {
@@ -56,18 +56,21 @@ export function DocumentReviewListColumn({
 
   return (
     <div ref={columnRef} className={column()} style={{ minHeight: height }}>
-      {anchors.map(({ key }) => (
-        <div
-          key={key}
-          ref={bindCard}
-          data-review-card={key}
-          className={card({ placed: tops[key] != null, settled: settled.has(key) })}
-          style={{ top: tops[key] ?? 0 }}
-          onPointerDownCapture={onPressInside}
-        >
-          {renderCard(key)}
-        </div>
-      ))}
+      {anchors.map((anchor) => {
+        const slot = reviewCardSlot(anchor);
+        return (
+          <div
+            key={slot}
+            ref={bindCard}
+            data-review-card={slot}
+            className={card({ placed: tops[slot] != null, settled: settled.has(slot) })}
+            style={{ top: tops[slot] ?? 0 }}
+            onPointerDownCapture={onPressInside}
+          >
+            {renderCard(anchor.key)}
+          </div>
+        );
+      })}
     </div>
   );
 }

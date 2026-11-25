@@ -32,13 +32,13 @@ import type {
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 import { useResolveDocumentThread } from "../../_lib/useResolveDocumentThread";
-import { documentCommentHistory, documentSuggestionListItem } from "../../variants";
+import { documentCommentHistory } from "../../variants";
 
 import { DocumentReviewAction } from "./DocumentReviewAction";
 import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
-import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
+import { DocumentSuggestionAnchorChanges } from "./DocumentSuggestionAnchorChanges";
 import { DocumentSuggestionChangeList } from "./DocumentSuggestionChangeList";
 import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
@@ -125,7 +125,6 @@ function SuggestionHistoryItem({
   const { t } = useTranslation("organizations/documents");
   const open = suggestion.status === "OPEN";
   const { item } = documentCommentHistory({ resolved: !open });
-  const { changes } = documentSuggestionListItem();
   const status = suggestionStatus(suggestion.status);
   const badge = (
     <Badge size={1} color={status.color}>
@@ -150,22 +149,7 @@ function SuggestionHistoryItem({
           primary
           trailing={trailing}
         />
-        {open && liveAnchor != null && (
-          <div className={changes()}>
-            {liveAnchor.changes.map((change, index) => (
-              // The list is rebuilt from the document on every change and has
-              // no stable identity beyond its order.
-              <DocumentSuggestionChange key={index} change={change} />
-            ))}
-            {liveAnchor.changeCount > liveAnchor.changes.length && (
-              <Text size={1} color="faint">
-                {t("details.review.changes.moreChanges", {
-                  count: liveAnchor.changeCount - liveAnchor.changes.length,
-                })}
-              </Text>
-            )}
-          </div>
-        )}
+        {open && liveAnchor != null && <DocumentSuggestionAnchorChanges anchor={liveAnchor} />}
         {!open && <DocumentSuggestionChangeList suggestionKey={suggestion} />}
         <DocumentReviewThread
           threadKey={thread}
