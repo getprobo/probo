@@ -49,6 +49,11 @@ CREATE TABLE third_party_agreements (
 
 -- generate_gid() is defined in 20250420T120000Z. Entity type 150 is
 -- ThirdPartyAgreementEntityType.
+--
+-- The legacy tables never had a foreign key on their third party column,
+-- so rows can reference a third party that no longer exists. Those rows
+-- are unreachable from the application and are skipped; copying them
+-- would violate third_party_agreements_third_party_id_fkey.
 INSERT INTO third_party_agreements (
     id,
     organization_id,
@@ -75,7 +80,13 @@ SELECT
     created_at,
     updated_at
 FROM
-    third_party_business_associate_agreements;
+    third_party_business_associate_agreements
+WHERE
+    EXISTS (
+        SELECT 1
+        FROM third_parties
+        WHERE third_parties.id = third_party_business_associate_agreements.third_party_id
+    );
 
 INSERT INTO third_party_agreements (
     id,
@@ -103,7 +114,13 @@ SELECT
     created_at,
     updated_at
 FROM
-    third_party_data_privacy_agreements;
+    third_party_data_privacy_agreements
+WHERE
+    EXISTS (
+        SELECT 1
+        FROM third_parties
+        WHERE third_parties.id = third_party_data_privacy_agreements.third_party_id
+    );
 
 -- TODO: Drop third_party_business_associate_agreements and
 -- third_party_data_privacy_agreements in a later migration, once the
