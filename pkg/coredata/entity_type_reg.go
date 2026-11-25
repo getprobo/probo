@@ -184,6 +184,8 @@ const (
 	AccessInventoryGrantEntityType                   uint16 = 152
 	AccessInventoryChangeEventEntityType             uint16 = 153
 	AccessSourceSyncRunEntityType                    uint16 = 154
+	AccessInventorySettingsEntityType                uint16 = 155
+	AccessInventoryProviderSyncConfigEntityType      uint16 = 156
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -468,6 +470,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AccessInventoryChangeEvent{ID: id}, true
 	case AccessSourceSyncRunEntityType:
 		return &AccessSourceSyncRun{ID: id}, true
+	case AccessInventorySettingsEntityType:
+		return &AccessInventorySettings{ID: id}, true
+	case AccessInventoryProviderSyncConfigEntityType:
+		return &AccessInventoryProviderSyncConfig{ID: id}, true
 	default:
 		return nil, false
 	}
