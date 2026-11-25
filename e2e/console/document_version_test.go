@@ -329,6 +329,8 @@ func TestDocumentVersion(t *testing.T) {
 		{name: "RequestSignatureIsIdempotentWithinVersion", run: documentVersionRequestSignatureIsIdempotentWithinVersion},
 		{name: "RequestSignatureDeduplicatesAcrossMinors", run: documentVersionRequestSignatureDeduplicatesAcrossMinors},
 		{name: "MinorPublishMovesSignatureRequestsToNewVersion", run: documentVersionMinorPublishMovesSignatureRequestsToNewVersion},
+		{name: "MinorApprovalPublishesAndKeepsSignatureRequests", run: documentVersionMinorApprovalPublishesAndKeepsSignatureRequests},
+		{name: "BulkPublishRequestApprovalOverride", run: documentVersionBulkPublishRequestApprovalOverride},
 		{name: "SignDocument", run: documentVersionSignDocument},
 		{name: "SignDocumentWithoutRequestFails", run: documentVersionSignDocumentWithoutRequestFails},
 		{name: "SignDocumentTwiceFails", run: documentVersionSignDocumentTwiceFails},
@@ -1454,22 +1456,198 @@ func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVers
 		assert.Nil(t, result.PublishDocument.ApprovalQuorum)
 	})
 
-	t.Run("minor publish with approver_ids is rejected", func(t *testing.T) {
+	t.Run("minor publish with approver_ids requests approval", func(t *testing.T) {
 		t.Parallel()
 		owner := actors.owner.ForTest(t)
 		docID := createTestDocument(t, owner)
 		publishMajorDocumentVersion(t, owner, docID)
-		updateDocumentContent(t, owner, docID, "Updated content for rejected minor")
+		updateDocumentContent(t, owner, docID, "Updated content for approved minor")
 
-		_, err := owner.Do(publishMutation, map[string]any{
+		var result publishResult
+
+		err := owner.Execute(publishMutation, map[string]any{
 			"input": map[string]any{
 				"minor":       true,
 				"documentId":  docID,
 				"approverIds": []string{getOwnerProfileID(t, owner)},
-				"changelog":   "Minor release",
+				"changelog":   "Minor release needing approval",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "PENDING_APPROVAL", result.PublishDocument.DocumentVersion.Status)
+		require.NotNil(t, result.PublishDocument.ApprovalQuorum)
+
+		version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, 1, version.Major)
+		assert.Equal(t, 1, version.Minor)
+	})
+
+	t.Run("minor publish with empty approver_ids publishes directly", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+		docID := createTestDocument(t, owner)
+		publishMajorDocumentVersion(t, owner, docID)
+		updateDocumentContent(t, owner, docID, "Updated content for direct minor")
+
+		var result publishResult
+
+		err := owner.Execute(publishMutation, map[string]any{
+			"input": map[string]any{
+				"minor":       true,
+				"documentId":  docID,
+				"approverIds": []string{},
+				"changelog":   "Direct minor release",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
+		assert.Nil(t, result.PublishDocument.ApprovalQuorum)
+	})
+}
+
+func documentVersionMinorApprovalPublishesAndKeepsSignatureRequests(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
+
+	docID := createTestDocument(t, owner)
+
+	v10ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v10ID, signer.GetProfileID().String())
+
+	before := requestedSignatureVersions(t, owner, v10ID)
+	require.Len(t, before, 1)
+
+	updateDocumentContent(t, owner, docID, "Updated content for approved 1.1")
+
+	_, err := owner.Do(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				approvalQuorum { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"minor":       true,
+			"documentId":  docID,
+			"approverIds": []string{getOwnerProfileID(t, owner)},
+			"changelog":   "Minor release needing approval",
+		},
+	})
+	require.NoError(t, err)
+
+	// Requesting approval does not touch the request on v1.0.
+	assert.Equal(t, before, requestedSignatureVersions(t, owner, v10ID))
+
+	approveLatestDocumentVersion(t, owner, docID)
+
+	version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+	assert.Equal(t, "PUBLISHED", version.Status)
+	assert.Equal(t, 1, version.Major)
+	assert.Equal(t, 1, version.Minor)
+
+	// Approving the minor version moves the request onto it, as a direct
+	// minor publish does.
+	after := requestedSignatureVersions(t, owner, version.ID)
+	require.Len(t, after, 1)
+
+	for id, versionID := range after {
+		_, ok := before[id]
+		assert.True(t, ok, "the signature request must keep its identity")
+		assert.Equal(t, version.ID, versionID)
+	}
+}
+
+func documentVersionBulkPublishRequestApprovalOverride(t *testing.T, actors documentVersionActors) {
+	const mutation = `
+		mutation($input: BulkPublishDocumentsInput!) {
+			bulkPublishDocuments(input: $input) {
+				documentVersions { status major minor }
+			}
+		}
+	`
+
+	type bulkResult struct {
+		BulkPublishDocuments struct {
+			DocumentVersions []struct {
+				Status string `json:"status"`
+				Major  int    `json:"major"`
+				Minor  int    `json:"minor"`
+			} `json:"documentVersions"`
+		} `json:"bulkPublishDocuments"`
+	}
+
+	t.Run("major without approval publishes directly and keeps default approvers", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+		approverID := getOwnerProfileID(t, owner)
+		docID := createTestDocumentWithApprovers(t, owner, []string{approverID})
+
+		var result bulkResult
+
+		err := owner.Execute(mutation, map[string]any{
+			"input": map[string]any{
+				"minor":           false,
+				"requestApproval": false,
+				"documentIds":     []string{docID},
+				"changelog":       "Direct major",
+			},
+		}, &result)
+		require.NoError(t, err)
+		require.Len(t, result.BulkPublishDocuments.DocumentVersions, 1)
+		assert.Equal(t, "PUBLISHED", result.BulkPublishDocuments.DocumentVersions[0].Status)
+
+		var doc struct {
+			Node struct {
+				DefaultApprovers []struct {
+					ID string `json:"id"`
+				} `json:"defaultApprovers"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(`
+			query($id: ID!) {
+				node(id: $id) { ... on Document { defaultApprovers { id } } }
+			}
+		`, map[string]any{"id": docID}, &doc)
+		require.NoError(t, err)
+		require.Len(t, doc.Node.DefaultApprovers, 1)
+		assert.Equal(t, approverID, doc.Node.DefaultApprovers[0].ID)
+	})
+
+	t.Run("minor with approval asks the default approvers", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+		approverID := getOwnerProfileID(t, owner)
+		docID := createTestDocument(t, owner)
+		publishMajorDocumentVersion(t, owner, docID)
+
+		_, err := owner.Do(`
+			mutation($input: UpdateDocumentInput!) {
+				updateDocument(input: $input) { document { id } }
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":                 docID,
+				"content":            testutil.ProseMirrorTextDoc("Updated content for bulk minor approval"),
+				"defaultApproverIds": []string{approverID},
 			},
 		})
-		require.Error(t, err)
+		require.NoError(t, err)
+
+		var result bulkResult
+
+		err = owner.Execute(mutation, map[string]any{
+			"input": map[string]any{
+				"minor":           true,
+				"requestApproval": true,
+				"documentIds":     []string{docID},
+				"changelog":       "Minor needing approval",
+			},
+		}, &result)
+		require.NoError(t, err)
+		require.Len(t, result.BulkPublishDocuments.DocumentVersions, 1)
+		assert.Equal(t, "PENDING_APPROVAL", result.BulkPublishDocuments.DocumentVersions[0].Status)
+		assert.Equal(t, 1, result.BulkPublishDocuments.DocumentVersions[0].Minor)
 	})
 }
 

@@ -133,15 +133,27 @@ type (
 	BulkPublishVersionsRequest struct {
 		DocumentIDs []gid.GID
 		Minor       bool
-		Changelog   string
+		// RequestApproval overrides whether each document asks its default
+		// approvers first. When nil, a major publish asks them and a minor
+		// publish does not.
+		RequestApproval *bool
+		Changelog       string
 	}
 
+	// PublishDocumentRequest publishes a draft. Minor picks the version
+	// number and ApproverIDs picks whether an approval quorum opens first;
+	// the two are independent.
 	PublishDocumentRequest struct {
-		DocumentID      gid.GID
-		Minor           bool
-		ApproverIDs     []gid.GID
-		Changelog       string
-		IgnoreUnchanged bool
+		DocumentID gid.GID
+		Minor      bool
+		// ApproverIDs non-empty opens an approval quorum for either bump, an
+		// empty list publishes directly, and nil leaves the choice unmade.
+		ApproverIDs []gid.GID
+		// KeepDefaultApprovers leaves the document's saved default approvers
+		// untouched. Otherwise a non-nil ApproverIDs replaces them.
+		KeepDefaultApprovers bool
+		Changelog            string
+		IgnoreUnchanged      bool
 	}
 
 	PublishDocumentResult struct {
@@ -190,18 +202,9 @@ func (req *PublishDocumentRequest) Validate() error {
 	})
 	v.Check(req.Changelog, "changelog", validator.Required(), validator.SafeText(5000))
 
-	// approver_ids must be an explicit choice for a major publish (an empty list
-	// publishes directly without approval, a non-empty list requests approval)
-	// and must be omitted for a minor publish, which ignores approvers.
-	if req.Minor && req.ApproverIDs != nil {
-		v.Check(req.ApproverIDs, "approver_ids", func(any) *validator.ValidationError {
-			return &validator.ValidationError{
-				Code:    validator.ErrorCodeCustom,
-				Message: "must not be set when publishing a minor version",
-			}
-		})
-	}
-
+	// approver_ids must be an explicit choice for a major publish: an empty
+	// list publishes directly without approval, a non-empty list requests
+	// approval. A minor publish publishes directly unless approvers are given.
 	if !req.Minor && req.ApproverIDs == nil {
 		v.Check(req.ApproverIDs, "approver_ids", func(any) *validator.ValidationError {
 			return &validator.ValidationError{
@@ -442,7 +445,7 @@ func (s *DocumentService) PublishVersionWithDefaultApprovers(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if !req.Minor {
+			if !req.Minor && req.ApproverIDs == nil {
 				defaultApprovers := &coredata.DocumentDefaultApprovers{}
 				if err := defaultApprovers.LoadByDocumentID(ctx, tx, scope, req.DocumentID); err != nil {
 					return fmt.Errorf("cannot load default approvers: %w", err)
@@ -474,16 +477,17 @@ func (s *DocumentService) PublishVersionWithDefaultApprovers(
 }
 
 // PublishVersion publishes a document version. The behaviour depends on
-// req.Minor and req.ApproverIDs:
-//   - Minor=true: publish the existing draft as a minor version. ApproverIDs
-//     are ignored.
-//   - Minor=false with ApproverIDs: open an approval quorum on the draft as
-//     a pending major bump (currentMajor+1.0). Result.Quorum is set.
-//   - Minor=false without ApproverIDs: publish the draft immediately as a
-//     major bump (currentMajor+1.0).
+// req.Minor and req.ApproverIDs, which are independent:
+//   - Minor picks the version number: currentMajor.currentMinor+1 when true,
+//     currentMajor+1.0 when false.
+//   - ApproverIDs non-empty opens an approval quorum on the draft as a
+//     pending version. Result.Quorum is set.
+//   - ApproverIDs empty publishes the draft immediately.
+//   - ApproverIDs nil publishes a minor version immediately and is rejected
+//     for a major version.
 //
-// A major publish also replaces the document's default approvers with
-// req.ApproverIDs, even when the list is empty.
+// A non-nil ApproverIDs also replaces the document's default approvers, even
+// when the list is empty, unless KeepDefaultApprovers is set.
 func (s *DocumentService) PublishVersion(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -536,18 +540,6 @@ func (s *DocumentService) publish(
 		return nil, err
 	}
 
-	if req.Minor {
-		document, version, err := s.publishMinor(ctx, scope, tx, req.DocumentID, &req.Changelog, req.IgnoreUnchanged)
-		if err != nil {
-			return nil, fmt.Errorf("cannot publish minor version: %w", err)
-		}
-
-		result.Document = document
-		result.Version = version
-
-		return result, nil
-	}
-
 	document := &coredata.Document{}
 	if err := document.LoadByID(ctx, tx, scope, req.DocumentID); err != nil {
 		return nil, fmt.Errorf("cannot load document: %w", err)
@@ -557,12 +549,26 @@ func (s *DocumentService) publish(
 		return nil, &collaboration.ErrDocumentArchived{}
 	}
 
-	defaultApprovers := &coredata.DocumentDefaultApprovers{}
-	if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, req.ApproverIDs); err != nil {
-		return nil, fmt.Errorf("cannot update default approvers: %w", err)
+	if req.ApproverIDs != nil && !req.KeepDefaultApprovers {
+		defaultApprovers := &coredata.DocumentDefaultApprovers{}
+		if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, req.ApproverIDs); err != nil {
+			return nil, fmt.Errorf("cannot update default approvers: %w", err)
+		}
 	}
 
 	if len(req.ApproverIDs) == 0 {
+		if req.Minor {
+			publishedDocument, version, err := s.publishMinor(ctx, scope, tx, req.DocumentID, &req.Changelog, req.IgnoreUnchanged)
+			if err != nil {
+				return nil, fmt.Errorf("cannot publish minor version: %w", err)
+			}
+
+			result.Document = publishedDocument
+			result.Version = version
+
+			return result, nil
+		}
+
 		publishedDocument, version, err := s.publishMajor(ctx, scope, tx, req.DocumentID, &req.Changelog, req.IgnoreUnchanged)
 		if err != nil {
 			return nil, fmt.Errorf("cannot publish major version: %w", err)
@@ -595,14 +601,14 @@ func (s *DocumentService) publish(
 		}
 	}
 
-	if err := s.requestMajorApproval(ctx, scope, tx, req, document, result); err != nil {
-		return nil, fmt.Errorf("cannot request major approval: %w", err)
+	if err := s.requestApproval(ctx, scope, tx, req, document, result); err != nil {
+		return nil, fmt.Errorf("cannot request approval: %w", err)
 	}
 
 	return result, nil
 }
 
-func (s *DocumentService) requestMajorApproval(
+func (s *DocumentService) requestApproval(
 	ctx context.Context,
 	scope coredata.Scoper,
 	tx pg.Tx,
@@ -627,7 +633,7 @@ func (s *DocumentService) requestMajorApproval(
 		scope,
 		tx,
 		document,
-		false,
+		req.Minor,
 		coredata.DocumentVersionStatusPendingApproval,
 		&req.Changelog,
 	)

@@ -44,7 +44,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: false,
-		description: 'Whether to publish as a minor version. Approvers are ignored when set.',
+		description: 'Whether to publish as a minor version instead of a new major version',
 	},
 	{
 		displayName: 'Approver IDs',
@@ -54,11 +54,10 @@ export const description: INodeProperties[] = [
 			show: {
 				resource: ['document'],
 				operation: ['publish'],
-				minor: [false],
 			},
 		},
 		default: '',
-		description: 'Comma-separated list of approver profile IDs. Provide IDs to request approval; leave empty to publish the major version directly without approval.',
+		description: 'Comma-separated list of approver profile IDs. Provide IDs to request approval for a minor or a major version; leave empty to publish directly without approval.',
 	},
 	{
 		displayName: 'Changelog',
@@ -126,14 +125,14 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = { documentId, minor, changelog };
-	if (!minor) {
-		// A major publish must set approverIds explicitly: an empty list publishes
-		// directly without approval, a non-empty list requests approval. It must be
-		// omitted for a minor publish, which ignores approvers.
-		input.approverIds = approverIdsRaw
-			.split(',')
-			.map(id => id.trim())
-			.filter(Boolean);
+	const approverIds = approverIdsRaw
+		.split(',')
+		.map(id => id.trim())
+		.filter(Boolean);
+	// A major publish must set approverIds explicitly: an empty list publishes
+	// directly without approval. A minor publish without approvers leaves it unset.
+	if (!minor || approverIds.length > 0) {
+		input.approverIds = approverIds;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

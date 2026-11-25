@@ -121,11 +121,12 @@ func (s *DocumentApprovalService) RequestApproval(
 }
 
 // BulkPublishVersions publishes (or requests approval for) the latest draft of
-// each document. When req.Minor is true each draft is published as a minor
-// bump and approvers are not consulted. When req.Minor is false, each
-// document's saved default approvers are honoured: if the document has any,
-// an approval is requested for it; otherwise it is published as a major
-// bump. Documents with no draft (or already pending approval) are skipped.
+// each document. req.Minor picks a minor or major bump. Whether approval is
+// requested is independent: when req.RequestApproval is true, or nil on a
+// major bump, each document's saved default approvers are honoured: if the
+// document has any, an approval is requested for it; otherwise it is
+// published directly. Documents with no draft (or already pending approval)
+// are skipped. The saved default approvers are never changed.
 func (s *DocumentApprovalService) BulkPublishVersions(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -160,9 +161,14 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					return &collaboration.ErrDocumentArchived{}
 				}
 
-				var approverIDs []gid.GID
+				approverIDs := []gid.GID{}
 
-				if !req.Minor {
+				requestApproval := !req.Minor
+				if req.RequestApproval != nil {
+					requestApproval = *req.RequestApproval
+				}
+
+				if requestApproval {
 					defaultApprovers := &coredata.DocumentDefaultApprovers{}
 					if err := defaultApprovers.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
 						return fmt.Errorf("cannot load default approvers for %q: %w", documentID, err)
@@ -179,11 +185,12 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					scope,
 					tx,
 					PublishDocumentRequest{
-						DocumentID:      documentID,
-						Minor:           req.Minor,
-						ApproverIDs:     approverIDs,
-						Changelog:       req.Changelog,
-						IgnoreUnchanged: true,
+						DocumentID:           documentID,
+						Minor:                req.Minor,
+						ApproverIDs:          approverIDs,
+						KeepDefaultApprovers: true,
+						Changelog:            req.Changelog,
+						IgnoreUnchanged:      true,
 					},
 				)
 				if err != nil {
@@ -1330,6 +1337,16 @@ func (s *DocumentApprovalService) publishVersion(
 
 	if err := s.svc.Documents.finalizePublish(ctx, scope, tx, document, version, nil); err != nil {
 		return nil, fmt.Errorf("cannot finalize publish: %w", err)
+	}
+
+	// A minor version carries the open signature requests of its major over,
+	// a major version cancels the ones of the previous majors.
+	if version.Minor > 0 {
+		if err := s.svc.Documents.moveRequestedSignaturesToVersionInTx(ctx, scope, tx, version.ID); err != nil {
+			return nil, err
+		}
+
+		return version, nil
 	}
 
 	if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, version.DocumentID, version.Major); err != nil {

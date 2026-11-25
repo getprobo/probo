@@ -458,4 +458,42 @@ func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
 		assert.Nil(t, result.ApprovalQuorum)
 		assert.Equal(t, "PUBLISHED", result.DocumentVersion.Status)
 	})
+
+	t.Run("explicit approvers override the default approvers", func(t *testing.T) {
+		docID := addDocument([]string{approverID})
+
+		var result publishResult
+		mc.CallToolInto("publishDocument", map[string]any{
+			"document_id":  docID,
+			"minor":        false,
+			"approver_ids": []string{},
+			"changelog":    "Initial major without approval",
+		}, &result)
+
+		assert.Nil(t, result.ApprovalQuorum)
+		assert.Equal(t, "PUBLISHED", result.DocumentVersion.Status)
+	})
+
+	t.Run("explicit approvers request approval for a minor version", func(t *testing.T) {
+		docID := addDocument(nil)
+
+		var major publishResult
+		mc.CallToolInto("publishDocument", map[string]any{
+			"document_id": docID,
+			"minor":       false,
+			"changelog":   "Initial major",
+		}, &major)
+		require.Equal(t, "PUBLISHED", major.DocumentVersion.Status)
+
+		var result publishResult
+		mc.CallToolInto("publishDocument", map[string]any{
+			"document_id":  docID,
+			"minor":        true,
+			"approver_ids": []string{approverID},
+			"changelog":    "Minor needing approval",
+		}, &result)
+
+		require.NotNil(t, result.ApprovalQuorum)
+		assert.Equal(t, "PENDING_APPROVAL", result.DocumentVersion.Status)
+	})
 }

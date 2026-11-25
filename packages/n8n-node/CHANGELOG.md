@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Changed
+
+- Document Publish: Approver IDs apply to a minor version as well as a
+  major one, instead of being hidden when Minor is set
+
 ### Added
 
 - Document Get History returns the history of a document. A version is a

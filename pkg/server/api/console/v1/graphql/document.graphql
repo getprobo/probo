@@ -786,14 +786,28 @@ input ExportEmployeeDocumentVersionPDFInput {
 
 input PublishDocumentInput {
     documentId: ID!
+    "Picks the version number: a minor bump keeps the major, a major bump starts the next one."
     minor: Boolean!
+    """
+    Picks whether an approval quorum opens first, for either bump. A non-empty
+    list requests approval from these profiles, an empty list publishes
+    directly. Omitting it publishes a minor version directly and is rejected
+    for a major version. The list becomes the document's default approvers.
+    """
     approverIds: [ID!]
     changelog: String!
 }
 
 input BulkPublishDocumentsInput {
     documentIds: [ID!]!
+    "Picks the version number: a minor bump keeps the major, a major bump starts the next one."
     minor: Boolean!
+    """
+    Whether each document asks its default approvers first. Documents without
+    default approvers publish directly. Defaults to true for a major bump and
+    false for a minor bump.
+    """
+    requestApproval: Boolean
     changelog: String!
 }
 

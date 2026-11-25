@@ -6779,9 +6779,10 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 	result, err := svc.Documents.PublishVersionWithDefaultApprovers(
 		ctx, scope,
 		probo.PublishDocumentRequest{
-			DocumentID: input.DocumentID,
-			Minor:      input.Minor,
-			Changelog:  input.Changelog,
+			DocumentID:  input.DocumentID,
+			Minor:       input.Minor,
+			ApproverIDs: input.ApproverIds,
+			Changelog:   input.Changelog,
 		},
 	)
 	if err != nil {

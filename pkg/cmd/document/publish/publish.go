@@ -77,8 +77,11 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 
 By default, the draft is published as a new major version. Pass --minor to
 publish as a minor version.
-When --approver is set (one or more profile IDs), an approval is requested
-instead of publishing immediately. Approvers are ignored with --minor.`,
+Whether an approval is requested does not depend on the version number. When
+--approver is set (one or more profile IDs), an approval is requested from
+them instead of publishing immediately, for a minor or a major version.
+Without --approver the draft is published immediately. The approvers become
+the document's default approvers.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if flagChangelog == "" {
@@ -109,8 +112,12 @@ instead of publishing immediately. Approvers are ignored with --minor.`,
 				"changelog":  flagChangelog,
 			}
 
+			// A major publish must choose explicitly: an empty list publishes
+			// directly. A minor publish without approvers leaves it unset.
 			if len(flagApprover) > 0 {
 				input["approverIds"] = flagApprover
+			} else if !flagMinor {
+				input["approverIds"] = []string{}
 			}
 
 			data, err := client.Do(
@@ -154,8 +161,8 @@ instead of publishing immediately. Approvers are ignored with --minor.`,
 		},
 	}
 
-	cmd.Flags().BoolVar(&flagMinor, "minor", false, "Publish as a minor version (no approval flow)")
-	cmd.Flags().StringArrayVar(&flagApprover, "approver", nil, "Approver profile ID (can be repeated; ignored with --minor)")
+	cmd.Flags().BoolVar(&flagMinor, "minor", false, "Publish as a minor version")
+	cmd.Flags().StringArrayVar(&flagApprover, "approver", nil, "Approver profile ID to request approval from (can be repeated)")
 	cmd.Flags().StringVar(&flagChangelog, "changelog", "", "Changelog for this version (required)")
 
 	return cmd

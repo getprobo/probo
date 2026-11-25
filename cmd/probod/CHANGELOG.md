@@ -19,6 +19,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - A version ends its revision, so later edits never move its tag
 - Publishing fails when a document has no collaboration record, instead of
   storing a version that cannot be tied to the history
+- Publishing a document picks the version number (minor or major) and
+  whether an approval is requested separately. `approverIds` in
+  `publishDocument` and `approver_ids` in the MCP `publishDocument` tool
+  request approval for a minor version as well as a major one. Omitting
+  `approverIds` still publishes a minor version directly and is still
+  rejected for a major one. Approving a minor version carries its open
+  signature requests over to it
+- `bulkPublishDocuments` takes an optional `requestApproval` to ask the
+  default approvers of each document for a minor version, or to publish a
+  major version directly. It never changes the default approvers
+- The publish dialog sets the version number and the approval request
+  separately
 
 ### Added
 

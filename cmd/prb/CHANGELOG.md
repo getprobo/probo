@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- `document publish --approver` requests approval for a minor version as
+  well as a major one, instead of being ignored with `--minor`. A major
+  publish without `--approver` publishes directly
+
 ### Added
 
 - `document list-history` shows the versions tagging each revision in a

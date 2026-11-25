@@ -10635,7 +10635,12 @@ components:
           description: Document ID
         minor:
           type: boolean
-          description: When true, publish the draft as a minor version (the document must already have a published major version). When false, publish a new major version using the document's default approvers; if the document has default approvers an approval is requested from them (they receive an email notification), otherwise the version is published directly. Configure a document's default approvers with updateDocument.
+          description: When true, publish the draft as a minor version (the document must already have a published major version). When false, publish a new major version. Whether an approval is requested is set by approver_ids, not by this flag.
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Profile IDs to request approval from, for a minor or a major version; they receive an email notification. An empty list publishes directly. When omitted, a major version uses the document's default approvers (publishing directly when it has none) and a minor version publishes directly. A given list becomes the document's default approvers.
         changelog:
           type: string
           description: Changelog for this version
@@ -22146,7 +22151,7 @@ tools:
       $ref: "#/components/schemas/RestoreDocumentHistoryOutput"
   - name: publishDocument
     title: Publish Document
-    description: Publish the latest draft of a document. Set minor=true to publish a minor version (no approval flow). When minor=false, providing approver_ids triggers an approval request as a new major version; otherwise the draft is published immediately as a new major version.
+    description: Publish the latest draft of a document. minor picks the version number and approver_ids picks whether an approval is requested first, independently. A non-empty approver_ids requests approval from those profiles for either bump, an empty list publishes directly. When approver_ids is omitted, a major version asks the document's default approvers (publishing directly when it has none) and a minor version publishes directly.
     hints:
       readonly: false
       destructive: false

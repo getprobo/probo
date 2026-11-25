@@ -1392,9 +1392,10 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 	versions, documents, err := r.probo.DocumentApprovals.BulkPublishVersions(
 		ctx, scope,
 		probo.BulkPublishVersionsRequest{
-			DocumentIDs: input.DocumentIds,
-			Minor:       input.Minor,
-			Changelog:   input.Changelog,
+			DocumentIDs:     input.DocumentIds,
+			Minor:           input.Minor,
+			RequestApproval: input.RequestApproval,
+			Changelog:       input.Changelog,
 		},
 	)
 	if err != nil {
