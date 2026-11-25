@@ -23,6 +23,8 @@ import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { DocumentMode } from "./useDocumentModes";
+
 type CollaborationState = {
   attempt: number;
   handle?: RepoCollaborationHandle;
@@ -31,12 +33,16 @@ type CollaborationState = {
 
 // A document that is not enabled opens no room. Archived documents are only
 // viewed, and legacy ones have no collaboration document to open.
-export function useDocumentCollaboration(documentId: string, enabled: boolean) {
+export function useDocumentCollaboration(documentId: string, mode: DocumentMode, enabled: boolean) {
   const { t } = useTranslation("organizations/documents");
   const toast = useToast();
   const addToast = toast.add;
   const attemptRef = useRef(0);
   const [state, setState] = useState<CollaborationState>();
+  // The server fixes a socket's access when it connects and drops every change
+  // from a viewing one. It grants editing and suggesting the same access, so
+  // switching between those two keeps the socket.
+  const access = mode === "viewing" ? "viewing" : "editing";
 
   useEffect(() => {
     if (!enabled) {
@@ -47,7 +53,7 @@ export function useDocumentCollaboration(documentId: string, enabled: boolean) {
 
     async function open() {
       try {
-        const handle = await connectRepoDocument(documentId);
+        const handle = await connectRepoDocument(documentId, access);
         if (attempt !== attemptRef.current) {
           handle.close();
           return;
@@ -74,7 +80,7 @@ export function useDocumentCollaboration(documentId: string, enabled: boolean) {
       activeHandle?.close();
       setState(current => (current?.attempt === attempt ? undefined : current));
     };
-  }, [addToast, documentId, enabled, t]);
+  }, [access, addToast, documentId, enabled, t]);
 
   return {
     handle: enabled && !state?.failed ? state?.handle : undefined,

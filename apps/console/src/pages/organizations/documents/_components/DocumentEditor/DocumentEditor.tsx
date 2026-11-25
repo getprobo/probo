@@ -130,6 +130,7 @@ export function DocumentEditor({
   const [toolbarEl, setToolbarEl] = useState<HTMLDivElement | null>(null);
   const { handle, failed } = useDocumentCollaboration(
     document.id,
+    mode,
     document.status !== "ARCHIVED",
   );
   const { controller, setEditor } = useSuggestionController(document.id, mode, activate, showOpenReview);
