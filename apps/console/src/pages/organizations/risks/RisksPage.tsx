@@ -76,7 +76,7 @@ const risksFragment = graphql`
     risksDocument {
       id
       defaultApprovers {
-        id
+        ...PublishListDialog_approver
       }
     }
     risks(
@@ -150,8 +150,7 @@ export default function RisksPage(props: RisksPageProps) {
     ({ canDelete, canUpdate }) => canUpdate || canDelete,
   );
 
-  const defaultApproverIds
-    = risksDocument?.defaultApprovers?.map(a => a.id) ?? [];
+  const defaultApprovers = risksDocument?.defaultApprovers ?? [];
 
   return (
     <div className="space-y-6">
@@ -174,7 +173,7 @@ export default function RisksPage(props: RisksPageProps) {
           {canPublishRisk && (
             <PublishRiskListDialog
               organizationId={organizationId}
-              defaultApproverIds={defaultApproverIds}
+              defaultApprovers={defaultApprovers}
               onPublished={documentId => void navigate(
                 `/organizations/${organizationId}/governance/documents/${documentId}`,
               )}

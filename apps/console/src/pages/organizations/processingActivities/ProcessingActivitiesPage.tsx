@@ -94,9 +94,7 @@ export default function ProcessingActivitiesPage({
   );
 
   const paDocument = organization.node.processingActivitiesDocument;
-  const paDefaultApproverIds = (paDocument?.defaultApprovers ?? []).map(
-    a => a.id,
-  );
+  const paDefaultApprovers = paDocument?.defaultApprovers ?? [];
 
   const goToDocument = (documentId: string) => {
     void navigate(
@@ -160,7 +158,7 @@ export default function ProcessingActivitiesPage({
         {canPublishProcessingActivities && (
           <PublishProcessingActivityListDialog
             organizationId={organizationId}
-            defaultApproverIds={paDefaultApproverIds}
+            defaultApprovers={paDefaultApprovers}
             onPublished={goToDocument}
           >
             <Button variant="secondary" icon={IconUpload}>

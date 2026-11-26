@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -26,6 +26,7 @@ import { graphql } from "relay-runtime";
 import type { PublishDataProtectionImpactAssessmentListDialogMutation } from "#/__generated__/core/PublishDataProtectionImpactAssessmentListDialogMutation.graphql";
 import {
   PublishListDialog,
+  type PublishListDialogApprovers,
   type PublishListDialogInput,
 } from "#/components/dialogs/PublishListDialog";
 
@@ -44,16 +45,16 @@ const publishMutation = graphql`
 `;
 
 type Props = {
-  children: ReactNode;
+  children: ReactElement;
   organizationId: string;
-  defaultApproverIds?: string[];
+  defaultApprovers: PublishListDialogApprovers;
   onPublished?: (documentId: string) => void;
 };
 
 export function PublishDataProtectionImpactAssessmentListDialog({
   children,
   organizationId,
-  defaultApproverIds,
+  defaultApprovers,
   onPublished,
 }: Props) {
   const { t } = useTranslation();
@@ -73,7 +74,7 @@ export function PublishDataProtectionImpactAssessmentListDialog({
   return (
     <PublishListDialog
       organizationId={organizationId}
-      defaultApproverIds={defaultApproverIds}
+      defaultApprovers={defaultApprovers}
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}

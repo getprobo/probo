@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -36,7 +36,7 @@ const publishBusinessFunctionListDialogFragment = graphql`
   fragment PublishBusinessFunctionListDialog_organization on Organization {
     businessFunctionsDocument {
       defaultApprovers {
-        id
+        ...PublishListDialog_approver
       }
     }
   }
@@ -57,7 +57,7 @@ const publishMutation = graphql`
 `;
 
 interface PublishBusinessFunctionListDialogProps {
-  children: ReactNode;
+  children: ReactElement;
   organizationKey: PublishBusinessFunctionListDialog_organization$key;
   onPublished?: (documentId: string) => void;
 }
@@ -73,9 +73,6 @@ export function PublishBusinessFunctionListDialog({
     publishBusinessFunctionListDialogFragment,
     organizationKey,
   );
-  const defaultApproverIds = (
-    organization.businessFunctionsDocument?.defaultApprovers ?? []
-  ).map(approver => approver.id);
 
   const [publish, isPublishing] = useMutation<PublishBusinessFunctionListDialogMutation>(
     publishMutation,
@@ -94,7 +91,7 @@ export function PublishBusinessFunctionListDialog({
   return (
     <PublishListDialog
       organizationId={organizationId}
-      defaultApproverIds={defaultApproverIds}
+      defaultApprovers={organization.businessFunctionsDocument?.defaultApprovers ?? []}
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}

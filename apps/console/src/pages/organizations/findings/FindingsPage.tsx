@@ -76,7 +76,7 @@ export const findingsPageQuery = graphql`
         findingsDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         findings(
@@ -145,7 +145,7 @@ export function FindingsPage({ queryRef }: FindingsPageProps) {
 
   const canCreate = organization.canCreateFinding ?? false;
   const documentId = organization.findingsDocument?.id;
-  const defaultApproverIds = organization.findingsDocument?.defaultApprovers.map(approver => approver.id);
+  const defaultApprovers = organization.findingsDocument?.defaultApprovers ?? [];
   const {
     root,
     header,
@@ -195,7 +195,7 @@ export function FindingsPage({ queryRef }: FindingsPageProps) {
           {organization.canPublishFindings && (
             <PublishFindingListDialog
               organizationId={organizationId}
-              defaultApproverIds={defaultApproverIds}
+              defaultApprovers={defaultApprovers}
               onPublished={(publishedDocumentId) => {
                 void navigate(findingDocumentPath(organizationId, publishedDocumentId));
               }}

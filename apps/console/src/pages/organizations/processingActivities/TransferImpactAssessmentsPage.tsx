@@ -89,9 +89,7 @@ export default function TransferImpactAssessmentsPage({
   );
 
   const tiaDocument = organization.node.transferImpactAssessmentsDocument;
-  const tiaDefaultApproverIds = (tiaDocument?.defaultApprovers ?? []).map(
-    a => a.id,
-  );
+  const tiaDefaultApprovers = tiaDocument?.defaultApprovers ?? [];
 
   const goToDocument = (documentId: string) => {
     void navigate(
@@ -136,7 +134,7 @@ export default function TransferImpactAssessmentsPage({
         {canPublishTIA && (
           <PublishTransferImpactAssessmentListDialog
             organizationId={organizationId}
-            defaultApproverIds={tiaDefaultApproverIds}
+            defaultApprovers={tiaDefaultApprovers}
             onPublished={goToDocument}
           >
             <Button variant="secondary" icon={IconUpload}>

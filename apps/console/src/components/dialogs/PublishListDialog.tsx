@@ -18,24 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PaperPlaneTiltIcon, UploadSimpleIcon } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-} from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
+import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
+import { DialogDescription } from "@probo/ui/src/v2/Dialog/DialogDescription";
+import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
+import type { PublishListDialog_approver$key } from "#/__generated__/core/PublishListDialog_approver.graphql";
+import { type Approver, ApproversField } from "#/components/people/ApproversField";
+
+import { publishListDialog } from "./variants";
+
+const approverFragment = graphql`
+  fragment PublishListDialog_approver on Profile @relay(plural: true) {
+    id
+    fullName
+    emailAddress
+    avatar {
+      downloadUrl
+    }
+  }
+`;
+
+export type PublishListDialogApprovers = PublishListDialog_approver$key;
 
 export type PublishListDialogInput = {
   organizationId: string;
@@ -44,10 +60,11 @@ export type PublishListDialogInput = {
 };
 
 type Props = {
-  children: ReactNode;
+  children: ReactElement;
   organizationId: string;
-  defaultApproverIds?: string[];
+  defaultApprovers: PublishListDialogApprovers;
   title: string;
+  description?: string;
   publishedMessage: string;
   publishError: string;
   isPublishing: boolean;
@@ -55,55 +72,67 @@ type Props = {
   onPublished?: (documentId: string) => void;
 };
 
-export function PublishListDialog({
-  children,
+export function PublishListDialog({ children, ...formProps }: Props) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={children} />
+      <DialogPopup>
+        <PublishListForm
+          {...formProps}
+          onDone={() => setOpen(false)}
+        />
+      </DialogPopup>
+    </Dialog>
+  );
+}
+
+type FormProps = Omit<Props, "children"> & {
+  onDone: () => void;
+};
+
+function PublishListForm({
   organizationId,
-  defaultApproverIds,
+  defaultApprovers,
   title,
+  description,
   publishedMessage,
   publishError,
   isPublishing,
   onPublish,
   onPublished,
-}: Props) {
+  onDone,
+}: FormProps) {
   const { t } = useTranslation();
   const toast = useToast();
-  const dialogRef = useDialogRef();
+  const defaults = useFragment(approverFragment, defaultApprovers);
+  const [approvers, setApprovers] = useState<Approver[]>(
+    () => defaults.map(({ id, fullName, emailAddress, avatar }) => ({
+      id,
+      fullName,
+      emailAddress,
+      avatarUrl: avatar?.downloadUrl,
+    })),
+  );
+  const { form, body } = publishListDialog();
+  const requestsApproval = approvers.length > 0;
 
-  const schema = useMemo(() => z.object({
-    approverIds: z.array(z.string()),
-  }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds ?? [],
-    },
-  });
-
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = async (data: z.infer<typeof schema>) => {
-    const requestedApproval = !minorRef.current && data.approverIds.length > 0;
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const minor = submitter instanceof HTMLButtonElement && submitter.value === "minor";
+    const requestedApproval = !minor && requestsApproval;
 
     try {
       const documentId = await onPublish({
         organizationId,
-        minor: minorRef.current,
-        approverIds: requestedApproval ? data.approverIds : undefined,
+        minor,
+        approverIds: requestedApproval ? approvers.map(approver => approver.id) : undefined,
       });
-
       if (!documentId) {
         return;
       }
-
       toast.add({
         title: t("publishListDialog.messages.success"),
         description: requestedApproval
@@ -111,65 +140,66 @@ export function PublishListDialog({
           : publishedMessage,
         type: "success",
       });
-      dialogRef.current?.close();
-      reset();
+      onDone();
       onPublished?.(documentId);
     } catch (error) {
       toast.add({
         title: t("publishListDialog.messages.error"),
-        description: formatError(
-          publishError,
-          error as Parameters<typeof formatError>[1],
-        ),
+        description: formatError(publishError, error as Parameters<typeof formatError>[1]),
         type: "error",
       });
     }
-  };
+  }
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
-      title={title}
-    >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishListDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishListDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishListDialog.fields.approversPlaceholder")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
+    <form className={form()} onSubmit={e => void handleSubmit(e)}>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{description ?? t("publishListDialog.description")}</DialogDescription>
+      </DialogHeader>
+      <DialogBody>
+        <div className={body()}>
+          <ApproversField
+            approvers={approvers}
+            onChange={setApprovers}
+            label={t("publishListDialog.fields.approvers")}
+            description={t("publishListDialog.fields.approversDescription")}
             disabled={isPublishing}
-          >
-            {t("publishListDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers
-              ? t("publishListDialog.actions.requestApproval")
-              : t("publishListDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+          />
+        </div>
+      </DialogBody>
+      <DialogFooter>
+        <DialogClose
+          render={(
+            <Button variant="soft" color="neutral" disabled={isPublishing}>
+              {t("publishListDialog.actions.cancel")}
+            </Button>
+          )}
+        />
+        <Button
+          type="submit"
+          value="minor"
+          variant="soft"
+          color="neutral"
+          disabled={isPublishing}
+          iconStart={<UploadSimpleIcon />}
+        >
+          {t("publishListDialog.actions.publishMinor")}
+        </Button>
+        <Button
+          type="submit"
+          value="major"
+          variant="solid"
+          color="neutral"
+          highContrast
+          loading={isPublishing}
+          iconStart={requestsApproval ? <PaperPlaneTiltIcon /> : <UploadSimpleIcon />}
+        >
+          {requestsApproval
+            ? t("publishListDialog.actions.requestApproval")
+            : t("publishListDialog.actions.publish")}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

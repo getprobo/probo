@@ -73,6 +73,7 @@ export const statementOfApplicabilityDetailPageQuery = graphql`
                     canUpdateDocument: permission(action: "core:document:update")
                     defaultApprovers {
                         id
+                        ...PublishListDialog_approver
                         fullName
                         emailAddress
                     }
@@ -121,6 +122,7 @@ const updateApproversMutation = graphql`
                 id
                 defaultApprovers {
                     id
+                    ...PublishListDialog_approver
                     fullName
                     emailAddress
                 }
@@ -378,7 +380,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
         {statementOfApplicability.canPublish && statementOfApplicability.id && (
           <PublishStatementOfApplicabilityDialog
             statementOfApplicabilityId={statementOfApplicability.id}
-            defaultApproverIds={defaultApproverIds}
+            defaultApprovers={defaultApprovers}
             onPublished={(documentId) => {
               void navigate(
                 `/organizations/${organizationId}/governance/documents/${documentId}`,

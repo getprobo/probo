@@ -89,9 +89,7 @@ export default function DataProtectionImpactAssessmentsPage({
   );
 
   const dpiaDocument = organization.node.dataProtectionImpactAssessmentsDocument;
-  const dpiaDefaultApproverIds = (dpiaDocument?.defaultApprovers ?? []).map(
-    a => a.id,
-  );
+  const dpiaDefaultApprovers = dpiaDocument?.defaultApprovers ?? [];
 
   const goToDocument = (documentId: string) => {
     void navigate(
@@ -137,7 +135,7 @@ export default function DataProtectionImpactAssessmentsPage({
         {canPublishDPIA && (
           <PublishDataProtectionImpactAssessmentListDialog
             organizationId={organizationId}
-            defaultApproverIds={dpiaDefaultApproverIds}
+            defaultApprovers={dpiaDefaultApprovers}
             onPublished={goToDocument}
           >
             <Button variant="secondary" icon={IconUpload}>

@@ -47,7 +47,7 @@ export const processingActivitiesQuery = graphql`
         processingActivitiesDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         ...ProcessingActivitiesPageFragment
@@ -68,7 +68,7 @@ export const dataProtectionImpactAssessmentsQuery = graphql`
         dataProtectionImpactAssessmentsDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         ...DataProtectionImpactAssessmentsPageFragment
@@ -89,7 +89,7 @@ export const transferImpactAssessmentsQuery = graphql`
         transferImpactAssessmentsDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         ...TransferImpactAssessmentsPageFragment

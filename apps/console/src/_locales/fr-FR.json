@@ -3142,9 +3142,10 @@
     "description": "Sélectionnez des approbateurs pour demander une approbation avant publication, ou publiez directement sans approbateurs.",
     "fields": {
       "approvers": "Approbateurs",
-      "approversPlaceholder": "Ajouter des approbateurs…"
+      "approversDescription": "Choisissez les personnes qui doivent approuver cette version, ou laissez la liste vide pour publier directement."
     },
     "actions": {
+      "cancel": "Annuler",
       "publishMinor": "Publier en mineur",
       "requestApproval": "Demander une approbation",
       "publish": "Publier"
@@ -3154,6 +3155,10 @@
       "error": "Erreur",
       "approvalRequested": "Approbation demandée avec succès."
     }
+  },
+  "approversField": {
+    "add": "Ajouter un approbateur",
+    "remove": "Retirer {{name}}"
   },
   "publishAiSystemListDialog": {
     "title": "Publier les systèmes d'IA",
@@ -4397,11 +4402,8 @@
   "publishRiskAnalysisDialog": {
     "title": "Publier l’analyse des risques",
     "description": "Sélectionnez des approbateurs pour demander une approbation avant la publication, ou publiez directement sans approbateurs.",
-    "fields": { "approvers": "Approbateurs" },
-    "placeholders": { "approvers": "Ajouter des approbateurs..." },
-    "messages": { "success": "Succès", "error": "Erreur", "approvalRequested": "Approbation demandée avec succès.", "published": "Analyse des risques publiée avec succès." },
-    "errors": { "publish": "Échec de la publication de l’analyse des risques" },
-    "actions": { "publishMinor": "Publier en version mineure", "requestApproval": "Demander une approbation", "publish": "Publier" }
+    "messages": { "published": "Analyse des risques publiée avec succès." },
+    "errors": { "publish": "Échec de la publication de l’analyse des risques" }
   },
   "riskRow": {
     "messages": {
@@ -5267,25 +5269,11 @@
   "publishStatementOfApplicabilityDialog": {
     "title": "Publier la déclaration d’applicabilité",
     "description": "Sélectionnez des approbateurs pour demander une approbation avant la publication, ou publiez directement sans approbateurs.",
-    "fields": {
-      "approvers": "Approbateurs"
-    },
-    "placeholders": {
-      "approvers": "Ajouter des approbateurs..."
-    },
     "messages": {
-      "success": "Succès",
-      "error": "Erreur",
-      "approvalRequested": "Approbation demandée avec succès.",
       "published": "Déclaration d’applicabilité publiée avec succès."
     },
     "errors": {
       "publish": "Échec de la publication de la déclaration d’applicabilité"
-    },
-    "actions": {
-      "publishMinor": "Publier en version mineure",
-      "requestApproval": "Demander une approbation",
-      "publish": "Publier"
     }
   },
   "statementOfApplicabilityControlsTab": {

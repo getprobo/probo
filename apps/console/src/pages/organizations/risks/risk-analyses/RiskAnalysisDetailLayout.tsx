@@ -67,7 +67,7 @@ export const riskAnalysisDetailLayoutQuery = graphql`
         document {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         canPublish: permission(action: "risk-management:risk-analysis:publish")
@@ -132,7 +132,7 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
         {ra.canPublish && (
           <PublishRiskAnalysisDialog
             riskAnalysisId={ra.id}
-            defaultApproverIds={ra.document?.defaultApprovers?.map(approver => approver.id) ?? []}
+            defaultApprovers={ra.document?.defaultApprovers ?? []}
             onPublished={(documentId) => {
               void navigate(
                 `/organizations/${organizationId}/governance/documents/${documentId}`,

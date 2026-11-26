@@ -42,7 +42,7 @@ export const assetsQuery = graphql`
         assetListDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         ...AssetsPageFragment

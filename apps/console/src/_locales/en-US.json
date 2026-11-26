@@ -2033,9 +2033,10 @@
     "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
     "fields": {
       "approvers": "Approvers",
-      "approversPlaceholder": "Add approvers..."
+      "approversDescription": "Choose the people who must approve this version, or leave the list empty to publish directly."
     },
     "actions": {
+      "cancel": "Cancel",
       "publishMinor": "Publish as minor",
       "requestApproval": "Request approval",
       "publish": "Publish"
@@ -2045,6 +2046,10 @@
       "error": "Error",
       "approvalRequested": "Approval requested successfully."
     }
+  },
+  "approversField": {
+    "add": "Add approver",
+    "remove": "Remove {{name}}"
   },
   "publishAiSystemListDialog": {
     "title": "Publish AI Systems",
@@ -2456,11 +2461,8 @@
   "publishRiskAnalysisDialog": {
     "title": "Publish Risk Analysis",
     "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "fields": { "approvers": "Approvers" },
-    "placeholders": { "approvers": "Add approvers..." },
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Risk analysis published successfully." },
-    "errors": { "publish": "Failed to publish risk analysis" },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "messages": { "published": "Risk analysis published successfully." },
+    "errors": { "publish": "Failed to publish risk analysis" }
   },
   "riskRow": {
     "messages": { "error": "Error" },
@@ -2857,11 +2859,8 @@
   "publishStatementOfApplicabilityDialog": {
     "title": "Publish Statement of Applicability",
     "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "fields": { "approvers": "Approvers" },
-    "placeholders": { "approvers": "Add approvers..." },
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Statement of Applicability published successfully." },
-    "errors": { "publish": "Failed to publish Statement of Applicability" },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "messages": { "published": "Statement of Applicability published successfully." },
+    "errors": { "publish": "Failed to publish Statement of Applicability" }
   },
   "statementOfApplicabilityControlsTab": {
     "columns": { "framework": "Framework", "control": "Control", "applicability": "Applicability", "maturity": "Maturity", "regulatory": "Regulatory", "contractual": "Contractual", "bestPractice": "Best Practice", "riskAssessment": "Risk Assessment" },

@@ -18,28 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-} from "@probo/ui";
-import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { PublishStatementOfApplicabilityDialogMutation } from "#/__generated__/core/PublishStatementOfApplicabilityDialogMutation.graphql";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  PublishListDialog,
+  type PublishListDialogApprovers,
+  type PublishListDialogInput,
+} from "#/components/dialogs/PublishListDialog";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { z } from "#/lib/zod";
 
 const publishMutation = graphql`
   mutation PublishStatementOfApplicabilityDialogMutation(
@@ -56,125 +46,49 @@ const publishMutation = graphql`
 `;
 
 type Props = {
-  children: ReactNode;
+  children: ReactElement;
   statementOfApplicabilityId: string;
-  defaultApproverIds?: string[];
+  defaultApprovers: PublishListDialogApprovers;
   onPublished?: (documentId: string) => void;
 };
 
 export function PublishStatementOfApplicabilityDialog({
   children,
   statementOfApplicabilityId,
-  defaultApproverIds = [],
+  defaultApprovers,
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const toast = useToast();
   const organizationId = useOrganizationId();
-  const dialogRef = useDialogRef();
-
-  const schema = useMemo(() => z.object({
-    approverIds: z.array(z.string()),
-  }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds,
-    },
-  });
-
   const [publish, isPublishing]
     = useMutation<PublishStatementOfApplicabilityDialogMutation>(publishMutation);
 
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = (data: z.infer<typeof schema>) => {
-    publish({
-      variables: {
-        input: {
-          minor: minorRef.current,
-          statementOfApplicabilityId,
-          approverIds: !minorRef.current && data.approverIds.length > 0 ? data.approverIds : undefined,
+  const onPublish = ({ minor, approverIds }: PublishListDialogInput) =>
+    new Promise<string | null | undefined>((resolve, reject) => {
+      publish({
+        variables: {
+          input: { statementOfApplicabilityId, minor, approverIds },
         },
-      },
-      onCompleted(response) {
-        const documentId = response.publishStatementOfApplicability?.documentEdge?.node?.id;
-        if (documentId) {
-          toast.add({
-            title: t("publishStatementOfApplicabilityDialog.messages.success"),
-            description: hasApprovers
-              ? t("publishStatementOfApplicabilityDialog.messages.approvalRequested")
-              : t("publishStatementOfApplicabilityDialog.messages.published"),
-            type: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onPublished?.(documentId);
-        }
-      },
-      onError(error) {
-        toast.add({
-          title: t("publishStatementOfApplicabilityDialog.messages.error"),
-          description: formatError(
-            t("publishStatementOfApplicabilityDialog.errors.publish"),
-            error,
-          ),
-          type: "error",
-        });
-      },
+        onCompleted: (response) => {
+          resolve(response.publishStatementOfApplicability?.documentEdge?.node?.id);
+        },
+        onError: reject,
+      });
     });
-  };
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
+    <PublishListDialog
+      organizationId={organizationId}
+      defaultApprovers={defaultApprovers}
+      isPublishing={isPublishing}
+      onPublish={onPublish}
+      onPublished={onPublished}
       title={t("publishStatementOfApplicabilityDialog.title")}
+      description={t("publishStatementOfApplicabilityDialog.description")}
+      publishedMessage={t("publishStatementOfApplicabilityDialog.messages.published")}
+      publishError={t("publishStatementOfApplicabilityDialog.errors.publish")}
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishStatementOfApplicabilityDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishStatementOfApplicabilityDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishStatementOfApplicabilityDialog.placeholders.approvers")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
-            disabled={isPublishing}
-          >
-            {t("publishStatementOfApplicabilityDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers ? t("publishStatementOfApplicabilityDialog.actions.requestApproval") : t("publishStatementOfApplicabilityDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+      {children}
+    </PublishListDialog>
   );
 }
