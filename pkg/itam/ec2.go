@@ -138,6 +138,7 @@ func mapEC2Instance(
 		}
 
 		name = *tag.Value
+
 		break
 	}
 

@@ -119,6 +119,7 @@ func TestEC2Configuration_IgnoresUnknownFields(t *testing.T) {
 	t.Parallel()
 
 	var configuration itam.EC2InstanceConfiguration
+
 	err := json.Unmarshal([]byte(`{"instance_type":"t3.micro","unknown":1}`), &configuration)
 
 	require.NoError(t, err)

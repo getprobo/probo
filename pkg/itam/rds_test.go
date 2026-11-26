@@ -101,6 +101,7 @@ func TestRDSConfiguration_IgnoresUnknownFields(t *testing.T) {
 	t.Parallel()
 
 	var configuration itam.RDSDBInstanceConfiguration
+
 	err := json.Unmarshal([]byte(`{"engine":"postgres","unknown":1}`), &configuration)
 
 	require.NoError(t, err)

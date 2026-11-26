@@ -84,6 +84,7 @@ func TestCloudFrontConfiguration_IgnoresUnknownFields(t *testing.T) {
 	t.Parallel()
 
 	var configuration itam.CloudFrontDistributionConfiguration
+
 	err := json.Unmarshal([]byte(`{"domain_name":"d.example.net","unknown":1}`), &configuration)
 
 	require.NoError(t, err)

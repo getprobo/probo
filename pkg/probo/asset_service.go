@@ -66,9 +66,11 @@ func (car *CreateAssetRequest) Validate() error {
 	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
 	v.Check(car.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
+
 	if car.DataTypesStored != nil && strings.TrimSpace(*car.DataTypesStored) != "" {
 		v.Check(car.DataTypesStored, "data_types_stored", validator.SafeText(ContentMaxLength))
 	}
+
 	v.CheckEach(car.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
 	})
@@ -84,9 +86,11 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v.Check(uar.Amount, "amount", validator.Min(1))
 	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))
+
 	if uar.DataTypesStored != nil && strings.TrimSpace(*uar.DataTypesStored) != "" {
 		v.Check(uar.DataTypesStored, "data_types_stored", validator.SafeText(ContentMaxLength))
 	}
+
 	v.CheckEach(uar.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.GID(coredata.ThirdPartyEntityType))
 	})

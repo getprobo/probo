@@ -187,6 +187,7 @@ func (h *assetSyncHandler) nextAttempt(
 	account *coredata.ConnectorAccount,
 ) (int, error) {
 	latest := &coredata.AssetSync{}
+
 	err := latest.LoadLatestByConnectorAccountID(
 		ctx,
 		tx,
@@ -244,6 +245,7 @@ func (h *assetSyncHandler) syncAccount(
 	sync *coredata.AssetSync,
 ) error {
 	scope := coredata.NewScopeFromObjectID(account.ID)
+
 	handle, err := h.connectors.Open(ctx, scope, account.ID)
 	if err != nil {
 		return &kindListError{
@@ -329,7 +331,9 @@ func (h *assetSyncHandler) finish(
 	}
 
 	status := coredata.AssetSyncStatusSucceeded
+
 	var syncErr *string
+
 	if len(failures) > 0 {
 		status = coredata.AssetSyncStatusFailed
 		message := assetSyncFailureMessage

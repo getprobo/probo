@@ -820,6 +820,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	ownerIDs := make([]gid.GID, 0, len(assets))
 
 	ownerIDSet := make(map[gid.GID]struct{})
+
 	for _, a := range assets {
 		if a.OwnerID == nil {
 			continue
@@ -846,6 +847,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	rows := make([]docgen.AssetListRow, 0, len(assets))
 	for _, a := range assets {
 		ownerName := "-"
+
 		if a.OwnerID != nil {
 			if p, ok := profileMap[*a.OwnerID]; ok && p.FullName != "" {
 				ownerName = p.FullName

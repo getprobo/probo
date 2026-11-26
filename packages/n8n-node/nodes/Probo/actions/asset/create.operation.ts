@@ -97,7 +97,6 @@ export const description: INodeProperties[] = [
 		},
 		default: '',
 		description: 'The types of data stored in the asset',
-		required: false,
 	},
 	{
 		displayName: 'ThirdParty IDs',
