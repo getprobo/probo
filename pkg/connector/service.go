@@ -24,6 +24,7 @@ import (
 	"context"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -37,8 +38,9 @@ type (
 	Option func(*options)
 
 	options struct {
-		federation *identityfederation.Issuer
-		registerer prometheus.Registerer
+		federation  *identityfederation.Issuer
+		registerer  prometheus.Registerer
+		httpOptions []httpclient.Option
 	}
 )
 
@@ -57,6 +59,15 @@ func WithRegisterer(registerer prometheus.Registerer) Option {
 func WithIdentityFederation(issuer *identityfederation.Issuer) Option {
 	return func(o *options) {
 		o.federation = issuer
+	}
+}
+
+// WithHTTPOptions supplies options for the OAuth refresh dial inside Open.
+// They are not applied to the connector API client. With none, that dial
+// keeps SSRF protection.
+func WithHTTPOptions(opts ...httpclient.Option) Option {
+	return func(o *options) {
+		o.httpOptions = opts
 	}
 }
 
@@ -85,6 +96,7 @@ func NewService(
 		connectorRegistry: connectorRegistry,
 		federation:        o.federation,
 		logger:            logger,
+		httpOptions:       o.httpOptions,
 		nameWorker: newAccountNameWorker(
 			pgClient,
 			encryptionKey,

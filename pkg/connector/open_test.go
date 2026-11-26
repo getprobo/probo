@@ -316,16 +316,14 @@ func oauthOpener(
 		},
 	))
 
-	opener := connector.NewService(
+	return connector.NewService(
 		pgClient,
 		key,
 		connectors,
 		provider.NewRegistry(),
 		log.NewLogger(log.WithName("test")),
+		connector.WithHTTPOptions(httpclient.WithSSRFAllowLoopback()),
 	)
-	connector.SetHTTPOptions(opener, httpclient.WithSSRFAllowLoopback())
-
-	return opener
 }
 
 type seededAccount struct {

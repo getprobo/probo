@@ -216,7 +216,7 @@ type (
 		nameWorker *worker.Worker[coredata.ConnectorAccount]
 
 		// httpOptions apply only to the OAuth refresh dial inside Open.
-		// Tests set them so a loopback token server can answer a refresh.
+		// With none, that dial keeps SSRF protection.
 		httpOptions []httpclient.Option
 	}
 
