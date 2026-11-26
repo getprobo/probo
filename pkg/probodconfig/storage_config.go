@@ -51,12 +51,17 @@ func (c StorageConfig) Validate() error {
 	case StorageProviderS3:
 		return nil
 	case StorageProviderAzure:
-		accountURL, err := url.Parse(strings.TrimSpace(c.AzureAccountURL))
+		// The Azure SDK receives the value as configured.
+		if c.AzureAccountURL != strings.TrimSpace(c.AzureAccountURL) {
+			return fmt.Errorf("invalid Azure Storage account URL: must not have surrounding whitespace")
+		}
+
+		accountURL, err := url.Parse(c.AzureAccountURL)
 		if err != nil {
 			return fmt.Errorf("invalid Azure Storage account URL: %w", err)
 		}
 
-		if accountURL.Scheme != "https" || accountURL.Host == "" ||
+		if accountURL.Scheme != "https" || accountURL.Hostname() == "" ||
 			accountURL.User != nil || accountURL.RawQuery != "" || accountURL.Fragment != "" {
 			return fmt.Errorf("invalid Azure Storage account URL: must be HTTPS without userinfo, query, or fragment")
 		}

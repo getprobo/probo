@@ -68,6 +68,30 @@ func TestStorageConfigValidate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Azure requires an account URL",
+			config: probodconfig.StorageConfig{
+				Provider:        probodconfig.StorageProviderAzure,
+				AzureAccountURL: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Azure URL requires a hostname",
+			config: probodconfig.StorageConfig{
+				Provider:        probodconfig.StorageProviderAzure,
+				AzureAccountURL: "https://:443",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Azure URL rejects surrounding whitespace",
+			config: probodconfig.StorageConfig{
+				Provider:        probodconfig.StorageProviderAzure,
+				AzureAccountURL: "https://probo.blob.core.windows.net ",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -7,11 +7,12 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 - Kubernetes 1.23+
 - Helm 3.8+
 - External PostgreSQL database (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
-- S3 or S3-compatible object storage (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.)
+- Object storage: S3 or S3-compatible (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.), or Azure Blob Storage
 - OpenSSL installed (for generating secrets)
 
 > Azure Blob behind S3 compatibility proxies currently has known metadata
-> compatibility issues. Prefer native S3-compatible backends for production.
+> compatibility issues. On Azure, use the native backend
+> (`storage.provider: azure`) instead.
 
 ## Installing the Chart
 
@@ -189,6 +190,8 @@ The pod uses `DefaultAzureCredential` (managed identity in Azure); assign it
 on the storage account so it can issue user-delegation SAS download URLs.
 The storage firewall must allow both the pod's outbound IPs and users'
 approved browser IPs; browsers download private files directly from Blob.
+Add a Blob service CORS rule that allows `GET` and `HEAD` from each public Probo
+origin, otherwise the browser blocks file previews.
 
 ### Secret Format Quick Reference
 
@@ -276,7 +279,7 @@ The chart deploys the following:
 ### External Dependencies (Required)
 
 - **PostgreSQL**: Managed database service
-- **S3 Storage**: Object storage for files and documents
+- **Object Storage**: S3 or Azure Blob Storage for files and documents
 
 ## Database Management
 
@@ -349,7 +352,7 @@ helm upgrade probo . -f values-production.yaml
 helm uninstall probo
 ```
 
-**Note:** This does not delete your external PostgreSQL database or S3 bucket.
+**Note:** This does not delete your external PostgreSQL database, S3 bucket, or Azure Blob container.
 
 ## Troubleshooting
 
@@ -370,9 +373,9 @@ kubectl get secret probo -o yaml
 
 Check the Probo logs for database connection errors. The application will fail to start if it cannot connect to PostgreSQL.
 
-### Test S3 Connection
+### Test Object Storage Connection
 
-Check the Probo logs for S3 connection errors when uploading files.
+Check the Probo logs for S3 or Azure Blob errors when uploading files.
 
 ### `IP geolocation table is empty` warning
 

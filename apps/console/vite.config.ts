@@ -248,6 +248,8 @@ function fileStorageOriginFromEnv(env: Record<string, string>): string {
       || parsed.password
       || parsed.search
       || parsed.hash
+      // Same characters as pkg/baseurl.CSPOrigin rejects.
+      || /[;,"'*]/.test(parsed.host)
     ) {
       return "";
     }

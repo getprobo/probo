@@ -446,7 +446,8 @@ seaweedfs:
 # Azure Blob alternative: set storage.provider to "azure", set
 # storage.azure.accountUrl, and use storage.bucket or s3.bucket as the existing
 # container name.
-# S3 settings (required only when storage.provider=s3)
+# S3 settings (used when storage.provider=s3; s3.bucket is also the Azure
+# container name when storage.bucket is not set)
 s3:
   # AWS S3 example:
   region: "us-east-1"
@@ -471,7 +472,7 @@ s3:
   # secretAccessKey: "..." # Spaces secret
 
   # Azure Blob through S3-compat proxies has known metadata compatibility gaps.
-  # Prefer AWS S3 / GCS / Spaces for production until native Azure Blob support lands.
+  # On Azure, use the native backend (storage.provider: azure) instead.
 
 # Chrome for PDF generation
 chrome:

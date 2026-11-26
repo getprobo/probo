@@ -21,6 +21,7 @@
 package objectstorage
 
 import (
+	"math"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
@@ -49,6 +50,12 @@ func TestParseRange(t *testing.T) {
 			value:     "bytes=3-",
 			fileSize:  12,
 			wantRange: blob.HTTPRange{Offset: 3},
+		},
+		{
+			name:      "end at the integer limit",
+			value:     "bytes=0-9223372036854775807",
+			fileSize:  12,
+			wantRange: blob.HTTPRange{Count: math.MaxInt64},
 		},
 		{
 			name:      "suffix range",

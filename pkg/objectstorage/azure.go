@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -338,7 +339,8 @@ func parseRange(value string, fileSize int64) (blob.HTTPRange, error) {
 			return blob.HTTPRange{}, fmt.Errorf("invalid byte range end")
 		}
 
-		rangeValueOut.Count = end - offset + 1
+		// Capped so that an end of math.MaxInt64 does not overflow.
+		rangeValueOut.Count = min(end-offset, math.MaxInt64-1) + 1
 	}
 
 	return rangeValueOut, nil

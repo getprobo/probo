@@ -48,12 +48,16 @@
 {{- end }}
 
 💾 Object Storage:
-{{- if .Values.seaweedfs.enabled }}
+{{- if eq (.Values.storage.provider | default "s3") "azure" }}
+  Using Azure Blob Storage
+  Container: {{ .Values.storage.bucket | default .Values.s3.bucket }}
+  Account URL: {{ .Values.storage.azure.accountUrl }}
+{{- else if .Values.seaweedfs.enabled }}
   Using SeaweedFS: {{ include "probo.fullname" . }}-seaweedfs:8333
-  Bucket: {{ .Values.s3.bucket }}
+  Bucket: {{ .Values.storage.bucket | default .Values.s3.bucket }}
 {{- else }}
   Using S3 storage
-  Bucket: {{ .Values.s3.bucket }}
+  Bucket: {{ .Values.storage.bucket | default .Values.s3.bucket }}
   Region: {{ .Values.s3.region }}
   {{- if .Values.s3.endpoint }}
   Endpoint: {{ .Values.s3.endpoint }}
