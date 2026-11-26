@@ -85,6 +85,10 @@ func Install(cfg Config) error {
 		return fmt.Errorf("cannot render rc.d script: %w", err)
 	}
 
+	if err := installServiceLog(); err != nil {
+		return fmt.Errorf("cannot install service log: %w", err)
+	}
+
 	if out, err := exec.Command("service", "probo_agent", "enable").CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run service probo_agent enable: %w: %s", err, strings.TrimSpace(string(out)))
 	}
@@ -115,5 +119,5 @@ func Uninstall(cfg Config) error {
 		return fmt.Errorf("cannot remove rc.d script: %w", err)
 	}
 
-	return nil
+	return uninstallServiceLog()
 }

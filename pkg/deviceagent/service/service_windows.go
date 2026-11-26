@@ -56,6 +56,12 @@ func Install(cfg Config) error {
 		return err
 	}
 
+	// Register the source before the service exists. A failure here
+	// must not leave an auto-start service that has no event source.
+	if err := installServiceLog(); err != nil {
+		return fmt.Errorf("cannot install service log: %w", err)
+	}
+
 	bin := fmt.Sprintf(`"%s" run --dir "%s"`, cfg.ExePath, cfg.Dir)
 	if out, err := exec.Command(
 		"sc.exe",
@@ -141,12 +147,10 @@ func Uninstall(cfg Config) error {
 	_ = exec.Command("sc.exe", "stop", name).Run()
 	if out, err := exec.Command("sc.exe", "delete", name).CombinedOutput(); err != nil {
 		msg := strings.TrimSpace(string(out))
-		if isWindowsServiceMissing(msg) {
-			return nil
+		if !isWindowsServiceMissing(msg) {
+			return fmt.Errorf("cannot run sc.exe delete: %w: %s", err, msg)
 		}
-
-		return fmt.Errorf("cannot run sc.exe delete: %w: %s", err, msg)
 	}
 
-	return nil
+	return uninstallServiceLog()
 }

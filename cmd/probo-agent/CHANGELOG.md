@@ -5,6 +5,14 @@ documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- The agent service logs through the OS facility that already rotates
+  them. macOS appends to `/var/log/probo-agent.log` and newsyslog
+  rotates it. Linux stays on the journal. FreeBSD writes syslog.
+  Windows writes the Application event log while it is running as
+  the service. A console `run` on Windows stays on stderr.
+
 ## [0.10.1] - 2026-11-26
 
 ### Fixed

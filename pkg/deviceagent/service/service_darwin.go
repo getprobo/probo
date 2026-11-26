@@ -123,6 +123,10 @@ func WritePlist(cfg Config) error {
 		return fmt.Errorf("executable path must be %s", deviceagent.DefaultExecutablePath())
 	}
 
+	if err := installServiceLog(); err != nil {
+		return fmt.Errorf("cannot install service log: %w", err)
+	}
+
 	if err := os.MkdirAll(filepath.Dir(plistPath), 0o755); err != nil {
 		return fmt.Errorf("cannot ensure launch daemons directory: %w", err)
 	}
@@ -192,6 +196,10 @@ func Uninstall(cfg Config) error {
 
 	if err := removeLaunchDaemonPlist(plistPath); err != nil {
 		return err
+	}
+
+	if err := uninstallServiceLog(); err != nil {
+		return fmt.Errorf("cannot remove service log: %w", err)
 	}
 
 	if err := removePrivilegedHelper(); err != nil {

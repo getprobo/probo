@@ -271,6 +271,26 @@ func newAgentLogger() *log.Logger {
 	)
 }
 
+// newRunLogger points the service at the OS log. Other commands stay
+// on stderr. A nil writer, or a log the process cannot open, does too.
+func newRunLogger() (*log.Logger, func()) {
+	writer, err := service.OpenRunLog()
+	if err != nil || writer == nil {
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "probo-agent: cannot open service log: %v\n", err)
+		}
+
+		return newAgentLogger(), func() {}
+	}
+
+	return log.NewLogger(
+			log.WithName("probo-agent"),
+			log.WithOutput(writer),
+		), func() {
+			_ = writer.Close()
+		}
+}
+
 func newInstallCmd() *cobra.Command {
 	var (
 		serverURL        string
@@ -544,7 +564,9 @@ func newRunCmd() *cobra.Command {
 				return fmt.Errorf("cannot load config: %w", err)
 			}
 
-			logger := newAgentLogger()
+			logger, closeLog := newRunLogger()
+			defer closeLog()
+
 			agent := deviceagent.New(dir, version, logger)
 			agent.Updater = newUpdater(logger, dir, cfg.AllowPrereleases)
 

@@ -41,6 +41,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart={{.ExePath}} run --dir {{.Dir}}
+StandardOutput=journal
+StandardError=journal
 Restart=always
 RestartSec=10
 # 75 is the exit code emitted after a successful self-update.
@@ -63,6 +65,10 @@ func Install(cfg Config) error {
 
 	if cfg.Dir == "" {
 		return errors.New("state directory is required")
+	}
+
+	if err := installServiceLog(); err != nil {
+		return fmt.Errorf("cannot install service log: %w", err)
 	}
 
 	tmpl, err := template.New("unit").Parse(systemdUnitTmpl)
@@ -112,5 +118,5 @@ func Uninstall(cfg Config) error {
 
 	_ = exec.Command("systemctl", "daemon-reload").Run()
 
-	return nil
+	return uninstallServiceLog()
 }
