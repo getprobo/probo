@@ -5,6 +5,8 @@ documented in this file.
 
 ## Unreleased
 
+## [0.10.1] - 2026-11-26
+
 ### Fixed
 
 - A macOS firewall enabled by a configuration profile was reported
