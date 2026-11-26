@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -213,6 +214,10 @@ type (
 		logger            *log.Logger
 
 		nameWorker *worker.Worker[coredata.ConnectorAccount]
+
+		// httpOptions apply only to the OAuth refresh dial inside Open.
+		// Tests set them so a loopback token server can answer a refresh.
+		httpOptions []httpclient.Option
 	}
 
 	CreateConnectorRequest struct {

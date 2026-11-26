@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package connectorclient_test
+package connector_test
 
 import (
 	"bytes"
@@ -38,7 +38,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/cloud"
-	"go.probo.inc/probo/pkg/connectorclient"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
@@ -71,12 +71,12 @@ func TestOpen_MemberAccountPassesExternalID(t *testing.T) {
 		&connectorprotocol.WorkloadIdentityConnection{},
 		memberID,
 	)
-	opener := connectorclient.New(
+	opener := connector.NewService(
 		pgClient,
 		seeded.key,
-		nil,
-		workloadRegistry(t, &seen),
 		connectorprotocol.NewConnectorRegistry(),
+		workloadRegistry(t, &seen),
+		log.NewLogger(log.WithName("test")),
 	)
 
 	handle := openAccount(t, opener, seeded.scope, seeded.account.ID)
@@ -100,12 +100,12 @@ func TestOpen_InitialAccountReachesHub(t *testing.T) {
 		&connectorprotocol.WorkloadIdentityConnection{},
 		hubAccountID,
 	)
-	opener := connectorclient.New(
+	opener := connector.NewService(
 		pgClient,
 		seeded.key,
-		nil,
-		workloadRegistry(t, &seen),
 		connectorprotocol.NewConnectorRegistry(),
+		workloadRegistry(t, &seen),
+		log.NewLogger(log.WithName("test")),
 	)
 
 	handle := openAccount(t, opener, seeded.scope, seeded.account.ID)
@@ -245,12 +245,12 @@ func TestOpen_NamesProviderWithoutASession(t *testing.T) {
 		&connectorprotocol.WorkloadIdentityConnection{},
 		hubAccountID,
 	)
-	opener := connectorclient.New(
+	opener := connector.NewService(
 		pgClient,
 		seeded.key,
-		nil,
-		registries,
 		connectorprotocol.NewConnectorRegistry(),
+		registries,
+		log.NewLogger(log.WithName("test")),
 	)
 
 	handle, err := opener.Open(t.Context(), seeded.scope, seeded.account.ID)
@@ -301,7 +301,7 @@ func oauthOpener(
 	pgClient *pg.Client,
 	key cipher.EncryptionKey,
 	tokenURL string,
-) *connectorclient.Client {
+) *connector.Service {
 	t.Helper()
 
 	connectors := connectorprotocol.NewConnectorRegistry()
@@ -316,14 +316,14 @@ func oauthOpener(
 		},
 	))
 
-	opener := connectorclient.New(
+	opener := connector.NewService(
 		pgClient,
 		key,
-		nil,
-		provider.NewRegistry(),
 		connectors,
+		provider.NewRegistry(),
+		log.NewLogger(log.WithName("test")),
 	)
-	connectorclient.SetHTTPOptions(opener, httpclient.WithSSRFAllowLoopback())
+	connector.SetHTTPOptions(opener, httpclient.WithSSRFAllowLoopback())
 
 	return opener
 }
@@ -376,7 +376,7 @@ func seedAccount(
 		org := &coredata.Organization{
 			ID:        organizationID,
 			TenantID:  tenantID,
-			Name:      "Connector client test",
+			Name:      "Connector open test",
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -403,10 +403,10 @@ func seedAccount(
 
 func openAccount(
 	t *testing.T,
-	opener *connectorclient.Client,
+	opener *connector.Service,
 	scope coredata.Scoper,
 	accountID gid.GID,
-) *connectorclient.Handle {
+) *connector.Handle {
 	t.Helper()
 
 	handle, err := opener.Open(t.Context(), scope, accountID)

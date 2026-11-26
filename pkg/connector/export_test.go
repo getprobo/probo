@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package connectorclient
+package connector
 
 import "go.gearno.de/kit/httpclient"
 
 // SetHTTPOptions sets the options Open forwards to the OAuth refresh dial.
 // Tests use it so an httptest token server on loopback can answer a refresh.
-func SetHTTPOptions(c *Client, opts ...httpclient.Option) {
-	c.httpOptions = opts
+func SetHTTPOptions(s *Service, opts ...httpclient.Option) {
+	s.httpOptions = opts
 }

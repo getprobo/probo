@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Package connectorclient opens one connector account as a cloud session or
-// an HTTP client.
-package connectorclient
+package connector
 
 import (
 	"context"
@@ -28,55 +26,23 @@ import (
 	"net/http"
 	"time"
 
-	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/identityfederation"
 )
 
-type (
-	// Client opens a connector account. It holds the credentials and
-	// registries Open needs, and nothing about a particular account.
-	Client struct {
-		pg            *pg.Client
-		encryptionKey cipher.EncryptionKey
-		federation    *identityfederation.Issuer
-		providers     *provider.Registry
-		connectors    *connectorprotocol.Registry
-		httpOptions   []httpclient.Option
-	}
-
-	// Handle is one opened connector account. Session and HTTPClient are
-	// mutually exclusive: a workload-identity account has a session, and an
-	// HTTP credential has a client.
-	Handle struct {
-		Provider   coredata.ConnectorProvider
-		Connector  *coredata.Connector
-		Account    *coredata.ConnectorAccount
-		Session    cloud.Session
-		HTTPClient *http.Client
-	}
-)
-
-func New(
-	pgClient *pg.Client,
-	encryptionKey cipher.EncryptionKey,
-	federation *identityfederation.Issuer,
-	providers *provider.Registry,
-	connectors *connectorprotocol.Registry,
-) *Client {
-	return &Client{
-		pg:            pgClient,
-		encryptionKey: encryptionKey,
-		federation:    federation,
-		providers:     providers,
-		connectors:    connectors,
-	}
+// Handle is one opened connector account. Session and HTTPClient are
+// mutually exclusive: a workload-identity account has a session, and an
+// HTTP credential has a client.
+type Handle struct {
+	Provider   coredata.ConnectorProvider
+	Connector  *coredata.Connector
+	Account    *coredata.ConnectorAccount
+	Session    cloud.Session
+	HTTPClient *http.Client
 }
 
 // Open loads the connector account and its connector, then returns a session
@@ -84,7 +50,7 @@ func New(
 // call. A refreshed OAuth credential is committed on its own transaction
 // after that, so the caller does not hold a connection while the commit
 // waits for one, and a rollback of the caller's transaction leaves it.
-func (c *Client) Open(
+func (s *Service) Open(
 	ctx context.Context,
 	scope coredata.Scoper,
 	accountID gid.GID,
@@ -92,12 +58,12 @@ func (c *Client) Open(
 	account := &coredata.ConnectorAccount{}
 	dbConnector := &coredata.Connector{}
 
-	err := c.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		if err := account.LoadByID(ctx, conn, scope, accountID); err != nil {
 			return fmt.Errorf("cannot load connector account: %w", err)
 		}
 
-		if err := dbConnector.LoadByID(ctx, conn, scope, account.ConnectorID, c.encryptionKey); err != nil {
+		if err := dbConnector.LoadByID(ctx, conn, scope, account.ConnectorID, s.encryptionKey); err != nil {
 			return fmt.Errorf("cannot load connector %s: %w", account.ConnectorID, err)
 		}
 
@@ -109,10 +75,10 @@ func (c *Client) Open(
 
 	switch dbConnector.Connection.(type) {
 	case *connectorprotocol.WorkloadIdentityConnection:
-		return c.openSession(ctx, dbConnector, account)
+		return s.openSession(ctx, dbConnector, account)
 
 	case connectorprotocol.HTTPConnection:
-		return c.openHTTP(ctx, scope, dbConnector, account)
+		return s.openHTTP(ctx, scope, dbConnector, account)
 
 	default:
 		return nil, fmt.Errorf(
@@ -122,15 +88,15 @@ func (c *Client) Open(
 	}
 }
 
-func (c *Client) openSession(
+func (s *Service) openSession(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
 	account *coredata.ConnectorAccount,
 ) (*Handle, error) {
 	session, err := provider.OpenSession(
 		ctx,
-		c.federation,
-		c.providers,
+		s.federation,
+		s.providerRegistry,
 		dbConnector,
 		account.ExternalAccountID,
 	)
@@ -150,7 +116,7 @@ func (c *Client) openSession(
 	}, nil
 }
 
-func (c *Client) openHTTP(
+func (s *Service) openHTTP(
 	ctx context.Context,
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
@@ -161,10 +127,10 @@ func (c *Client) openHTTP(
 
 	httpClient, err := provider.HTTPClient(
 		ctx,
-		c.connectors,
-		c.providers,
+		s.connectorRegistry,
+		s.providerRegistry,
 		dbConnector,
-		c.httpOptions...,
+		s.httpOptions...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open HTTP client for %s connector: %w", dbConnector.Provider, err)
@@ -180,8 +146,8 @@ func (c *Client) openHTTP(
 	if before.changed(oauth2Conn) {
 		dbConnector.UpdatedAt = time.Now()
 
-		if err := c.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return dbConnector.UpdateConnection(ctx, tx, scope, c.encryptionKey)
+		if err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			return dbConnector.UpdateConnection(ctx, tx, scope, s.encryptionKey)
 		}); err != nil {
 			return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
 		}
