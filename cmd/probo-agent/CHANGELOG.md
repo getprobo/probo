@@ -5,6 +5,8 @@ documented in this file.
 
 ## Unreleased
 
+## [0.11.0-rc.1] - 2026-11-26
+
 ### Changed
 
 - The agent service logs through the OS facility that already rotates
