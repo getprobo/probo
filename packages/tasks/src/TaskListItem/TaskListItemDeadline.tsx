@@ -80,7 +80,7 @@ export function TaskListItemDeadline({
 
   if (!canUpdate) {
     return (
-      <span className={slots.deadline()} title={tooltip}>
+      <span className={`${slots.deadline()} ${slots.chipInset()}`} title={tooltip}>
         {dateIcon}
         {shown != null && (
           <Text size={size} color={label == null ? "faint" : "current"}>

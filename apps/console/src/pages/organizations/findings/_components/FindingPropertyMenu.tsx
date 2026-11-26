@@ -61,7 +61,7 @@ export function FindingPropertyMenu({
       <Tooltip>
         <TooltipTrigger
           render={(
-            <span className={slots.stateOption()} aria-label={label}>
+            <span className={`${slots.stateOption()} ${slots.chipInset()}`} aria-label={label}>
               {value}
             </span>
           )}

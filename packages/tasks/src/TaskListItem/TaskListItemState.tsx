@@ -85,7 +85,7 @@ export function TaskListItemState({
       <Tooltip>
         <TooltipTrigger
           render={(
-            <span className={frame} aria-label={label}>
+            <span className={`${frame} ${slots.chipInset()}`} aria-label={label}>
               {value}
             </span>
           )}

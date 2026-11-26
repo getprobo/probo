@@ -131,7 +131,7 @@ export function TaskListItemAssignee({
     <Tooltip>
       <TooltipTrigger
         render={(
-          <span className={className} aria-label={label}>
+          <span className={`${className} ${slots.chipInset()}`} aria-label={label}>
             {value}
           </span>
         )}

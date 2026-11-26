@@ -170,7 +170,7 @@ export function TaskProperties({
               </Tooltip>
             )
           : (
-              <div className={canUpdate ? `${recurrence()} ${slots.chipTrigger()}` : recurrence()}>
+              <div className={canUpdate ? `${recurrence()} ${slots.chipTrigger()}` : `${recurrence()} ${slots.chipInset()}`}>
                 <ArrowsClockwiseIcon className={recurrenceIcon()} weight="bold" />
                 {canUpdate
                   ? (

@@ -77,6 +77,7 @@ export const taskListItem = tv({
     deadlineIcon: "text-red-11",
     deadlineCustom: "p-1",
     chipTrigger: "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit",
+    chipInset: "",
     created: "relative z-1 grid h-6 shrink-0 items-center justify-items-end whitespace-nowrap text-1 text-sand-11 tabular-nums",
     more: "relative z-1 flex h-6 shrink-0 items-center",
     trailing: "relative z-1 flex h-6 shrink-0 items-center gap-2",
@@ -102,6 +103,7 @@ export const taskListItem = tv({
     field: {
       true: {
         chipTrigger: "rounded-2 !px-1.5 !py-0.5 hover:bg-sand-3",
+        chipInset: "px-1.5 py-0.5",
         meta: "!h-auto !gap-2 [&_svg]:!size-4",
         deadline: "!h-auto !gap-2 !text-sand-11 [&_svg]:!size-4",
       },

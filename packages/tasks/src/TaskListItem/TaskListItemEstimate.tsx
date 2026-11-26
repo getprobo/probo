@@ -73,7 +73,7 @@ export function TaskListItemEstimate({
 
   if (!canUpdate) {
     return (
-      <span className={slots.meta()} title={tooltip}>
+      <span className={`${slots.meta()} ${slots.chipInset()}`} title={tooltip}>
         <ClockIcon className={slots.metaIcon()} weight="bold" />
         {shown != null && (
           <Text size={size} color={label == null ? "faint" : "current"}>
