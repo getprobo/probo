@@ -545,10 +545,7 @@ func (assets Assets) UpsertDiscovered(
 	}
 
 	for start := 0; start < len(deduped); start += discoveredUpsertBatchSize {
-		end := start + discoveredUpsertBatchSize
-		if end > len(deduped) {
-			end = len(deduped)
-		}
+		end := min(start+discoveredUpsertBatchSize, len(deduped))
 
 		if err := upsertDiscoveredBatch(ctx, conn, scope, deduped[start:end]); err != nil {
 			return err
