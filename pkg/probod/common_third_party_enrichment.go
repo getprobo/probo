@@ -74,6 +74,6 @@ func (impl *Implm) buildCommonThirdPartyEnrichmentConfig(
 		StaleAfter:          time.Duration(workerCfg.StaleAfter) * time.Second,
 		MaxAttempts:         workerCfg.MaxAttempts,
 		FileManager:         fileManager,
-		Bucket:              impl.cfg.AWS.Bucket,
+		Bucket:              configuredStorageBucket(impl.cfg),
 	}, nil
 }

@@ -27,7 +27,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
@@ -39,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/resourcealias"
 )
 
@@ -48,7 +48,7 @@ type (
 	// methods on a single type.
 	Service struct {
 		pg                *pg.Client
-		s3                *s3.Client
+		store             objectstorage.Store
 		bucket            string
 		baseURL           string
 		esign             *esign.Service
@@ -63,7 +63,7 @@ type (
 
 func NewService(
 	pgClient *pg.Client,
-	s3Client *s3.Client,
+	store objectstorage.Store,
 	bucket string,
 	baseURL string,
 	esignSvc *esign.Service,
@@ -76,7 +76,7 @@ func NewService(
 ) *Service {
 	svc := &Service{
 		pg:                pgClient,
-		s3:                s3Client,
+		store:             store,
 		bucket:            bucket,
 		baseURL:           baseURL,
 		esign:             esignSvc,

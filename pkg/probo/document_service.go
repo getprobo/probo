@@ -34,13 +34,11 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/automerge"
-	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -49,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/notification"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/richtext"
@@ -2572,15 +2571,15 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, scope coreda
 				return fmt.Errorf("cannot stat temp file: %w", err)
 			}
 
-			_, err = s.svc.s3.PutObject(
+			err = s.svc.store.PutObject(
 				ctx,
-				&s3.PutObjectInput{
-					Bucket:        new(s.svc.bucket),
-					Key:           new(uuid.String()),
-					Body:          tempFile,
+				s.svc.bucket,
+				uuid.String(),
+				tempFile,
+				objectstorage.PutOptions{
 					ContentLength: new(fileInfo.Size()),
-					ContentType:   new("application/zip"),
-					CacheControl:  new("private, max-age=3600"),
+					ContentType:   "application/zip",
+					CacheControl:  "private, max-age=3600",
 					Metadata: map[string]string{
 						"type":            "document-export",
 						"export-job-id":   exportJob.ID.String(),
@@ -2589,7 +2588,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, scope coreda
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("cannot upload file to S3: %w", err)
+				return fmt.Errorf("cannot upload document export to object storage: %w", err)
 			}
 
 			now := time.Now()
@@ -3157,27 +3156,22 @@ func (s *DocumentService) GenerateDocumentExportDownloadURL(
 	ctx context.Context, scope coredata.Scoper,
 	file *coredata.File,
 ) (string, error) {
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	presignedReq, err := presignClient.PresignGetObject(
+	presignedURL, err := s.svc.store.PresignGetObject(
 		ctx,
-		&s3.GetObjectInput{
-			Bucket:                     new(s.svc.bucket),
-			Key:                        new(file.FileKey),
-			ResponseCacheControl:       new("max-age=3600, public"),
-			ResponseContentType:        new(file.MimeType),
-			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
-		},
-		awsconfig.UnsignedChecksumMode,
-		func(opts *s3.PresignOptions) {
-			opts.Expires = documentExportEmailExpiresIn
+		s.svc.bucket,
+		file.FileKey,
+		objectstorage.PresignOptions{
+			Expires:                    documentExportEmailExpiresIn,
+			ResponseCacheControl:       "max-age=3600, public",
+			ResponseContentType:        file.MimeType,
+			ResponseContentDisposition: fmt.Sprintf("attachment; filename=\"%s\"", file.FileName),
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+		return "", fmt.Errorf("cannot generate document export download URL: %w", err)
 	}
 
-	return presignedReq.URL, nil
+	return presignedURL, nil
 }
 
 func sanitizeFilename(title string) string {

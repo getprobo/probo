@@ -31,15 +31,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/validator"
@@ -271,12 +270,11 @@ func (s FrameworkService) Export(
 							return fmt.Errorf("cannot load evidence file: %w", err)
 						}
 
-						object, err := s.svc.s3.GetObject(
+						object, err := s.svc.store.GetObject(
 							ctx,
-							&s3.GetObjectInput{
-								Bucket: new(s.svc.bucket),
-								Key:    new(evidence_file.FileKey),
-							},
+							s.svc.bucket,
+							evidence_file.FileKey,
+							objectstorage.GetOptions{},
 						)
 						if err != nil {
 							return fmt.Errorf("cannot download evidence: %w", err)
@@ -865,27 +863,22 @@ func (s FrameworkService) GenerateFrameworkExportDownloadURL(
 	ctx context.Context, scope coredata.Scoper,
 	file *coredata.File,
 ) (string, error) {
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	presignedReq, err := presignClient.PresignGetObject(
+	presignedURL, err := s.svc.store.PresignGetObject(
 		ctx,
-		&s3.GetObjectInput{
-			Bucket:                     new(s.svc.bucket),
-			Key:                        new(file.FileKey),
-			ResponseCacheControl:       new("max-age=3600, public"),
-			ResponseContentType:        new(file.MimeType),
-			ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
-		},
-		awsconfig.UnsignedChecksumMode,
-		func(opts *s3.PresignOptions) {
-			opts.Expires = frameworkExportEmailExpiresIn
+		s.svc.bucket,
+		file.FileKey,
+		objectstorage.PresignOptions{
+			Expires:                    frameworkExportEmailExpiresIn,
+			ResponseCacheControl:       "max-age=3600, public",
+			ResponseContentType:        file.MimeType,
+			ResponseContentDisposition: fmt.Sprintf("attachment; filename=\"%s\"", file.FileName),
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+		return "", fmt.Errorf("cannot generate framework export download URL: %w", err)
 	}
 
-	return presignedReq.URL, nil
+	return presignedURL, nil
 }
 
 func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope coredata.Scoper, exportJobID gid.GID) (*coredata.ExportJob, error) {
@@ -937,15 +930,15 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 				return fmt.Errorf("cannot stat temp file: %w", err)
 			}
 
-			_, err = s.svc.s3.PutObject(
+			err = s.svc.store.PutObject(
 				ctx,
-				&s3.PutObjectInput{
-					Bucket:        new(s.svc.bucket),
-					Key:           new(uuid.String()),
-					Body:          tempFile,
+				s.svc.bucket,
+				uuid.String(),
+				tempFile,
+				objectstorage.PutOptions{
 					ContentLength: new(fileInfo.Size()),
-					ContentType:   new("application/zip"),
-					CacheControl:  new("private, max-age=3600"),
+					ContentType:   "application/zip",
+					CacheControl:  "private, max-age=3600",
 					Metadata: map[string]string{
 						"type":            "framework-export",
 						"export-job-id":   exportJob.ID.String(),
@@ -954,7 +947,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("cannot upload file to S3: %w", err)
+				return fmt.Errorf("cannot upload framework export to object storage: %w", err)
 			}
 
 			now := time.Now()

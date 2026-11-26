@@ -63,6 +63,7 @@ type (
 		IdentityFederation IdentityFederationConfig `json:"identity-federation"`
 		ITAM               ITAMConfig               `json:"itam"`
 		CompliancePortal   CompliancePortalConfig   `json:"trust-center"`
+		Storage            StorageConfig            `json:"storage"`
 		AWS                AWSConfig                `json:"aws"`
 		Notifications      NotificationsConfig      `json:"notifications"`
 		TaskRecurrence     TaskRecurrenceConfig     `json:"task-recurrence"`

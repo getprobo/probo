@@ -26,11 +26,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 )
@@ -171,15 +171,9 @@ func (s *Service) exportPortalFileData(
 		return nil, "", err
 	}
 
-	result, err := s.s3.GetObject(
-		ctx,
-		&s3.GetObjectInput{
-			Bucket: new(s.bucket),
-			Key:    new(file.FileKey),
-		},
-	)
+	result, err := s.store.GetObject(ctx, s.bucket, file.FileKey, objectstorage.GetOptions{})
 	if err != nil {
-		return nil, "", fmt.Errorf("cannot download file from S3: %w", err)
+		return nil, "", fmt.Errorf("cannot download file from object storage: %w", err)
 	}
 
 	defer func() { _ = result.Body.Close() }()

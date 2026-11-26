@@ -443,7 +443,10 @@ postgresql:
 seaweedfs:
   enabled: false
 
-# S3 storage configuration (REQUIRED)
+# Azure Blob alternative: set storage.provider to "azure", set
+# storage.azure.accountUrl, and use storage.bucket or s3.bucket as the existing
+# container name.
+# S3 settings (required only when storage.provider=s3)
 s3:
   # AWS S3 example:
   region: "us-east-1"

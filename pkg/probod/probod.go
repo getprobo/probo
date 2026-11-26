@@ -85,6 +85,7 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/notification"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
@@ -185,6 +186,9 @@ func New() *Implm {
 				BaseDomain: "probopage.localhost",
 				TLSMode:    CompliancePortalTLSModeDirect,
 			},
+			Storage: StorageConfig{
+				Provider: StorageProviderS3,
+			},
 			AWS: AWSConfig{
 				Region: "us-east-1",
 				Bucket: "probod",
@@ -276,6 +280,18 @@ func (impl *Implm) GetConfiguration() any {
 	return &impl.cfg
 }
 
+func configuredStorageBucket(cfg Config) string {
+	if cfg.Storage.Bucket != "" {
+		return cfg.Storage.Bucket
+	}
+
+	if cfg.AWS.Bucket != "" {
+		return cfg.AWS.Bucket
+	}
+
+	return "probod"
+}
+
 func (impl *Implm) Run(
 	parentCtx context.Context,
 	l *log.Logger,
@@ -350,22 +366,52 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot configure auth cookie: %w", err)
 	}
 
-	awsConfig, err := awsconfig.NewConfig(
-		l,
-		httpclient.DefaultPooledClient(
-			httpclient.WithLogger(l),
-			httpclient.WithTracerProvider(tp),
-			httpclient.WithRegisterer(r),
-		),
-		awsconfig.Options{
-			Region:          impl.cfg.AWS.Region,
-			AccessKeyID:     impl.cfg.AWS.AccessKeyID,
-			SecretAccessKey: impl.cfg.AWS.SecretAccessKey,
-			Endpoint:        impl.cfg.AWS.Endpoint,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("cannot initialize AWS config: %w", err)
+	if err := impl.cfg.Storage.Validate(); err != nil {
+		return fmt.Errorf("cannot validate object storage config: %w", err)
+	}
+
+	storageBucket := configuredStorageBucket(impl.cfg)
+
+	storageProvider := impl.cfg.Storage.Provider
+	if storageProvider == "" {
+		storageProvider = StorageProviderS3
+	}
+
+	var objectStore objectstorage.Store
+
+	switch storageProvider {
+	case StorageProviderAzure:
+		azureStore, err := objectstorage.NewAzureStore(impl.cfg.Storage.AzureAccountURL)
+		if err != nil {
+			return fmt.Errorf("cannot initialize Azure object storage: %w", err)
+		}
+
+		objectStore = azureStore
+	case StorageProviderS3:
+		awsConfig, err := awsconfig.NewConfig(
+			l,
+			httpclient.DefaultPooledClient(
+				httpclient.WithLogger(l),
+				httpclient.WithTracerProvider(tp),
+				httpclient.WithRegisterer(r),
+			),
+			awsconfig.Options{
+				Region:          impl.cfg.AWS.Region,
+				AccessKeyID:     impl.cfg.AWS.AccessKeyID,
+				SecretAccessKey: impl.cfg.AWS.SecretAccessKey,
+				Endpoint:        impl.cfg.AWS.Endpoint,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("cannot initialize AWS config: %w", err)
+		}
+
+		s3Client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
+			o.UsePathStyle = impl.cfg.AWS.UsePathStyle
+		})
+		objectStore = objectstorage.NewS3Store(s3Client)
+	default:
+		panic("storage config validation accepted an unsupported provider")
 	}
 
 	html2pdfConverter := html2pdf.NewConverter(
@@ -373,10 +419,6 @@ func (impl *Implm) Run(
 		html2pdf.WithLogger(l),
 		html2pdf.WithTracerProvider(tp),
 	)
-
-	s3Client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.UsePathStyle = impl.cfg.AWS.UsePathStyle
-	})
 
 	err = migrator.NewMigrator(pgClient, coredata.Migrations, l.Named("migrations")).Run(ctx, "migrations")
 	if err != nil {
@@ -560,7 +602,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	fileManagerService := filemanager.NewService(pgClient, baseURL, s3Client, l.Named("filemanager"))
+	fileManagerService := filemanager.NewService(pgClient, baseURL, objectStore, l.Named("filemanager"))
 
 	commonThirdPartyEnrichmentCfg, err := impl.buildCommonThirdPartyEnrichmentConfig(l, tp, r, fileManagerService)
 	if err != nil {
@@ -732,7 +774,7 @@ func (impl *Implm) Run(
 			MagicLinkTokenValidity:         time.Duration(impl.cfg.Auth.MagicLinkTokenValidity) * time.Second,
 			EmailConfirmationTokenValidity: time.Duration(impl.cfg.Auth.EmailConfirmationTokenValidity) * time.Second,
 			SessionDuration:                time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
-			Bucket:                         impl.cfg.AWS.Bucket,
+			Bucket:                         storageBucket,
 			TokenSecret:                    impl.cfg.Auth.Cookie.Secret,
 			BaseURL:                        baseURL,
 			CompliancePortalBaseDomain:     impl.cfg.CompliancePortal.BaseDomain,
@@ -779,7 +821,7 @@ func (impl *Implm) Run(
 		fileManagerService,
 		html2pdfConverter,
 		impl.cfg.ESign.TSAURL,
-		impl.cfg.AWS.Bucket,
+		storageBucket,
 		l.Named("esign"),
 	)
 
@@ -793,8 +835,8 @@ func (impl *Implm) Run(
 
 	managementService := management.NewService(
 		pgClient,
-		s3Client,
-		impl.cfg.AWS.Bucket,
+		objectStore,
+		storageBucket,
 		baseURL.String(),
 		impl.cfg.CompliancePortal.BaseDomain,
 		fileManagerService,
@@ -810,7 +852,7 @@ func (impl *Implm) Run(
 		impl.cfg.Auth.Cookie.Secret,
 		baseURL,
 		managementService,
-		impl.cfg.AWS.Bucket,
+		storageBucket,
 		encryptionKey,
 		l,
 	)
@@ -823,8 +865,8 @@ func (impl *Implm) Run(
 
 	employeePortalService := employeeportalmgmt.NewService(
 		pgClient,
-		s3Client,
-		impl.cfg.AWS.Bucket,
+		objectStore,
+		storageBucket,
 	)
 
 	connectorsService := connector.NewService(
@@ -846,8 +888,8 @@ func (impl *Implm) Run(
 		ctx,
 		encryptionKey,
 		pgClient,
-		s3Client,
-		impl.cfg.AWS.Bucket,
+		objectStore,
+		storageBucket,
 		baseURL.String(),
 		proboLLMClient,
 		probo.LLMConfig{
@@ -870,8 +912,8 @@ func (impl *Implm) Run(
 
 	visitorService := visitor.NewService(
 		pgClient,
-		s3Client,
-		impl.cfg.AWS.Bucket,
+		objectStore,
+		storageBucket,
 		baseURL.String(),
 		esignService,
 		html2pdfConverter,
@@ -940,7 +982,7 @@ func (impl *Implm) Run(
 		asanaAPIBaseURL,
 		l.Named("task"),
 		fileManagerService,
-		impl.cfg.AWS.Bucket,
+		storageBucket,
 	)
 	itamService := itam.NewService(
 		pgClient,
@@ -949,18 +991,24 @@ func (impl *Implm) Run(
 			EnrollmentTokenValidity: time.Duration(impl.cfg.ITAM.DeviceEnrollmentTokenValidity) * time.Second,
 			PDF:                     html2pdfConverter,
 			FileManager:             fileManagerService,
-			Bucket:                  impl.cfg.AWS.Bucket,
+			Bucket:                  storageBucket,
 			BaseURL:                 baseURL,
 		},
 		l.Named("itam"),
 	)
 
-	fileStorageOrigin, err := awsconfig.CSPFileStorageOrigin(
-		impl.cfg.AWS.Endpoint,
-		impl.cfg.AWS.Region,
-		impl.cfg.AWS.Bucket,
-		impl.cfg.AWS.UsePathStyle,
-	)
+	var fileStorageOrigin string
+	if storageProvider == StorageProviderAzure {
+		fileStorageOrigin, err = awsconfig.CSPAzureStorageOrigin(impl.cfg.Storage.AzureAccountURL)
+	} else {
+		fileStorageOrigin, err = awsconfig.CSPFileStorageOrigin(
+			impl.cfg.AWS.Endpoint,
+			impl.cfg.AWS.Region,
+			storageBucket,
+			impl.cfg.AWS.UsePathStyle,
+		)
+	}
+
 	if err != nil {
 		return fmt.Errorf("cannot build file storage CSP origin: %w", err)
 	}

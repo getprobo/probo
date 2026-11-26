@@ -21,29 +21,29 @@
 package filemanager
 
 import (
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/objectstorage"
 )
 
 type Service struct {
-	pg       *pg.Client
-	baseURL  *baseurl.BaseURL
-	s3Client *awss3.Client
-	logger   *log.Logger
+	pg      *pg.Client
+	baseURL *baseurl.BaseURL
+	store   objectstorage.Store
+	logger  *log.Logger
 }
 
 func NewService(
 	pgClient *pg.Client,
 	baseURL *baseurl.BaseURL,
-	s3Client *awss3.Client,
+	store objectstorage.Store,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
-		pg:       pgClient,
-		baseURL:  baseURL,
-		s3Client: s3Client,
-		logger:   logger,
+		pg:      pgClient,
+		baseURL: baseURL,
+		store:   store,
+		logger:  logger,
 	}
 }

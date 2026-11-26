@@ -185,3 +185,14 @@ func TestCSPFileStorageOrigin(t *testing.T) {
 		)
 	}
 }
+
+func TestCSPAzureStorageOrigin(t *testing.T) {
+	t.Parallel()
+
+	got, err := awsconfig.CSPAzureStorageOrigin("https://probo.blob.core.windows.net/")
+	require.NoError(t, err)
+	assert.Equal(t, "https://probo.blob.core.windows.net", got)
+
+	_, err = awsconfig.CSPAzureStorageOrigin("http://probo.blob.core.windows.net")
+	require.Error(t, err)
+}

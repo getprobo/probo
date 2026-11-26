@@ -180,6 +180,16 @@ Identity or IRSA. In that mode, setting only one of the two keys fails at
 install time. Off AWS, set `seaweedfs.enabled=false`, set `s3.endpoint`, and
 set both keys; an empty pair is rejected when `s3.endpoint` is set.
 
+Azure Blob Storage is also supported through the native Azure SDK. Disable
+SeaweedFS, set `storage.provider: azure`, set `storage.azure.accountUrl` to the
+Blob service endpoint, and use `storage.bucket` as the pre-created container
+name (or leave it blank to reuse `s3.bucket`).
+The pod uses `DefaultAzureCredential` (managed identity in Azure); assign it
+`Storage Blob Data Contributor` on the container and `Storage Blob Delegator`
+on the storage account so it can issue user-delegation SAS download URLs.
+The storage firewall must allow both the pod's outbound IPs and users'
+approved browser IPs; browsers download private files directly from Blob.
+
 ### Secret Format Quick Reference
 
 - `probo.encryptionKey`, `probo.auth.cookieSecret`,
@@ -207,6 +217,9 @@ set both keys; an empty pair is rejected when `s3.endpoint` is set.
 | `s3.region`            | AWS region                      | `us-east-1` |
 | `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
 | `s3.usePathStyle`      | Use path-style URLs for selected S3-compatible backends | `false` |
+| `storage.provider`     | Object storage backend (`s3` or `azure`) | `s3` |
+| `storage.bucket`       | S3 bucket / Azure container name | `""` (uses `s3.bucket`) |
+| `storage.azure.accountUrl` | Azure Blob service endpoint | `""` |
 | `probo.openai.baseUrl` | OpenAI compatible endpoint (e.g. Azure OpenAI) | `""` (api.openai.com) |
 | `probo.anthropic.baseUrl` | Anthropic compatible endpoint | `""` (api.anthropic.com) |
 | `chrome.enabled`       | Deploy Chrome                   | `true` |

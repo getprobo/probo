@@ -29,11 +29,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -211,7 +211,7 @@ func (s *Service) CreateReference(
 		},
 	)
 	if err != nil {
-		s.cleanupReferenceS3Object(ctx, scope, logoKey)
+		s.cleanupReferenceObject(ctx, scope, logoKey)
 		return nil, err
 	}
 
@@ -287,7 +287,7 @@ func (s *Service) UpdateReference(
 		},
 	)
 	if err != nil {
-		s.cleanupReferenceS3Object(ctx, scope, logoKey)
+		s.cleanupReferenceObject(ctx, scope, logoKey)
 		return nil, err
 	}
 
@@ -411,14 +411,14 @@ func (s *Service) uploadReferenceLogoFile(
 		}
 	}
 
-	_, err = s.s3.PutObject(
+	err = s.store.PutObject(
 		ctx,
-		&s3.PutObjectInput{
-			Bucket:       new(s.bucket),
-			Key:          new(objectKey.String()),
-			Body:         fileContent,
-			ContentType:  new(contentType),
-			CacheControl: new("max-age=3600, public"),
+		s.bucket,
+		objectKey.String(),
+		fileContent,
+		objectstorage.PutOptions{
+			ContentType:  contentType,
+			CacheControl: "max-age=3600, public",
 			Metadata: map[string]string{
 				"type":                         "compliance-page-reference-logo",
 				"compliance-page-reference-id": referenceID.String(),
@@ -427,7 +427,7 @@ func (s *Service) uploadReferenceLogoFile(
 		},
 	)
 	if err != nil {
-		return gid.GID{}, "", fmt.Errorf("cannot upload logo file to S3: %w", err)
+		return gid.GID{}, "", fmt.Errorf("cannot upload logo file to object storage: %w", err)
 	}
 
 	fileRecord := &coredata.File{
@@ -479,7 +479,7 @@ func defaultReferenceLogoFile() File {
 	}
 }
 
-func (s *Service) cleanupReferenceS3Object(
+func (s *Service) cleanupReferenceObject(
 	ctx context.Context,
 	scope coredata.Scoper,
 	s3Key string,
@@ -488,11 +488,5 @@ func (s *Service) cleanupReferenceS3Object(
 		return
 	}
 
-	_, _ = s.s3.DeleteObject(
-		ctx,
-		&s3.DeleteObjectInput{
-			Bucket: new(s.bucket),
-			Key:    new(s3Key),
-		},
-	)
+	_ = s.store.DeleteObject(ctx, s.bucket, s3Key)
 }
