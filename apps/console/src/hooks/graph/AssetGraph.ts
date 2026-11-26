@@ -241,7 +241,7 @@ export const useUpdateAsset = () => {
     amount?: number;
     assetType?: AssetType;
     dataTypesStored?: string;
-    ownerId?: string;
+    ownerId?: string | null;
     thirdPartyIds?: string[];
   }) => {
     if (!input.id) {

@@ -247,8 +247,7 @@ func (h *assetSyncHandler) syncAccount(
 	handle, err := h.connectors.Open(ctx, scope, account.ID)
 	if err != nil {
 		return &kindListError{
-			kind: h.kindFor(coredata.ConnectorProviderAWS),
-			err:  fmt.Errorf("cannot open connector account: %w", err),
+			err: fmt.Errorf("cannot open connector account: %w", err),
 		}
 	}
 
@@ -352,9 +351,10 @@ func (h *assetSyncHandler) store(
 	return h.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		now := time.Now()
 		scope := coredata.NewScopeFromObjectID(account.ID)
+		assets := make(coredata.Assets, 0, len(pending))
 
 		for _, item := range pending {
-			asset := &coredata.Asset{
+			assets = append(assets, &coredata.Asset{
 				ID:             gid.New(account.ID.TenantID(), coredata.AssetEntityType),
 				OrganizationID: account.OrganizationID,
 				Name:           item.observation.Name,
@@ -370,11 +370,11 @@ func (h *assetSyncHandler) store(
 				ConnectorID:    &account.ConnectorID,
 				CreatedAt:      now,
 				UpdatedAt:      now,
-			}
+			})
+		}
 
-			if _, err := asset.UpsertDiscovered(ctx, tx, scope); err != nil {
-				return err
-			}
+		if err := assets.UpsertDiscovered(ctx, tx, scope); err != nil {
+			return err
 		}
 
 		updated, err := sync.FinishIfRunning(

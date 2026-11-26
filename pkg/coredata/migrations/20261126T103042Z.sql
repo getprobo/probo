@@ -43,10 +43,10 @@ ALTER TABLE assets
     ADD COLUMN schema_version INTEGER,
     ADD COLUMN last_seen_at TIMESTAMP WITH TIME ZONE,
     ADD COLUMN connector_id TEXT,
+    -- status stays NOT NULL DEFAULT 'ACTIVE'. probod deploys blue/green,
+    -- and pods still running the previous release insert assets without
+    -- this column until the rollout finishes.
     ADD COLUMN status asset_status NOT NULL DEFAULT 'ACTIVE';
-
-ALTER TABLE assets
-    ALTER COLUMN status DROP DEFAULT;
 
 CREATE UNIQUE INDEX assets_discovered_identity_idx
     ON assets (organization_id, connector_id, kind, external_id)
@@ -70,3 +70,6 @@ CREATE TABLE asset_syncs (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
+CREATE INDEX asset_syncs_connector_account_created_at_idx
+    ON asset_syncs (connector_account_id, created_at);

@@ -31,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	rdstypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
+	"github.com/aws/smithy-go"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	aws "go.probo.inc/probo/pkg/cloud/aws"
@@ -222,6 +223,45 @@ func ListByRegionSecondErrorForTest() (int, []int, error) {
 	}
 
 	return calls, flat, err
+}
+
+func ListByRegionAccessErrorKeepsEarlierForTest() ([]int, error) {
+	items, err := listByRegion(
+		context.Background(),
+		[]string{"us-east-1", "eu-west-1", "ap-southeast-2"},
+		func(_ context.Context, region string) ([]int, error) {
+			if region == "eu-west-1" {
+				return nil, &smithy.GenericAPIError{
+					Code:    "UnauthorizedOperation",
+					Message: "denied by a region SCP",
+				}
+			}
+
+			if region == "ap-southeast-2" {
+				return []int{3}, nil
+			}
+
+			return []int{1}, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	flat := make([]int, 0)
+	for _, page := range items {
+		flat = append(flat, page.items...)
+	}
+
+	return flat, nil
+}
+
+func EC2InstanceTerminatedForTest(state string) bool {
+	name := ec2types.InstanceStateName(state)
+
+	return ec2InstanceTerminated(ec2types.Instance{
+		State: &ec2types.InstanceState{Name: name},
+	})
 }
 
 func MapEC2ForTest() (AssetObservation, error) {

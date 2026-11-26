@@ -180,7 +180,7 @@ input UpdateAssetInput {
     id: ID!
     name: String
     amount: Int
-    ownerId: ID
+    ownerId: ID @goField(omittable: true)
     assetType: AssetType
     dataTypesStored: String
     thirdPartyIds: [ID!]

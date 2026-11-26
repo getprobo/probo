@@ -63,6 +63,10 @@ func ListEC2Instances(
 
 	for _, page := range listed {
 		for _, instance := range page.items {
+			if ec2InstanceTerminated(instance) {
+				continue
+			}
+
 			item, err := mapEC2Instance(session, page.region, instance)
 			if err != nil {
 				return nil, err
@@ -110,6 +114,10 @@ func listEC2InstancesInRegion(
 			return instances, truncated, next, nil
 		},
 	)
+}
+
+func ec2InstanceTerminated(item types.Instance) bool {
+	return item.State != nil && item.State.Name == types.InstanceStateNameTerminated
 }
 
 func mapEC2Instance(

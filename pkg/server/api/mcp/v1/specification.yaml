@@ -3742,6 +3742,7 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
+          go.probo.inc/mcpgen/omittable: true
         asset_type:
           $ref: "#/components/schemas/AssetType"
           description: Asset type

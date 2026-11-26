@@ -52,7 +52,7 @@ type UpdateAssetRequest struct {
 	ID              gid.GID
 	Name            *string
 	Amount          *int
-	OwnerID         *gid.GID
+	OwnerID         **gid.GID
 	AssetType       *coredata.AssetType
 	DataTypesStored *string
 	ThirdPartyIDs   []gid.GID
@@ -236,12 +236,14 @@ func (s AssetService) Update(
 		}
 
 		if req.OwnerID != nil {
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, conn, scope, *req.OwnerID); err != nil {
-				return fmt.Errorf("cannot load owner profile: %w", err)
+			if *req.OwnerID != nil {
+				profile := &coredata.MembershipProfile{}
+				if err := profile.LoadByID(ctx, conn, scope, **req.OwnerID); err != nil {
+					return fmt.Errorf("cannot load owner profile: %w", err)
+				}
 			}
 
-			asset.OwnerID = req.OwnerID
+			asset.OwnerID = *req.OwnerID
 		}
 
 		if req.AssetType != nil {

@@ -22,9 +22,11 @@ package itam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/smithy-go"
 	aws "go.probo.inc/probo/pkg/cloud/aws"
 )
 
@@ -62,8 +64,10 @@ func enabledRegions(ctx context.Context, session *aws.Session) ([]string, error)
 	return regions, nil
 }
 
-// listByRegion calls list once per region. A region error discards every
-// page already collected, so the caller writes nothing for the kind.
+// listByRegion calls list once per region. An access error skips that
+// region and keeps the others, so assets that live only there are not
+// refreshed. Any other region error discards every page already
+// collected, and the caller writes nothing for the kind.
 func listByRegion[T any](
 	ctx context.Context,
 	regions []string,
@@ -73,6 +77,10 @@ func listByRegion[T any](
 
 	for _, region := range regions {
 		items, err := list(ctx, region)
+		if isRegionAccessError(err) {
+			continue
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -81,6 +89,29 @@ func listByRegion[T any](
 	}
 
 	return listed, nil
+}
+
+func isRegionAccessError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var apiErr smithy.APIError
+	if !errors.As(err, &apiErr) {
+		return false
+	}
+
+	switch apiErr.ErrorCode() {
+	case "AccessDenied",
+		"AccessDeniedException",
+		"AuthFailure",
+		"OptInRequired",
+		"UnauthorizedException",
+		"UnauthorizedOperation":
+		return true
+	default:
+		return false
+	}
 }
 
 func pageToken(token *string) (bool, *string) {

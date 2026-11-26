@@ -98,7 +98,7 @@ export default function AssetDetailsPage(props: Props) {
     await updateAsset({
       id: assetEntry.id!,
       ...formData,
-      ownerId: formData.ownerId || undefined,
+      ownerId: formData.ownerId || null,
       dataTypesStored: formData.dataTypesStored.trim(),
     });
     reset(formData);

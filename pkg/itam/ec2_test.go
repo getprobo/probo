@@ -40,6 +40,23 @@ func TestListByRegion_SecondErrorReturnsNoItems(t *testing.T) {
 	assert.Nil(t, items)
 }
 
+func TestListByRegion_AccessErrorKeepsOtherRegions(t *testing.T) {
+	t.Parallel()
+
+	items, err := itam.ListByRegionAccessErrorKeepsEarlierForTest()
+
+	require.NoError(t, err)
+	assert.Equal(t, []int{1, 3}, items)
+}
+
+func TestEC2Instance_TerminatedIsSkipped(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, itam.EC2InstanceTerminatedForTest("terminated"))
+	assert.False(t, itam.EC2InstanceTerminatedForTest("running"))
+	assert.False(t, itam.EC2InstanceTerminatedForTest("stopped"))
+}
+
 func TestMapEC2Instance_UsesInstanceFields(t *testing.T) {
 	t.Parallel()
 

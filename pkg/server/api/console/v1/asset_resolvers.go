@@ -300,7 +300,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 			ID:              input.ID,
 			Name:            input.Name,
 			Amount:          input.Amount,
-			OwnerID:         input.OwnerID,
+			OwnerID:         gqlx.UnwrapOmittable(input.OwnerID),
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,

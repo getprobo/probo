@@ -184,13 +184,14 @@ SET
 WHERE
     %s
     AND id = @id
-    AND status = 'RUNNING'
+    AND status = @running_status::asset_sync_status
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":              y.ID,
 		"status":          status,
+		"running_status":  AssetSyncStatusRunning,
 		"error":           syncErr,
 		"completed_kinds": completedKinds,
 		"completed_at":    completedAt,
@@ -226,30 +227,30 @@ func FailStaleAssetSyncs(
 	onlyAccount *gid.GID,
 ) ([]AssetSync, error) {
 	now := time.Now()
-	accountFilter := ""
 	args := pgx.StrictNamedArgs{
-		"error":        message,
-		"completed_at": now,
-		"updated_at":   now,
-		"stale_before": staleBefore,
+		"failed_status":        AssetSyncStatusFailed,
+		"running_status":       AssetSyncStatusRunning,
+		"error":                message,
+		"completed_at":         now,
+		"updated_at":           now,
+		"stale_before":         staleBefore,
+		"connector_account_id": onlyAccount,
 	}
 
-	if onlyAccount != nil {
-		accountFilter = "AND connector_account_id = @connector_account_id"
-		args["connector_account_id"] = *onlyAccount
-	}
-
-	q := fmt.Sprintf(`
+	q := `
 UPDATE asset_syncs
 SET
-    status = 'FAILED',
+    status = @failed_status::asset_sync_status,
     error = @error,
     completed_at = @completed_at,
     updated_at = @updated_at
 WHERE
-    status = 'RUNNING'
+    status = @running_status::asset_sync_status
     AND started_at <= @stale_before
-    %s
+    AND (
+        @connector_account_id::text IS NULL
+        OR connector_account_id = @connector_account_id
+    )
 RETURNING
     id,
     tenant_id,
@@ -263,7 +264,7 @@ RETURNING
     completed_at,
     created_at,
     updated_at
-`, accountFilter)
+`
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

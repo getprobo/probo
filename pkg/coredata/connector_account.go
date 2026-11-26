@@ -944,11 +944,11 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
-// LoadNextDueForAssetSyncForUpdateSkipLocked claims the next AWS connector
-// account whose latest finished asset sync is at least dueBefore old, or
-// that has no sync yet. A recent stale failure below maxStaleAttempts is
-// due immediately. The row is locked so two workers cannot claim it.
-// onlyAccount restricts the claim to one account.
+// LoadNextDueForAssetSyncForUpdateSkipLocked claims the next connector
+// account for provider whose latest finished asset sync is at least
+// dueBefore old, or that has no sync yet. A recent stale failure below
+// maxStaleAttempts is due immediately. The row is locked so two workers
+// cannot claim it. onlyAccount restricts the claim to one account.
 func (a *ConnectorAccount) LoadNextDueForAssetSyncForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
@@ -958,20 +958,32 @@ func (a *ConnectorAccount) LoadNextDueForAssetSyncForUpdateSkipLocked(
 	maxStaleAttempts int,
 	onlyAccount *gid.GID,
 ) error {
-	accountFilter := ""
+	connectorIDs, err := LoadConnectorIDsByProvider(ctx, conn, provider)
+	if err != nil {
+		return err
+	}
+
+	if len(connectorIDs) == 0 {
+		return ErrResourceNotFound
+	}
+
+	connectorIDText := make([]string, len(connectorIDs))
+	for i, id := range connectorIDs {
+		connectorIDText[i] = id.String()
+	}
+
 	args := pgx.StrictNamedArgs{
-		"provider":           provider,
+		"connector_ids":      connectorIDText,
+		"only_account_id":    onlyAccount,
 		"due_before":         dueBefore,
 		"stale_error":        staleError,
 		"max_stale_attempts": maxStaleAttempts,
+		"running_status":     AssetSyncStatusRunning,
+		"succeeded_status":   AssetSyncStatusSucceeded,
+		"failed_status":      AssetSyncStatusFailed,
 	}
 
-	if onlyAccount != nil {
-		accountFilter = "AND a.id = @only_account_id"
-		args["only_account_id"] = *onlyAccount
-	}
-
-	q := fmt.Sprintf(`
+	q := `
 SELECT
     a.id,
     a.organization_id,
@@ -985,16 +997,17 @@ SELECT
     a.updated_at
 FROM
     connector_accounts a
-INNER JOIN
-    connectors c ON c.id = a.connector_id
 WHERE
-    c.provider = @provider
-    %s
+    a.connector_id = ANY(@connector_ids::text[])
+    AND (
+        @only_account_id::text IS NULL
+        OR a.id = @only_account_id
+    )
     AND NOT EXISTS (
         SELECT 1
         FROM asset_syncs running
         WHERE running.connector_account_id = a.id
-            AND running.status = 'RUNNING'
+            AND running.status = @running_status::asset_sync_status
     )
     AND NOT EXISTS (
         SELECT 1
@@ -1005,10 +1018,13 @@ WHERE
                 FROM asset_syncs
                 WHERE connector_account_id = a.id
             )
-            AND latest.status IN ('SUCCEEDED', 'FAILED')
+            AND latest.status IN (
+                @succeeded_status::asset_sync_status,
+                @failed_status::asset_sync_status
+            )
             AND latest.completed_at > @due_before
             AND NOT (
-                latest.status = 'FAILED'
+                latest.status = @failed_status::asset_sync_status
                 AND latest.error = @stale_error
                 AND latest.attempt_number < @max_stale_attempts
             )
@@ -1017,7 +1033,7 @@ ORDER BY
     a.created_at ASC
 LIMIT 1
 FOR UPDATE OF a SKIP LOCKED
-`, accountFilter)
+`
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
