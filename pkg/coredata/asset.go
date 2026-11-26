@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -40,15 +41,23 @@ var (
 
 type (
 	Asset struct {
-		ID              gid.GID   `db:"id"`
-		Name            string    `db:"name"`
-		Amount          int       `db:"amount"`
-		OwnerID         gid.GID   `db:"owner_profile_id"`
-		OrganizationID  gid.GID   `db:"organization_id"`
-		AssetType       AssetType `db:"asset_type"`
-		DataTypesStored string    `db:"data_types_stored"`
-		CreatedAt       time.Time `db:"created_at"`
-		UpdatedAt       time.Time `db:"updated_at"`
+		ID              gid.GID         `db:"id"`
+		Name            string          `db:"name"`
+		Amount          int             `db:"amount"`
+		OwnerID         *gid.GID        `db:"owner_profile_id"`
+		OrganizationID  gid.GID         `db:"organization_id"`
+		AssetType       AssetType       `db:"asset_type"`
+		DataTypesStored *string         `db:"data_types_stored"`
+		Kind            *string         `db:"kind"`
+		ExternalID      *string         `db:"external_id"`
+		Region          *string         `db:"region"`
+		Configuration   json.RawMessage `db:"configuration"`
+		SchemaVersion   *int            `db:"schema_version"`
+		LastSeenAt      *time.Time      `db:"last_seen_at"`
+		Status          AssetStatus     `db:"status"`
+		ConnectorID     *gid.GID        `db:"connector_id"`
+		CreatedAt       time.Time       `db:"created_at"`
+		UpdatedAt       time.Time       `db:"updated_at"`
 	}
 
 	Assets []*Asset
@@ -68,7 +77,12 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 }
 
 func (a Asset) SearchText() []string {
-	return []string{a.Name, a.DataTypesStored}
+	text := []string{a.Name}
+	if a.DataTypesStored != nil && *a.DataTypesStored != "" {
+		text = append(text, *a.DataTypesStored)
+	}
+
+	return text
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
@@ -126,6 +140,14 @@ SELECT
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 FROM
@@ -174,6 +196,14 @@ SELECT
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 FROM
@@ -255,6 +285,14 @@ SELECT
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 FROM
@@ -291,6 +329,10 @@ func (a *Asset) Insert(
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	if a.Status == "" {
+		a.Status = AssetStatusActive
+	}
+
 	q := `
 INSERT INTO assets (
 	id,
@@ -301,6 +343,14 @@ INSERT INTO assets (
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -312,6 +362,14 @@ INSERT INTO assets (
 	@amount,
 	@asset_type,
 	@data_types_stored,
+	@kind,
+	@external_id,
+	@region,
+	@configuration,
+	@schema_version,
+	@last_seen_at,
+	@status,
+	@connector_id,
 	@created_at,
 	@updated_at
 )
@@ -326,6 +384,14 @@ INSERT INTO assets (
 		"amount":            a.Amount,
 		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
+		"kind":              a.Kind,
+		"external_id":       a.ExternalID,
+		"region":            a.Region,
+		"configuration":     a.Configuration,
+		"schema_version":    a.SchemaVersion,
+		"last_seen_at":      a.LastSeenAt,
+		"status":            a.Status,
+		"connector_id":      a.ConnectorID,
 		"created_at":        a.CreatedAt,
 		"updated_at":        a.UpdatedAt,
 	}
@@ -334,6 +400,193 @@ INSERT INTO assets (
 	if err != nil {
 		return fmt.Errorf("cannot insert asset: %w", err)
 	}
+
+	return nil
+}
+
+// UpsertDiscovered inserts one discovered row or refreshes the fields a
+// list is allowed to change. Amount, owner, data types, status, and the
+// connector stay as they are on a row that already exists. A new row
+// stores amount 1.
+func (a *Asset) UpsertDiscovered(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) (bool, error) {
+	if len(a.Configuration) == 0 {
+		a.Configuration = json.RawMessage(`{}`)
+	}
+
+	if a.Status == "" {
+		a.Status = AssetStatusActive
+	}
+
+	q := `
+INSERT INTO assets (
+	id,
+	tenant_id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	@tenant_id,
+	@name,
+	@organization_id,
+	NULL,
+	1,
+	@asset_type,
+	NULL,
+	@kind,
+	@external_id,
+	@region,
+	@configuration::jsonb,
+	@schema_version,
+	@last_seen_at,
+	@status,
+	@connector_id,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (organization_id, connector_id, kind, external_id)
+WHERE connector_id IS NOT NULL
+	AND kind IS NOT NULL
+	AND external_id IS NOT NULL
+DO UPDATE
+SET
+	name = EXCLUDED.name,
+	region = EXCLUDED.region,
+	configuration = EXCLUDED.configuration,
+	schema_version = EXCLUDED.schema_version,
+	last_seen_at = EXCLUDED.last_seen_at,
+	updated_at = EXCLUDED.updated_at
+RETURNING
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
+	created_at,
+	updated_at
+`
+
+	originalID := a.ID
+	args := pgx.StrictNamedArgs{
+		"id":              a.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": a.OrganizationID,
+		"name":            a.Name,
+		"asset_type":      a.AssetType,
+		"kind":            a.Kind,
+		"external_id":     a.ExternalID,
+		"region":          a.Region,
+		"configuration":   a.Configuration,
+		"schema_version":  a.SchemaVersion,
+		"last_seen_at":    a.LastSeenAt,
+		"status":          a.Status,
+		"connector_id":    a.ConnectorID,
+		"created_at":      a.CreatedAt,
+		"updated_at":      a.UpdatedAt,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot upsert asset: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
+	if err != nil {
+		return false, fmt.Errorf("cannot collect upserted asset: %w", err)
+	}
+
+	*a = row
+
+	return originalID == a.ID, nil
+}
+
+func (a *Asset) LoadByDiscoveredIdentity(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorID gid.GID,
+	kind string,
+	externalID string,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
+	created_at,
+	updated_at
+FROM
+	assets
+WHERE
+	%s
+	AND connector_id = @connector_id
+	AND kind = @kind
+	AND external_id = @external_id
+LIMIT 1
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"connector_id": connectorID,
+		"kind":         kind,
+		"external_id":  externalID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query asset by discovered identity: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect asset by discovered identity: %w", err)
+	}
+
+	*a = row
 
 	return nil
 }
@@ -363,6 +616,14 @@ RETURNING
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 `
@@ -475,6 +736,14 @@ SELECT
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 FROM
@@ -529,6 +798,14 @@ SELECT
 	amount,
 	asset_type,
 	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
 	created_at,
 	updated_at
 FROM

@@ -29,6 +29,10 @@ func (r *assetResolver) Tags(ctx context.Context, obj *types.Asset, first *int, 
 
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Profile, error) {
+	if obj.Owner == nil {
+		return nil, nil
+	}
+
 	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}

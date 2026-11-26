@@ -943,3 +943,97 @@ FOR UPDATE SKIP LOCKED;
 
 	return nil
 }
+
+// LoadNextDueForAssetSyncForUpdateSkipLocked claims the next AWS connector
+// account whose latest finished asset sync is at least dueBefore old, or
+// that has no sync yet. A recent stale failure below maxStaleAttempts is
+// due immediately. The row is locked so two workers cannot claim it.
+// onlyAccount restricts the claim to one account.
+func (a *ConnectorAccount) LoadNextDueForAssetSyncForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+	provider ConnectorProvider,
+	dueBefore time.Time,
+	staleError string,
+	maxStaleAttempts int,
+	onlyAccount *gid.GID,
+) error {
+	accountFilter := ""
+	args := pgx.StrictNamedArgs{
+		"provider":           provider,
+		"due_before":         dueBefore,
+		"stale_error":        staleError,
+		"max_stale_attempts": maxStaleAttempts,
+	}
+
+	if onlyAccount != nil {
+		accountFilter = "AND a.id = @only_account_id"
+		args["only_account_id"] = *onlyAccount
+	}
+
+	q := fmt.Sprintf(`
+SELECT
+    a.id,
+    a.organization_id,
+    a.connector_id,
+    a.external_account_id,
+    a.name,
+    a.name_synced_at,
+    a.name_sync_attempts,
+    a.name_sync_next_attempt_at,
+    a.created_at,
+    a.updated_at
+FROM
+    connector_accounts a
+INNER JOIN
+    connectors c ON c.id = a.connector_id
+WHERE
+    c.provider = @provider
+    %s
+    AND NOT EXISTS (
+        SELECT 1
+        FROM asset_syncs running
+        WHERE running.connector_account_id = a.id
+            AND running.status = 'RUNNING'
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM asset_syncs latest
+        WHERE latest.connector_account_id = a.id
+            AND latest.created_at = (
+                SELECT MAX(created_at)
+                FROM asset_syncs
+                WHERE connector_account_id = a.id
+            )
+            AND latest.status IN ('SUCCEEDED', 'FAILED')
+            AND latest.completed_at > @due_before
+            AND NOT (
+                latest.status = 'FAILED'
+                AND latest.error = @stale_error
+                AND latest.attempt_number < @max_stale_attempts
+            )
+    )
+ORDER BY
+    a.created_at ASC
+LIMIT 1
+FOR UPDATE OF a SKIP LOCKED
+`, accountFilter)
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connector accounts due for asset sync: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ConnectorAccount])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect connector account due for asset sync: %w", err)
+	}
+
+	*a = row
+
+	return nil
+}

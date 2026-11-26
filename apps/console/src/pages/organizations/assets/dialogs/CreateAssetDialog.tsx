@@ -53,12 +53,9 @@ export function CreateAssetDialog({
     name: z.string().min(1, t("createAssetDialog.validation.nameRequired")),
     amount: z.number().min(1, t("createAssetDialog.validation.amountRequired")),
     assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
-    ownerId: z.string().min(1, t("createAssetDialog.validation.ownerRequired")),
+    ownerId: z.string().optional(),
     thirdPartyIds: z.array(z.string()).optional(),
-    dataTypesStored: z.string().min(
-      1,
-      t("createAssetDialog.validation.dataTypesStoredRequired"),
-    ),
+    dataTypesStored: z.string().optional(),
   });
   const { control, handleSubmit, register, formState, reset }
     = useFormWithSchema(schema, {

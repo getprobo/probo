@@ -3600,9 +3600,7 @@ components:
         - organization_id
         - name
         - amount
-        - owner_id
         - asset_type
-        - data_types_stored
         - created_at
         - updated_at
       properties:
@@ -3690,9 +3688,7 @@ components:
         - organization_id
         - name
         - amount
-        - owner_id
         - asset_type
-        - data_types_stored
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"

@@ -1607,6 +1607,25 @@ func (impl *Implm) Run(
 		},
 	)
 
+	assetSyncWorker := itam.NewAssetSyncWorker(
+		pgClient,
+		connectorsService,
+		l.Named("asset-sync-worker"),
+		worker.WithInterval(30*time.Second),
+		worker.WithMaxConcurrency(20),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	assetSyncWorkerCtx, stopAssetSyncWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := assetSyncWorker.Run(assetSyncWorkerCtx); err != nil {
+				cancel(fmt.Errorf("asset sync worker crashed: %w", err))
+			}
+		},
+	)
+
 	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -1965,6 +1984,7 @@ func (impl *Implm) Run(
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopConnectorsService()
+	stopAssetSyncWorker()
 	stopAuditLogRetentionWorker()
 	stopIAMService()
 	stopITAMGC()

@@ -158,7 +158,7 @@ export function AssetsTable(props: Props) {
           />
           <PeopleCell
             name="ownerId"
-            defaultValue={item?.owner}
+            defaultValue={item?.owner ?? undefined}
             organizationId={organizationId}
           />
           <ThirdPartiesCell

@@ -66,11 +66,8 @@ export default function AssetDetailsPage(props: Props) {
     name: z.string().min(1, t("assetDetailsPage.validation.nameRequired")),
     amount: z.number().min(1, t("assetDetailsPage.validation.amountRequired")),
     assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
-    dataTypesStored: z.string().min(
-      1,
-      t("assetDetailsPage.validation.dataTypesStoredRequired"),
-    ),
-    ownerId: z.string().min(1, t("assetDetailsPage.validation.ownerRequired")),
+    dataTypesStored: z.string(),
+    ownerId: z.string(),
     thirdPartyIds: z.array(z.string()).optional(),
   });
 
@@ -101,6 +98,8 @@ export default function AssetDetailsPage(props: Props) {
     await updateAsset({
       id: assetEntry.id!,
       ...formData,
+      ownerId: formData.ownerId || undefined,
+      dataTypesStored: formData.dataTypesStored.trim(),
     });
     reset(formData);
   });

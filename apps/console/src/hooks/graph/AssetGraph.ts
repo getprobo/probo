@@ -198,22 +198,16 @@ export const useCreateAsset = (connectionId: string) => {
       name: string;
       amount: number;
       assetType: AssetType;
-      ownerId: string;
+      ownerId?: string;
       organizationId: string;
       thirdPartyIds?: string[];
-      dataTypesStored: string;
+      dataTypesStored?: string;
     }) => {
       if (!input.name?.trim()) {
         return alert(t("assetGraph.errors.createNameRequired"));
       }
-      if (!input.ownerId) {
-        return alert(t("assetGraph.errors.createOwnerRequired"));
-      }
       if (!input.organizationId) {
         return alert(t("assetGraph.errors.createOrganizationRequired"));
-      }
-      if (!input.dataTypesStored) {
-        return alert(t("assetGraph.errors.createDataTypesStoredRequired"));
       }
 
       return promisifyMutation(mutate)({
@@ -222,10 +216,12 @@ export const useCreateAsset = (connectionId: string) => {
             name: input.name,
             amount: input.amount,
             assetType: input.assetType,
-            dataTypesStored: input.dataTypesStored || "",
-            ownerId: input.ownerId,
             organizationId: input.organizationId,
             thirdPartyIds: input.thirdPartyIds || [],
+            ...(input.ownerId ? { ownerId: input.ownerId } : {}),
+            ...(input.dataTypesStored?.trim()
+              ? { dataTypesStored: input.dataTypesStored.trim() }
+              : {}),
           },
           connections: [connectionId],
         },

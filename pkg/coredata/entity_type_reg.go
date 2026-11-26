@@ -180,6 +180,7 @@ const (
 	TagEntityType                                    uint16 = 148
 	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
 	ThirdPartyAgreementEntityType                    uint16 = 150
+	AssetSyncEntityType                              uint16 = 151
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -452,6 +453,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Tag{ID: id}, true
 	case ThirdPartyAgreementEntityType:
 		return &ThirdPartyAgreement{ID: id}, true
+	case AssetSyncEntityType:
+		return &AssetSync{ID: id}, true
 	default:
 		return nil, false
 	}

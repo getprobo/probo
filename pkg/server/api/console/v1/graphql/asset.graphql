@@ -76,7 +76,7 @@ type Asset implements Node & Taggable {
     id: ID!
     name: String!
     amount: Int!
-    owner: Profile! @goField(forceResolver: true)
+    owner: Profile @goField(forceResolver: true)
     thirdParties(
         first: Int
         after: CursorKey
@@ -85,7 +85,7 @@ type Asset implements Node & Taggable {
         orderBy: ThirdPartyOrder
     ): ThirdPartyConnection! @goField(forceResolver: true)
     assetType: AssetType!
-    dataTypesStored: String!
+    dataTypesStored: String
     organization: Organization! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -170,9 +170,9 @@ input CreateAssetInput {
     organizationId: ID!
     name: String!
     amount: Int!
-    ownerId: ID!
+    ownerId: ID
     assetType: AssetType!
-    dataTypesStored: String!
+    dataTypesStored: String
     thirdPartyIds: [ID!]
 }
 
