@@ -497,33 +497,3 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 
 	return &presignedURL, nil
 }
-
-func (s OrganizationService) DeleteHorizontalLogo(
-	ctx context.Context, scope coredata.Scoper,
-	organizationID gid.GID,
-) (*coredata.Organization, error) {
-	organization := &coredata.Organization{}
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			organization.HorizontalLogoFileID = nil
-			organization.UpdatedAt = time.Now()
-
-			if err := organization.Update(ctx, scope, tx); err != nil {
-				return fmt.Errorf("cannot update organization: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return organization, nil
-}
