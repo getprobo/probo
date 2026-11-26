@@ -286,8 +286,9 @@ func (s *DocumentApprovalService) Approve(
 		fileRecord,
 		bytes.NewReader(pdfData),
 		map[string]string{
-			"type":        "approval-document",
-			"decision-id": decision.ID.String(),
+			"type":            "approval-document",
+			"decision-id":     decision.ID.String(),
+			"organization-id": documentVersion.OrganizationID.String(),
 		},
 	)
 	if err != nil {
@@ -1175,8 +1176,9 @@ func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
 		fileRecord,
 		bytes.NewReader(pdfData),
 		map[string]string{
-			"type":      "approval-quorum-document",
-			"quorum-id": quorum.ID.String(),
+			"type":            "approval-quorum-document",
+			"quorum-id":       quorum.ID.String(),
+			"organization-id": quorum.OrganizationID.String(),
 		},
 	)
 	if err != nil {

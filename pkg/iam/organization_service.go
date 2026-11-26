@@ -712,6 +712,7 @@ func (s *OrganizationService) CreateOrganization(
 			logoFile,
 			req.LogoFile.Content,
 			map[string]string{
+				"type":            "organization-logo",
 				"file-id":         fileID.String(),
 				"organization-id": organization.ID.String(),
 			},
@@ -750,6 +751,7 @@ func (s *OrganizationService) CreateOrganization(
 			horizontalLogoFile,
 			req.HorizontalLogoFile.Content,
 			map[string]string{
+				"type":            "organization-horizontal-logo",
 				"file-id":         fileID.String(),
 				"organization-id": organization.ID.String(),
 			},
@@ -903,6 +905,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			logoFile,
 			(*req.LogoFile).Content,
 			map[string]string{
+				"type":            "organization-logo",
 				"file-id":         fileID.String(),
 				"organization-id": organizationID.String(),
 			},
@@ -941,6 +944,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			horizontalLogoFile,
 			(*req.HorizontalLogoFile).Content,
 			map[string]string{
+				"type":            "organization-horizontal-logo",
 				"file-id":         fileID.String(),
 				"organization-id": organizationID.String(),
 			},

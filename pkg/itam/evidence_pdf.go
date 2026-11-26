@@ -276,6 +276,7 @@ func (s *Service) storeDeviceEvidencePDF(
 		file,
 		content,
 		map[string]string{
+			"type":            "device-evidence",
 			"organization-id": organizationID.String(),
 		},
 	)

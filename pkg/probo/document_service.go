@@ -834,8 +834,9 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 		fileRecord,
 		bytes.NewReader(pdfData),
 		map[string]string{
-			"type":         "signature-document",
-			"signature-id": documentVersionSignature.ID.String(),
+			"type":            "signature-document",
+			"signature-id":    documentVersionSignature.ID.String(),
+			"organization-id": documentVersion.OrganizationID.String(),
 		},
 	)
 	if err != nil {
@@ -3695,6 +3696,7 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 		map[string]string{
 			"type":                "document-version-pdf",
 			"document-version-id": documentVersion.ID.String(),
+			"organization-id":     documentVersion.OrganizationID.String(),
 		},
 	)
 	if err != nil {

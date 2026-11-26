@@ -94,8 +94,8 @@ func (s ThirdPartyComplianceReportService) Upload(
 		scope,
 		s.fileValidator,
 		map[string]string{
-			"type":            "thirdParty-compliance-report",
-			"thirdParty-id":   thirdPartyID.String(),
+			"type":            "third-party-compliance-report",
+			"third-party-id":  thirdPartyID.String(),
 			"organization-id": thirdParty.OrganizationID.String(),
 		},
 		&req.File)

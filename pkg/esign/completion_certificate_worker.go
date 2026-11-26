@@ -279,8 +279,9 @@ func (h *completionCertificateHandler) generateCertificate(
 		&certificateOfCompletionFile,
 		certificatePDFReader,
 		map[string]string{
-			"type":         "certificate-of-completion",
-			"signature-id": signature.ID.String(),
+			"type":            "certificate-of-completion",
+			"signature-id":    signature.ID.String(),
+			"organization-id": signature.OrganizationID.String(),
 		},
 	)
 	if err != nil {

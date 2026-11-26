@@ -345,8 +345,9 @@ func (s *Service) createStampedDocument(
 		&stampedFile,
 		bytes.NewReader(stampedData),
 		map[string]string{
-			"type":         "stamped-document",
-			"signature-id": signatureID.String(),
+			"type":            "stamped-document",
+			"signature-id":    signatureID.String(),
+			"organization-id": organizationID.String(),
 		},
 	)
 	if err != nil {

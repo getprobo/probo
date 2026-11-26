@@ -678,7 +678,11 @@ func (s AuditService) UploadReport(
 	file, err := s.svc.Files.UploadAndSaveFile(
 		ctx, scope,
 		fv,
-		map[string]string{"organization-id": audit.OrganizationID.String()},
+		map[string]string{
+			"type":            "audit-report",
+			"audit-id":        audit.ID.String(),
+			"organization-id": audit.OrganizationID.String(),
+		},
 		&FileUpload{
 			Content:     req.File.Content,
 			Filename:    req.File.Filename,
