@@ -164,7 +164,6 @@ export function AssetsTable(props: Props) {
           <TextCell
             name="dataTypesStored"
             defaultValue={item?.dataTypesStored ?? defaultValue.dataTypesStored}
-            required
           />
           <TextCell
             name="amount"

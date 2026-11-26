@@ -404,129 +404,6 @@ INSERT INTO assets (
 	return nil
 }
 
-// UpsertDiscovered inserts one discovered row or refreshes the fields a
-// list is allowed to change. Amount, owner, data types, status, and the
-// connector stay as they are on a row that already exists. A new row
-// stores amount 1.
-func (a *Asset) UpsertDiscovered(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-) (bool, error) {
-	if len(a.Configuration) == 0 {
-		a.Configuration = json.RawMessage(`{}`)
-	}
-
-	if a.Status == "" {
-		a.Status = AssetStatusActive
-	}
-
-	q := `
-INSERT INTO assets (
-	id,
-	tenant_id,
-	name,
-	organization_id,
-	owner_profile_id,
-	amount,
-	asset_type,
-	data_types_stored,
-	kind,
-	external_id,
-	region,
-	configuration,
-	schema_version,
-	last_seen_at,
-	status,
-	connector_id,
-	created_at,
-	updated_at
-) VALUES (
-	@id,
-	@tenant_id,
-	@name,
-	@organization_id,
-	NULL,
-	1,
-	@asset_type,
-	NULL,
-	@kind,
-	@external_id,
-	@region,
-	@configuration::jsonb,
-	@schema_version,
-	@last_seen_at,
-	@status,
-	@connector_id,
-	@created_at,
-	@updated_at
-)
-ON CONFLICT (organization_id, connector_id, kind, external_id)
-WHERE connector_id IS NOT NULL
-	AND kind IS NOT NULL
-	AND external_id IS NOT NULL
-DO UPDATE
-SET
-	name = EXCLUDED.name,
-	region = EXCLUDED.region,
-	configuration = EXCLUDED.configuration,
-	schema_version = EXCLUDED.schema_version,
-	last_seen_at = EXCLUDED.last_seen_at,
-	updated_at = EXCLUDED.updated_at
-RETURNING
-	id,
-	name,
-	organization_id,
-	owner_profile_id,
-	amount,
-	asset_type,
-	data_types_stored,
-	kind,
-	external_id,
-	region,
-	configuration,
-	schema_version,
-	last_seen_at,
-	status,
-	connector_id,
-	created_at,
-	updated_at
-`
-
-	originalID := a.ID
-	args := pgx.StrictNamedArgs{
-		"id":              a.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": a.OrganizationID,
-		"name":            a.Name,
-		"asset_type":      a.AssetType,
-		"kind":            a.Kind,
-		"external_id":     a.ExternalID,
-		"region":          a.Region,
-		"configuration":   a.Configuration,
-		"schema_version":  a.SchemaVersion,
-		"last_seen_at":    a.LastSeenAt,
-		"status":          a.Status,
-		"connector_id":    a.ConnectorID,
-		"created_at":      a.CreatedAt,
-		"updated_at":      a.UpdatedAt,
-	}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return false, fmt.Errorf("cannot upsert asset: %w", err)
-	}
-
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
-	if err != nil {
-		return false, fmt.Errorf("cannot collect upserted asset: %w", err)
-	}
-
-	*a = row
-
-	return originalID == a.ID, nil
-}
-
 const discoveredUpsertBatchSize = 500
 
 // UpsertDiscovered inserts or refreshes discovered rows in batches. Amount,
@@ -718,24 +595,6 @@ SET
 	schema_version = EXCLUDED.schema_version,
 	last_seen_at = EXCLUDED.last_seen_at,
 	updated_at = EXCLUDED.updated_at
-RETURNING
-	id,
-	name,
-	organization_id,
-	owner_profile_id,
-	amount,
-	asset_type,
-	data_types_stored,
-	kind,
-	external_id,
-	region,
-	configuration,
-	schema_version,
-	last_seen_at,
-	status,
-	connector_id,
-	created_at,
-	updated_at
 `
 
 	args := pgx.StrictNamedArgs{
@@ -756,13 +615,8 @@ RETURNING
 		"updated_ats":      updatedAts,
 	}
 
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
+	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot upsert assets: %w", err)
-	}
-
-	if _, err := pgx.CollectRows(rows, pgx.RowToStructByName[Asset]); err != nil {
-		return fmt.Errorf("cannot collect upserted assets: %w", err)
 	}
 
 	return nil

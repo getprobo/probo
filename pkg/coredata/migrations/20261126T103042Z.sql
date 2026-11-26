@@ -73,3 +73,9 @@ CREATE TABLE asset_syncs (
 
 CREATE INDEX asset_syncs_connector_account_created_at_idx
     ON asset_syncs (connector_account_id, created_at);
+
+-- The asset-sync claim lists connector ids by provider with no
+-- organization filter. The existing lookup index leads with
+-- organization_id, so it does not serve that scan.
+CREATE INDEX connectors_provider_idx
+    ON connectors (provider, id);
