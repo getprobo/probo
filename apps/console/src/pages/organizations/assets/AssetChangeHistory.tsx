@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
 
 import type { AssetChangeHistory_asset$key } from "#/__generated__/core/AssetChangeHistory_asset.graphql";
+import type { AssetChangeHistoryRefetchQuery } from "#/__generated__/core/AssetChangeHistoryRefetchQuery.graphql";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
@@ -86,7 +87,10 @@ export function AssetChangeHistory({
   asset: AssetChangeHistory_asset$key;
 }) {
   const { t, i18n } = useTranslation();
-  const [data, refetch] = useRefetchableFragment(
+  const [data, refetch] = useRefetchableFragment<
+    AssetChangeHistoryRefetchQuery,
+    AssetChangeHistory_asset$key
+  >(
     assetChangeHistoryFragment,
     asset,
   );
@@ -113,7 +117,7 @@ export function AssetChangeHistory({
           )
         : (
             <ol className="space-y-4">
-              {events.map(event => {
+              {events.map((event) => {
                 const actor = event.actor?.fullName
                   ?? (event.assetSyncId
                     ? t("assetDetailsPage.changeHistory.sync")

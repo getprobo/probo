@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -210,10 +211,8 @@ func gidSet(ids []gid.GID) map[gid.GID]struct{} {
 }
 
 func appendGID(ids []gid.GID, id gid.GID) []gid.GID {
-	for _, existing := range ids {
-		if existing == id {
-			return ids
-		}
+	if slices.Contains(ids, id) {
+		return ids
 	}
 
 	next := make([]gid.GID, len(ids)+1)
