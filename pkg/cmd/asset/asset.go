@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/asset/delete"
 	"go.probo.inc/probo/pkg/cmd/asset/list"
 	"go.probo.inc/probo/pkg/cmd/asset/publish"
+	"go.probo.inc/probo/pkg/cmd/asset/snapshot"
 	"go.probo.inc/probo/pkg/cmd/asset/update"
 	"go.probo.inc/probo/pkg/cmd/asset/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -45,6 +46,7 @@ func NewCmdAsset(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
+	cmd.AddCommand(snapshot.NewCmdSnapshot(f))
 
 	return cmd
 }

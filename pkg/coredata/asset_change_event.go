@@ -796,3 +796,42 @@ func sortedIDStrings(ids []gid.GID) []string {
 
 	return values
 }
+
+// DeleteAssetChangeEventsBeforeBatch deletes events observed strictly before
+// the cutoff. A name is not part of an event, and nothing else keeps one.
+//
+// No ORDER BY observed_at. There is no index leading with observed_at, so
+// each ordered batch would sort every expired row. Any expired row is
+// eligible. SKIP LOCKED lets another replica take a different batch.
+func DeleteAssetChangeEventsBeforeBatch(
+	ctx context.Context,
+	conn pg.Querier,
+	before time.Time,
+	batchSize int,
+) (int64, error) {
+	q := `
+WITH doomed AS (
+	SELECT id
+	FROM asset_change_events
+	WHERE observed_at < @before
+	LIMIT @limit
+	FOR UPDATE SKIP LOCKED
+)
+DELETE FROM asset_change_events
+WHERE id IN (SELECT id FROM doomed)
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"before": before,
+			"limit":  batchSize,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete asset change events: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}

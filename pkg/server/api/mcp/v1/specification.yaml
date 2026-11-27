@@ -3927,6 +3927,283 @@ components:
         asset_change_event:
           $ref: "#/components/schemas/AssetChangeEvent"
 
+    AssetSnapshotOrderField:
+      type: string
+      enum:
+        - CAPTURED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetSnapshotOrderField
+
+    AssetSnapshotOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AssetSnapshotOrderField"
+          description: Asset snapshot order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Asset snapshot order direction
+
+    AssetSnapshotAssetOrderField:
+      type: string
+      enum:
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetSnapshotAssetOrderField
+
+    AssetSnapshotAssetOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AssetSnapshotAssetOrderField"
+          description: Copied asset order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Copied asset order direction
+
+    AssetSnapshot:
+      type: object
+      required:
+        - id
+        - organization_id
+        - captured_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Asset snapshot ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        captured_at:
+          type: string
+          format: date-time
+          description: When the snapshot was taken
+        actor_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Membership profile that published the list
+            - type: "null"
+              description: No actor
+          description: Membership profile that published the list
+        name:
+          anyOf:
+            - type: string
+              description: Optional snapshot name
+            - type: "null"
+              description: No name
+          description: Optional snapshot name
+        note:
+          anyOf:
+            - type: string
+              description: Optional snapshot note
+            - type: "null"
+              description: No note
+          description: Optional snapshot note
+
+    AssetSnapshotAsset:
+      type: object
+      required:
+        - id
+        - snapshot_id
+        - organization_id
+        - asset_id
+        - name
+        - amount
+        - asset_type
+        - status
+        - third_party_ids
+        - business_function_ids
+        - tag_ids
+        - asset_created_at
+        - asset_updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Copied row ID
+        snapshot_id:
+          $ref: "#/components/schemas/GID"
+          description: Snapshot ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        asset_id:
+          $ref: "#/components/schemas/GID"
+          description: Live asset ID at the time of the copy
+        name:
+          type: string
+          description: Asset name
+        amount:
+          type: integer
+          description: Asset amount
+        owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Owner profile ID
+            - type: "null"
+              description: No owner
+          description: Owner profile ID
+        asset_type:
+          $ref: "#/components/schemas/AssetType"
+          description: Asset type
+        data_types_stored:
+          anyOf:
+            - type: string
+              description: Data types stored
+            - type: "null"
+              description: No data types
+          description: Data types stored
+        kind:
+          anyOf:
+            - type: string
+              description: Catalog key
+            - type: "null"
+              description: No kind
+          description: Catalog key
+        external_id:
+          anyOf:
+            - type: string
+              description: Provider identifier
+            - type: "null"
+              description: No external id
+          description: Provider identifier
+        region:
+          anyOf:
+            - type: string
+              description: Provider region
+            - type: "null"
+              description: No region
+          description: Provider region
+        configuration:
+          anyOf:
+            - type: string
+              description: JSON configuration copied from the asset
+            - type: "null"
+              description: No configuration
+          description: JSON configuration copied from the asset
+        schema_version:
+          anyOf:
+            - type: integer
+              description: Configuration schema version
+            - type: "null"
+              description: No schema version
+          description: Configuration schema version
+        last_seen_at:
+          anyOf:
+            - type: string
+              format: date-time
+              description: Last time a successful list included the asset
+            - type: "null"
+              description: Never seen by a list
+          description: Last time a successful list included the asset
+        status:
+          $ref: "#/components/schemas/AssetStatus"
+          description: Asset status at the time of the copy
+        connector_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Connector ID
+            - type: "null"
+              description: No connector
+          description: Connector ID
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Third-party IDs linked at the time of the copy
+        business_function_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Business-function IDs linked at the time of the copy
+        tag_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Tag IDs linked at the time of the copy
+        asset_created_at:
+          type: string
+          format: date-time
+          description: When the live asset was created
+        asset_updated_at:
+          type: string
+          format: date-time
+          description: When the live asset was last updated
+
+    ListAssetSnapshotsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AssetSnapshotOrderBy"
+          description: Asset snapshot order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListAssetSnapshotsOutput:
+      type: object
+      required:
+        - asset_snapshots
+      properties:
+        asset_snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetSnapshot"
+          description: List of asset snapshots
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetAssetSnapshotInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Asset snapshot ID
+        order_by:
+          $ref: "#/components/schemas/AssetSnapshotAssetOrderBy"
+          description: Copied asset order by
+        size:
+          type: integer
+          description: Page size for the copied rows
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor for the copied rows
+
+    GetAssetSnapshotOutput:
+      type: object
+      required:
+        - asset_snapshot
+        - assets
+      properties:
+        asset_snapshot:
+          $ref: "#/components/schemas/AssetSnapshot"
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetSnapshotAsset"
+          description: Copied rows in this page
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor for the copied rows
+
     DeviceState:
       type: string
       description: Device lifecycle state. PENDING means an enrollment token was issued but the agent has never checked in; ACTIVE means the agent is heartbeating; REVOKED means enrollment was revoked.
@@ -11831,6 +12108,12 @@ components:
         minor:
           type: boolean
           description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+        name:
+          type: string
+          description: Optional name for the snapshot this publish stores. A name is not required, and it does not keep the snapshot past the retention period.
+        note:
+          type: string
+          description: Optional note stored on the snapshot.
 
     PublishAssetListOutput:
       type: object
@@ -20980,6 +21263,30 @@ tools:
       $ref: "#/components/schemas/GetAssetChangeEventInput"
     outputSchema:
       $ref: "#/components/schemas/GetAssetChangeEventOutput"
+  - name: listAssetSnapshots
+    title: List Asset Snapshots
+    description: List asset snapshots for an organization, newest first by default. A snapshot is the copy publish stored. Later edits do not change it.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAssetSnapshotsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAssetSnapshotsOutput"
+  - name: getAssetSnapshot
+    title: Get Asset Snapshot
+    description: Get one asset snapshot and a page of the active assets copied into it. Pass cursor to read the next page of copied rows.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetAssetSnapshotInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAssetSnapshotOutput"
   - name: listDevices
     title: List Devices
     description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Pass states, platforms, or agent_versions to keep devices that match any value in that list; omit a list to leave that dimension unconstrained. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."

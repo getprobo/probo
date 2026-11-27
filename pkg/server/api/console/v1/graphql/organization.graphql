@@ -148,6 +148,14 @@ type Organization implements Node {
 
     assetListDocument: Document @goField(forceResolver: true)
 
+    assetSnapshots(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetSnapshotOrder
+    ): AssetSnapshotConnection! @goField(forceResolver: true)
+
     assets(
         first: Int
         after: CursorKey

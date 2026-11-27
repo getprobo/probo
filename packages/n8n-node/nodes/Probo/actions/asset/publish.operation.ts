@@ -42,6 +42,32 @@ export const description: INodeProperties[] = [
 		description: 'Comma-separated list of approver profile IDs',
 	},
 	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['asset'],
+				operation: ['publish'],
+			},
+		},
+		default: '',
+		description: 'Optional name stored on the snapshot. A name is not required, and it does not keep the snapshot past the retention period.',
+	},
+	{
+		displayName: 'Note',
+		name: 'note',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['asset'],
+				operation: ['publish'],
+			},
+		},
+		default: '',
+		description: 'Optional note stored on the snapshot',
+	},
+	{
 		displayName: 'Minor',
 		name: 'minor',
 		type: 'boolean',
@@ -63,6 +89,8 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const approverIds = this.getNodeParameter('approverIds', itemIndex, '') as string;
 	const minor = this.getNodeParameter('minor', itemIndex, false) as boolean;
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
+	const note = this.getNodeParameter('note', itemIndex, '') as string;
 
 	const query = `
 		mutation PublishAssetList($input: PublishAssetListInput!) {
@@ -102,6 +130,14 @@ export async function execute(
 			.split(',')
 			.map(id => id.trim())
 			.filter(Boolean);
+	}
+
+	if (name.trim()) {
+		input.name = name.trim();
+	}
+
+	if (note.trim()) {
+		input.note = note.trim();
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

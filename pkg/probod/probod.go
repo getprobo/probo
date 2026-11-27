@@ -227,6 +227,10 @@ func New() *Implm {
 				Interval:  int(iam.DefaultAuditLogRetentionInterval / time.Second),
 				Retention: int(iam.DefaultAuditLogRetention / time.Second),
 			},
+			AssetHistoryRetention: AssetHistoryRetentionConfig{
+				Interval:  int(probo.DefaultAssetHistoryRetentionInterval / time.Second),
+				Retention: int(probo.DefaultAssetHistoryRetention / time.Second),
+			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
@@ -1676,6 +1680,36 @@ func (impl *Implm) Run(
 		},
 	)
 
+	assetHistoryRetention := time.Duration(impl.cfg.AssetHistoryRetention.Retention) * time.Second
+	if assetHistoryRetention <= 0 {
+		assetHistoryRetention = probo.DefaultAssetHistoryRetention
+	}
+
+	assetHistoryRetentionInterval := time.Duration(impl.cfg.AssetHistoryRetention.Interval) * time.Second
+	if assetHistoryRetentionInterval <= 0 {
+		assetHistoryRetentionInterval = probo.DefaultAssetHistoryRetentionInterval
+	}
+
+	assetHistoryRetentionWorker := probo.NewAssetHistoryRetentionWorker(
+		pgClient,
+		l.Named("asset-history-retention-worker"),
+		assetHistoryRetention,
+		worker.WithInterval(assetHistoryRetentionInterval),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	assetHistoryRetentionWorkerCtx, stopAssetHistoryRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := assetHistoryRetentionWorker.Run(assetHistoryRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("asset history retention worker crashed: %w", err))
+			}
+		},
+	)
+
 	itamGC := itam.NewGarbageCollector(pgClient, l.Named("itam"))
 	itamGCCtx, stopITAMGC := context.WithCancel(context.Background())
 
@@ -1986,6 +2020,7 @@ func (impl *Implm) Run(
 	stopConnectorsService()
 	stopAssetSyncWorker()
 	stopAuditLogRetentionWorker()
+	stopAssetHistoryRetentionWorker()
 	stopIAMService()
 	stopITAMGC()
 	stopMailer()

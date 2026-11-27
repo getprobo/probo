@@ -649,10 +649,14 @@ func BuildDataListDocument(data docgen.DataListData) (string, error) {
 }
 
 func (s *GeneratedDocumentService) PublishAssetList(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
+	name *string,
+	note *string,
+	identityID *gid.GID,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	var (
 		document        *coredata.Document
@@ -667,7 +671,31 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildAssetListDocumentData(ctx, scope, tx, organization)
+			now := time.Now()
+
+			actorID, err := actorProfileID(ctx, tx, scope, identityID, organizationID)
+			if err != nil {
+				return err
+			}
+
+			snapshot := &coredata.AssetSnapshot{
+				ID:             gid.New(scope.GetTenantID(), coredata.AssetSnapshotEntityType),
+				OrganizationID: organizationID,
+				CapturedAt:     now,
+				ActorID:        actorID,
+				Name:           optionalSnapshotText(name),
+				Note:           optionalSnapshotText(note),
+			}
+
+			if err := snapshot.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert asset snapshot: %w", err)
+			}
+
+			if err := snapshot.CopyActiveAssets(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot copy active assets: %w", err)
+			}
+
+			documentData, err := s.buildAssetListDocumentData(ctx, scope, tx, organization, snapshot)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -676,8 +704,6 @@ func (s *GeneratedDocumentService) PublishAssetList(
 			if err != nil {
 				return fmt.Errorf("cannot build prosemirror document: %w", err)
 			}
-
-			now := time.Now()
 
 			asset := coredata.Asset{}
 
@@ -784,21 +810,36 @@ func (s *GeneratedDocumentService) GetAssetListDocumentID(
 	return assetDocumentID, nil
 }
 
+func optionalSnapshotText(value *string) *string {
+	if value == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*value)
+	if trimmed == "" {
+		return nil
+	}
+
+	return &trimmed
+}
+
 func (s *GeneratedDocumentService) buildAssetListDocumentData(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
+	snapshot *coredata.AssetSnapshot,
 ) (docgen.AssetListData, error) {
 	assets, err := page.LoadAll(
 		ctx,
-		page.OrderBy[coredata.AssetOrderField]{
-			Field:     coredata.AssetOrderFieldName,
+		page.OrderBy[coredata.AssetSnapshotAssetOrderField]{
+			Field:     coredata.AssetSnapshotAssetOrderFieldName,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.AssetOrderField]) ([]*coredata.Asset, error) {
-			var batch coredata.Assets
-			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
-				return nil, fmt.Errorf("cannot load assets: %w", err)
+		func(ctx context.Context, cursor *page.Cursor[coredata.AssetSnapshotAssetOrderField]) ([]*coredata.AssetSnapshotAsset, error) {
+			var batch coredata.AssetSnapshotAssets
+			if err := batch.LoadBySnapshotID(ctx, conn, scope, snapshot.ID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load snapshot assets: %w", err)
 			}
 
 			return batch, nil
@@ -812,23 +853,39 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 		return docgen.AssetListData{
 			Title:            "Assets",
 			OrganizationName: organization.Name,
-			CreatedAt:        time.Now(),
+			CreatedAt:        snapshot.CapturedAt,
 			TotalAssets:      0,
 		}, nil
 	}
 
 	ownerIDs := make([]gid.GID, 0, len(assets))
-
 	ownerIDSet := make(map[gid.GID]struct{})
+	thirdPartyIDs := make([]gid.GID, 0)
+	thirdPartyIDSet := make(map[gid.GID]struct{})
+	assetThirdParties := make([][]gid.GID, len(assets))
 
-	for _, a := range assets {
-		if a.OwnerID == nil {
-			continue
+	for i, asset := range assets {
+		if asset.OwnerID != nil {
+			if _, ok := ownerIDSet[*asset.OwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *asset.OwnerID)
+				ownerIDSet[*asset.OwnerID] = struct{}{}
+			}
 		}
 
-		if _, ok := ownerIDSet[*a.OwnerID]; !ok {
-			ownerIDs = append(ownerIDs, *a.OwnerID)
-			ownerIDSet[*a.OwnerID] = struct{}{}
+		parties, err := asset.ThirdParties()
+		if err != nil {
+			return docgen.AssetListData{}, fmt.Errorf("cannot read snapshot third parties: %w", err)
+		}
+
+		assetThirdParties[i] = parties
+
+		for _, id := range parties {
+			if _, ok := thirdPartyIDSet[id]; ok {
+				continue
+			}
+
+			thirdPartyIDs = append(thirdPartyIDs, id)
+			thirdPartyIDSet[id] = struct{}{}
 		}
 	}
 
@@ -844,39 +901,39 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 		profileMap[p.ID] = p
 	}
 
+	var thirdParties coredata.ThirdParties
+	if len(thirdPartyIDs) > 0 {
+		if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.AssetListData{}, fmt.Errorf("cannot load third parties: %w", err)
+		}
+	}
+
+	thirdPartyNamesByID := make(map[gid.GID]string, len(thirdParties))
+	for _, thirdParty := range thirdParties {
+		thirdPartyNamesByID[thirdParty.ID] = thirdParty.Name
+	}
+
 	rows := make([]docgen.AssetListRow, 0, len(assets))
-	for _, a := range assets {
+	for i, asset := range assets {
 		ownerName := "-"
 
-		if a.OwnerID != nil {
-			if p, ok := profileMap[*a.OwnerID]; ok && p.FullName != "" {
+		if asset.OwnerID != nil {
+			if p, ok := profileMap[*asset.OwnerID]; ok && p.FullName != "" {
 				ownerName = p.FullName
 			}
 		}
 
-		thirdParties, err := page.LoadAll(
-			ctx,
-			page.OrderBy[coredata.ThirdPartyOrderField]{
-				Field:     coredata.ThirdPartyOrderFieldName,
-				Direction: page.OrderDirectionAsc,
-			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
-				var batch coredata.ThirdParties
-				if err := batch.LoadByAssetID(ctx, conn, scope, a.ID, cursor); err != nil {
-					return nil, fmt.Errorf("cannot load thirdParties for asset %s: %w", a.ID, err)
-				}
+		thirdPartyNames := make([]string, 0, len(assetThirdParties[i]))
+		for _, id := range assetThirdParties[i] {
+			name, ok := thirdPartyNamesByID[id]
+			if !ok || name == "" {
+				continue
+			}
 
-				return batch, nil
-			},
-		)
-		if err != nil {
-			return docgen.AssetListData{}, err
+			thirdPartyNames = append(thirdPartyNames, name)
 		}
 
-		thirdPartyNames := make([]string, 0, len(thirdParties))
-		for _, v := range thirdParties {
-			thirdPartyNames = append(thirdPartyNames, v.Name)
-		}
+		slices.Sort(thirdPartyNames)
 
 		thirdPartyStr := "-"
 		if len(thirdPartyNames) > 0 {
@@ -884,10 +941,10 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 		}
 
 		rows = append(rows, docgen.AssetListRow{
-			Name:            a.Name,
-			AssetType:       formatAssetType(a.Type),
-			Amount:          a.Amount,
-			DataTypesStored: stringOrNotSpecified(stringOrEmpty(a.DataTypesStored)),
+			Name:            asset.Name,
+			AssetType:       formatAssetType(asset.AssetType),
+			Amount:          asset.Amount,
+			DataTypesStored: stringOrNotSpecified(stringOrEmpty(asset.DataTypesStored)),
 			Owner:           ownerName,
 			ThirdParties:    thirdPartyStr,
 		})
@@ -896,7 +953,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	return docgen.AssetListData{
 		Title:            "Assets",
 		OrganizationName: organization.Name,
-		CreatedAt:        time.Now(),
+		CreatedAt:        snapshot.CapturedAt,
 		TotalAssets:      len(assets),
 		Rows:             rows,
 	}, nil

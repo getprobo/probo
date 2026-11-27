@@ -496,6 +496,9 @@ func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.Pub
 		input.OrganizationID,
 		input.ApproverIds,
 		input.Minor,
+		input.Name,
+		input.Note,
+		callerIdentityID(ctx),
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {

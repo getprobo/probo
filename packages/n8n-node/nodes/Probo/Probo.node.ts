@@ -143,6 +143,11 @@ export class Probo implements INodeType {
 						description: 'List asset change events',
 					},
 					{
+						name: 'Asset Snapshot',
+						value: 'assetSnapshot',
+						description: 'Read asset snapshots written by publish',
+					},
+					{
 						name: 'Attachment',
 						value: 'attachment',
 						description: 'Upload a file for rich text',

@@ -78,6 +78,8 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 		flagOrg      string
 		flagApprover []string
 		flagMinor    bool
+		flagName     string
+		flagNote     string
 	)
 
 	cmd := &cobra.Command{
@@ -121,6 +123,14 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 				input["approverIds"] = flagApprover
 			}
 
+			if flagName != "" {
+				input["name"] = flagName
+			}
+
+			if flagNote != "" {
+				input["note"] = flagNote
+			}
+
 			data, err := client.Do(
 				publishMutation,
 				map[string]any{"input": input},
@@ -150,6 +160,8 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringArrayVar(&flagApprover, "approver", nil, "Approver profile ID (can be repeated; ignored with --minor)")
 	cmd.Flags().BoolVar(&flagMinor, "minor", false, "Publish as a minor version (no approval flow)")
+	cmd.Flags().StringVar(&flagName, "name", "", "Optional name stored on the snapshot")
+	cmd.Flags().StringVar(&flagNote, "note", "", "Optional note stored on the snapshot")
 
 	return cmd
 }
