@@ -730,3 +730,61 @@ func caaRecord(tag, value string, flag uint8) *dns.CAA {
 
 	return caa
 }
+
+func TestLookupTXT(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns every txt record with strings concatenated", func(t *testing.T) {
+		t.Parallel()
+
+		first := &dns.TXT{Hdr: dns.Header{Name: "_email-verification.example.com."}}
+		first.Txt = []string{"iss=", "issuer.example"}
+
+		second := &dns.TXT{Hdr: dns.Header{Name: "_email-verification.example.com."}}
+		second.Txt = []string{"iss=other.example"}
+
+		client := &Client{
+			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
+				return &dns.Msg{Answer: []dns.RR{first, second}}, nil
+			},
+		}
+
+		values, err := client.LookupTXT(context.Background(), "_email-verification.example.com")
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"iss=issuer.example", "iss=other.example"}, values)
+	})
+
+	t.Run("ignores records owned by other names", func(t *testing.T) {
+		t.Parallel()
+
+		parent := &dns.TXT{Hdr: dns.Header{Name: "example.com."}}
+		parent.Txt = []string{"iss=issuer.example"}
+
+		client := &Client{
+			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
+				return &dns.Msg{Answer: []dns.RR{parent}}, nil
+			},
+		}
+
+		_, err := client.LookupTXT(context.Background(), "_email-verification.example.com")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrTXTNotFound)
+	})
+
+	t.Run("maps nxdomain to ErrTXTNotFound", func(t *testing.T) {
+		t.Parallel()
+
+		client := &Client{
+			exchange: func(_ context.Context, _ *dns.Msg, _ string) (*dns.Msg, error) {
+				return &dns.Msg{Rcode: dns.RcodeNameError}, nil
+			},
+		}
+
+		_, err := client.LookupTXT(context.Background(), "_email-verification.example.com")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrTXTNotFound)
+	})
+}

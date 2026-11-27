@@ -233,6 +233,21 @@ func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
 	return r.iam.IsSignUpEnabled(), nil
 }
 
+// SignUpEmailVerificationNonce is the resolver for the signUpEmailVerificationNonce field.
+func (r *queryResolver) SignUpEmailVerificationNonce(ctx context.Context) (*string, error) {
+	if !r.iam.IsSignUpEnabled() {
+		return nil, nil
+	}
+
+	nonce, err := r.iam.AuthService.NewEmailVerificationNonce()
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create email verification nonce", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &nonce, nil
+}
+
 // SlackbotAvailable is the resolver for the slackbotAvailable field.
 func (r *queryResolver) SlackbotAvailable(ctx context.Context) (bool, error) {
 	return r.slackbotAvailable, nil

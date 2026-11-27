@@ -22,16 +22,20 @@ package iam
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/emailverification"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
@@ -66,6 +70,13 @@ type (
 		Email    mail.Addr
 		Password string
 		FullName string
+		// EmailVerificationToken is the EVT~KB-JWT the browser produced for
+		// Email. An invalid token falls back to the confirmation email.
+		EmailVerificationToken *string
+	}
+
+	EmailVerificationNonceData struct {
+		Nonce string `json:"nonce"`
 	}
 
 	SendMagicLinkRequest struct {
@@ -91,8 +102,12 @@ const (
 	TokenTypeOrganizationInvitation = "organization_invitation"
 	TokenTypePasswordReset          = "password_reset"
 	TokenTypeMagicLink              = "magic_link"
+	TokenTypeEmailVerificationNonce = "email_verification_nonce"
 
 	magicLinkDefaultSenderName = "Probo"
+
+	emailVerificationNonceBytes    = 32
+	emailVerificationNonceValidity = time.Hour
 )
 
 func NewAuthService(svc *Service) *AuthService {
@@ -611,36 +626,40 @@ func (s AuthService) CreateIdentityWithPassword(
 		EmailAddress:         req.Email,
 		FullName:             req.FullName,
 		HashedPassword:       hashedPassword,
-		EmailAddressVerified: false,
+		EmailAddressVerified: s.emailVerifiedByToken(ctx, req),
 		CreatedAt:            now,
 		UpdatedAt:            now,
 	}
 
-	confirmationToken, err := statelesstoken.NewToken(
-		s.tokenSecret,
-		TokenTypeEmailConfirmation,
-		s.emailConfirmationTokenValidity,
-		EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate confirmation token: %w", err)
+	var confirmationEmail *coredata.Email
+
+	if !identity.EmailAddressVerified {
+		confirmationToken, err := statelesstoken.NewToken(
+			s.tokenSecret,
+			TokenTypeEmailConfirmation,
+			s.emailConfirmationTokenValidity,
+			EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot generate confirmation token: %w", err)
+		}
+
+		emailPresenter := emails.NewPresenter(s.baseURL, req.FullName)
+
+		subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
+		if err != nil {
+			return nil, fmt.Errorf("cannot render confirmation email: %w", err)
+		}
+
+		confirmationEmail = coredata.NewEmail(
+			req.FullName,
+			identity.EmailAddress,
+			subject,
+			textBody,
+			htmlBody,
+			nil,
+		)
 	}
-
-	emailPresenter := emails.NewPresenter(s.baseURL, req.FullName)
-
-	subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
-	if err != nil {
-		return nil, fmt.Errorf("cannot render confirmation email: %w", err)
-	}
-
-	confirmationEmail := coredata.NewEmail(
-		req.FullName,
-		identity.EmailAddress,
-		subject,
-		textBody,
-		htmlBody,
-		nil,
-	)
 
 	err = s.pg.WithTx(
 		ctx,
@@ -654,8 +673,10 @@ func (s AuthService) CreateIdentityWithPassword(
 				return fmt.Errorf("cannot insert identity: %w", err)
 			}
 
-			if err := confirmationEmail.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert email: %w", err)
+			if confirmationEmail != nil {
+				if err := confirmationEmail.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert email: %w", err)
+				}
 			}
 
 			return nil
@@ -666,6 +687,63 @@ func (s AuthService) CreateIdentityWithPassword(
 	}
 
 	return identity, nil
+}
+
+// NewEmailVerificationNonce returns a nonce for the sign-up form's
+// email-verification input. It is a signed, expiring token, so the nonce
+// the browser binds into the KB-JWT can be checked without server-side state.
+func (s AuthService) NewEmailVerificationNonce() (string, error) {
+	random := make([]byte, emailVerificationNonceBytes)
+	if _, err := rand.Read(random); err != nil {
+		return "", fmt.Errorf("cannot generate nonce: %w", err)
+	}
+
+	nonce, err := statelesstoken.NewToken(
+		s.tokenSecret,
+		TokenTypeEmailVerificationNonce,
+		emailVerificationNonceValidity,
+		EmailVerificationNonceData{Nonce: base64.RawURLEncoding.EncodeToString(random)},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot sign nonce: %w", err)
+	}
+
+	return nonce, nil
+}
+
+func (s AuthService) validateEmailVerificationNonce(nonce string) error {
+	_, err := statelesstoken.ValidateToken[EmailVerificationNonceData](
+		s.tokenSecret,
+		TokenTypeEmailVerificationNonce,
+		nonce,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot validate nonce: %w", err)
+	}
+
+	return nil
+}
+
+func (s AuthService) emailVerifiedByToken(ctx context.Context, req *CreateIdentityWithPasswordRequest) bool {
+	if req.EmailVerificationToken == nil || *req.EmailVerificationToken == "" {
+		return false
+	}
+
+	err := s.emailVerifier.Verify(
+		ctx,
+		emailverification.Request{
+			Token:         *req.EmailVerificationToken,
+			Email:         req.Email.String(),
+			Audience:      s.emailVerificationAudience,
+			ValidateNonce: s.validateEmailVerificationNonce,
+		},
+	)
+	if err != nil {
+		s.logger.InfoCtx(ctx, "email verification token rejected, sending confirmation email", log.Error(err))
+		return false
+	}
+
+	return true
 }
 
 func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID) (*coredata.Session, error) {

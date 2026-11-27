@@ -101,6 +101,7 @@ input SignUpInput {
   email: EmailAddr!
   password: String!
   fullName: String!
+  emailVerificationToken: String
 }
 
 input ActivateAccountFromInvitationInput {
