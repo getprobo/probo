@@ -299,7 +299,17 @@ func runMarkScenario(
 
 	document, err := engine.open(actor(1))
 	require.NoError(t, err)
-	closeDocument(t, document)
+
+	// Closed here rather than with closeDocument, whose t.Cleanup does not
+	// run until the test ends. TestRustText_MarkValuesMatchReferenceUnderErrors
+	// calls this 2000 times for each of two engines, so 4000 documents stayed
+	// open for the whole test and were closed in one go at the finish. For the
+	// reference engine each document is a wazero module instance with up to
+	// 64MB of linear memory, which took that test to 3987MB and the package to
+	// 9721MB of peak RSS.
+	defer func() {
+		require.NoError(t, document.Close())
+	}()
 
 	text, err := document.CreateText("text")
 	require.NoError(t, err)
