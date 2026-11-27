@@ -27,12 +27,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -357,14 +357,14 @@ func (s *Service) uploadBrandFile(
 		mimeType = mime.TypeByExtension(filepath.Ext(fileUpload.Filename))
 	}
 
-	_, err = s.s3.PutObject(
+	err = s.store.PutObject(
 		ctx,
-		&s3.PutObjectInput{
-			Bucket:       &s.bucket,
-			Key:          new(objectKey.String()),
-			Body:         fileUpload.Content,
-			ContentType:  &mimeType,
-			CacheControl: new("max-age=3600, public"),
+		s.bucket,
+		objectKey.String(),
+		fileUpload.Content,
+		objectstorage.PutOptions{
+			ContentType:  mimeType,
+			CacheControl: "max-age=3600, public",
 			Metadata: map[string]string{
 				"type":               fileType,
 				"employee-portal-id": portal.ID.String(),
@@ -373,16 +373,10 @@ func (s *Service) uploadBrandFile(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
+		return nil, fmt.Errorf("cannot upload file to object storage: %w", err)
 	}
 
-	headOutput, err := s.s3.HeadObject(
-		ctx,
-		&s3.HeadObjectInput{
-			Bucket: new(s.bucket),
-			Key:    new(objectKey.String()),
-		},
-	)
+	headOutput, err := s.store.HeadObject(ctx, s.bucket, objectKey.String())
 	if err != nil {
 		return nil, fmt.Errorf("cannot get object metadata: %w", err)
 	}
@@ -397,7 +391,7 @@ func (s *Service) uploadBrandFile(
 		MimeType:       mimeType,
 		FileName:       fileUpload.Filename,
 		FileKey:        objectKey.String(),
-		FileSize:       *headOutput.ContentLength,
+		FileSize:       headOutput.ContentLength,
 		Visibility:     coredata.FileVisibilityPublic,
 		CreatedAt:      now,
 		UpdatedAt:      now,

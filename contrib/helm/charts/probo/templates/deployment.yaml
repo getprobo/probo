@@ -259,7 +259,16 @@ spec:
               value: {{ .Values.probo.trustAuth.scope | quote }}
             - name: PROBOD_TRUST_AUTH_TOKEN_TYPE
               value: {{ .Values.probo.trustAuth.tokenType | quote }}
-            # AWS / S3 Storage
+            # Object storage
+            - name: PROBOD_STORAGE_PROVIDER
+              value: {{ .Values.storage.provider | default "s3" | quote }}
+            - name: PROBOD_STORAGE_BUCKET
+              value: {{ .Values.storage.bucket | default .Values.s3.bucket | quote }}
+            {{- if eq (.Values.storage.provider | default "s3") "azure" }}
+            - name: PROBOD_AZURE_STORAGE_ACCOUNT_URL
+              value: {{ .Values.storage.azure.accountUrl | required "storage.azure.accountUrl is required when storage.provider=azure" | quote }}
+            {{- end }}
+            # S3 storage
             - name: PROBOD_AWS_REGION
               value: {{ .Values.s3.region | quote }}
             - name: PROBOD_AWS_BUCKET

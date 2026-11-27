@@ -625,7 +625,17 @@ postgresql:
   # Or use caBundlePath to mount from a ConfigMap/Secret
   # caBundlePath: /etc/ssl/certs/ca-certificates.crt
 
-# S3 storage configuration
+# Object storage backend
+storage:
+  # Options are "s3" (default) and "azure".
+  provider: "s3"
+  # Shared S3 bucket / Azure Blob container name. Defaults to s3.bucket.
+  bucket: ""
+  azure:
+    # Blob service account URL. Uses the pod's Azure managed identity.
+    accountUrl: ""
+
+# S3 settings (used when storage.provider=s3; bucket is also the Azure fallback)
 # For production: Use external S3 (AWS S3, GCS, etc.)
 # For testing: Enable the included SeaweedFS chart
 s3:

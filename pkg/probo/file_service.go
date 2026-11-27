@@ -27,12 +27,12 @@ import (
 	"io"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -200,25 +200,22 @@ func (s FileService) UploadAndSaveFile(
 		return nil, fmt.Errorf("cannot validate file: %w", err)
 	}
 
-	_, err = s.svc.s3.PutObject(
+	err = s.svc.store.PutObject(
 		ctx,
-		&s3.PutObjectInput{
-			Bucket:       &s.svc.bucket,
-			Key:          new(objectKey.String()),
-			Body:         req.Content,
+		s.svc.bucket,
+		objectKey.String(),
+		req.Content,
+		objectstorage.PutOptions{
 			Metadata:     s3Metadata,
-			ContentType:  new(mimeType),
-			CacheControl: new("private, max-age=3600"),
+			ContentType:  mimeType,
+			CacheControl: "private, max-age=3600",
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
+		return nil, fmt.Errorf("cannot upload file to object storage: %w", err)
 	}
 
-	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: new(s.svc.bucket),
-		Key:    new(objectKey.String()),
-	})
+	headOutput, err := s.svc.store.HeadObject(ctx, s.svc.bucket, objectKey.String())
 	if err != nil {
 		return nil, fmt.Errorf("cannot get object metadata: %w", err)
 	}
@@ -252,7 +249,7 @@ func (s FileService) UploadAndSaveFile(
 				MimeType:       mimeType,
 				FileName:       req.Filename,
 				FileKey:        objectKey.String(),
-				FileSize:       *headOutput.ContentLength,
+				FileSize:       headOutput.ContentLength,
 				Visibility:     coredata.FileVisibilityPrivate,
 				CreatedAt:      now,
 				UpdatedAt:      now,

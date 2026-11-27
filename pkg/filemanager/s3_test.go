@@ -38,6 +38,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/objectstorage"
 )
 
 // withRequestChecksumCalculation sets the S3 client's RequestChecksumCalculation
@@ -74,7 +75,12 @@ func newTestS3Service(
 		},
 	)
 
-	return filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
+	return filemanager.NewService(
+		nil,
+		nil,
+		objectstorage.NewS3Store(s3Client),
+		log.NewLogger(log.WithOutput(io.Discard)),
+	)
 }
 
 func TestOpenFile_StreamsBody(t *testing.T) {

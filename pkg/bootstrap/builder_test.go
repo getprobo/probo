@@ -415,6 +415,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.AWS.Region)
 	assert.Empty(t, cfg.Probod.AWS.Bucket)
 	assert.False(t, cfg.Probod.AWS.UsePathStyle)
+	assert.Equal(t, probodconfig.StorageProviderS3, cfg.Probod.Storage.Provider)
+	assert.Equal(t, "probod", cfg.Probod.Storage.Bucket)
+	assert.Empty(t, cfg.Probod.Storage.AzureAccountURL)
 
 	// Notifications config
 	assert.Empty(t, cfg.Probod.Notifications.Mailer.SenderName)
@@ -581,6 +584,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AWS_SECRET_ACCESS_KEY"] = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 	env["PROBOD_AWS_ENDPOINT"] = "https://s3.example.com"
 	env["PROBOD_AWS_USE_PATH_STYLE"] = "true"
+	env["PROBOD_STORAGE_PROVIDER"] = "azure"
+	env["PROBOD_STORAGE_BUCKET"] = "probo-container"
+	env["PROBOD_AZURE_STORAGE_ACCOUNT_URL"] = "https://probo.blob.core.windows.net"
 	// Notifications
 	env["PROBOD_WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["PROBOD_WEBHOOK_REQUEST_TIMEOUT"] = "20"
@@ -745,6 +751,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", cfg.Probod.AWS.SecretAccessKey)
 	assert.Equal(t, "https://s3.example.com", cfg.Probod.AWS.Endpoint)
 	assert.True(t, cfg.Probod.AWS.UsePathStyle)
+	assert.Equal(t, probodconfig.StorageProviderAzure, cfg.Probod.Storage.Provider)
+	assert.Equal(t, "probo-container", cfg.Probod.Storage.Bucket)
+	assert.Equal(t, "https://probo.blob.core.windows.net", cfg.Probod.Storage.AzureAccountURL)
 	// Notifications
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, "https://example.com/feedback", cfg.Probod.Notifications.FeedbackURL)

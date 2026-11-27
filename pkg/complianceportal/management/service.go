@@ -20,7 +20,6 @@ package management
 import (
 	"io"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/bot"
@@ -28,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/objectstorage"
 )
 
 const (
@@ -44,7 +44,7 @@ type (
 	// methods on a single type.
 	Service struct {
 		pg            *pg.Client
-		s3            *s3.Client
+		store         objectstorage.Store
 		bucket        string
 		baseURL       string
 		baseDomain    string
@@ -75,7 +75,7 @@ type (
 
 func NewService(
 	pgClient *pg.Client,
-	s3Client *s3.Client,
+	store objectstorage.Store,
 	bucket string,
 	baseURL string,
 	baseDomain string,
@@ -87,7 +87,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		pg:          pgClient,
-		s3:          s3Client,
+		store:       store,
 		bucket:      bucket,
 		baseURL:     baseURL,
 		baseDomain:  baseDomain,

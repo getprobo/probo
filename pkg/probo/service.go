@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/collaboration"
@@ -41,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/objectstorage"
 )
 
 const (
@@ -75,7 +75,7 @@ type (
 
 	Service struct {
 		pg                              *pg.Client
-		s3                              *s3.Client
+		store                           objectstorage.Store
 		bucket                          string
 		encryptionKey                   cipher.EncryptionKey
 		baseURL                         string
@@ -124,7 +124,7 @@ func NewService(
 	ctx context.Context,
 	encryptionKey cipher.EncryptionKey,
 	pgClient *pg.Client,
-	s3Client *s3.Client,
+	store objectstorage.Store,
 	bucket string,
 	baseURL string,
 	llmClient *llm.Client,
@@ -146,7 +146,7 @@ func NewService(
 
 	svc := &Service{
 		pg:                pgClient,
-		s3:                s3Client,
+		store:             store,
 		bucket:            bucket,
 		encryptionKey:     encryptionKey,
 		baseURL:           baseURL,

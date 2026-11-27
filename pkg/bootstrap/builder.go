@@ -243,6 +243,16 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},
 			},
+			Storage: probodconfig.StorageConfig{
+				Provider: probodconfig.StorageProvider(
+					b.resolver.getEnvOrDefault("PROBOD_STORAGE_PROVIDER", string(probodconfig.StorageProviderS3)),
+				),
+				Bucket: b.resolver.getEnvOrDefault(
+					"PROBOD_STORAGE_BUCKET",
+					b.resolver.getEnvOrDefault("PROBOD_AWS_BUCKET", "probod"),
+				),
+				AzureAccountURL: b.resolver.getEnv("PROBOD_AZURE_STORAGE_ACCOUNT_URL"),
+			},
 			AWS: probodconfig.AWSConfig{
 				Region:          b.resolver.getEnv("PROBOD_AWS_REGION"),
 				Bucket:          b.resolver.getEnv("PROBOD_AWS_BUCKET"),
@@ -726,6 +736,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 
 	if err := cfg.Probod.Auth.Cookie.Validate(); err != nil {
 		return nil, fmt.Errorf("cannot validate auth cookie config: %w", err)
+	}
+
+	if err := cfg.Probod.Storage.Validate(); err != nil {
+		return nil, fmt.Errorf("cannot validate object storage config: %w", err)
 	}
 
 	return cfg, nil

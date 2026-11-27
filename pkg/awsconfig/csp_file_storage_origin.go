@@ -71,6 +71,27 @@ func CSPFileStorageOrigin(
 	return origin, nil
 }
 
+func CSPAzureStorageOrigin(accountURL string) (string, error) {
+	accountURL = strings.TrimSpace(accountURL)
+
+	parsed, err := url.Parse(accountURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid Azure Storage account URL: %w", err)
+	}
+
+	if parsed.Scheme != "https" || parsed.Host == "" ||
+		parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", fmt.Errorf("invalid Azure Storage account URL: must be HTTPS without userinfo, query, or fragment")
+	}
+
+	origin, err := baseurl.CSPOrigin(accountURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid Azure Storage account origin: %w", err)
+	}
+
+	return origin, nil
+}
+
 func fileStorageURL(
 	endpoint string,
 	region string,

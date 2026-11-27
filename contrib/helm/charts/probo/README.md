@@ -7,11 +7,12 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 - Kubernetes 1.23+
 - Helm 3.8+
 - External PostgreSQL database (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
-- S3 or S3-compatible object storage (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.)
+- Object storage (production): S3 or S3-compatible (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.), or Azure Blob Storage. By default the chart deploys bundled SeaweedFS for testing
 - OpenSSL installed (for generating secrets)
 
 > Azure Blob behind S3 compatibility proxies currently has known metadata
-> compatibility issues. Prefer native S3-compatible backends for production.
+> compatibility issues. On Azure, use the native backend
+> (`storage.provider: azure`) instead.
 
 ## Installing the Chart
 
@@ -172,13 +173,26 @@ The following parameters **must** be configured:
 | `postgresql.password` | PostgreSQL password |
 
 S3 credentials are conditionally required, and only when
-`seaweedfs.enabled=false`. The chart default (`seaweedfs.enabled=true`) deploys
-bundled SeaweedFS and does not read `s3.accessKeyId` or `s3.secretAccessKey`.
+`storage.provider=s3` and `seaweedfs.enabled=false`. The chart default
+(`seaweedfs.enabled=true`) deploys bundled SeaweedFS and does not read
+`s3.accessKeyId` or `s3.secretAccessKey`.
 On AWS, set `seaweedfs.enabled=false` and leave `s3.endpoint`,
 `s3.accessKeyId`, and `s3.secretAccessKey` blank to authenticate via EKS Pod
 Identity or IRSA. In that mode, setting only one of the two keys fails at
 install time. Off AWS, set `seaweedfs.enabled=false`, set `s3.endpoint`, and
 set both keys; an empty pair is rejected when `s3.endpoint` is set.
+
+Azure Blob Storage is also supported through the native Azure SDK. Disable
+SeaweedFS, set `storage.provider: azure`, set `storage.azure.accountUrl` to the
+Blob service endpoint, and use `storage.bucket` as the pre-created container
+name (or leave it blank to reuse `s3.bucket`).
+The pod uses `DefaultAzureCredential` (managed identity in Azure); assign it
+`Storage Blob Data Contributor` on the container and `Storage Blob Delegator`
+on the storage account so it can issue user-delegation SAS download URLs.
+The storage firewall must allow both the pod's outbound IPs and users'
+approved browser IPs; browsers download private files directly from Blob.
+Add a Blob service CORS rule that allows `GET` and `HEAD` from each public Probo
+origin, otherwise the browser blocks file previews.
 
 ### Secret Format Quick Reference
 
@@ -207,6 +221,9 @@ set both keys; an empty pair is rejected when `s3.endpoint` is set.
 | `s3.region`            | AWS region                      | `us-east-1` |
 | `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
 | `s3.usePathStyle`      | Use path-style URLs for selected S3-compatible backends | `false` |
+| `storage.provider`     | Object storage backend (`s3` or `azure`) | `s3` |
+| `storage.bucket`       | S3 bucket / Azure container name | `""` (uses `s3.bucket`) |
+| `storage.azure.accountUrl` | Azure Blob service endpoint | `""` |
 | `probo.openai.baseUrl` | OpenAI compatible endpoint (e.g. Azure OpenAI) | `""` (api.openai.com) |
 | `probo.anthropic.baseUrl` | Anthropic compatible endpoint | `""` (api.anthropic.com) |
 | `chrome.enabled`       | Deploy Chrome                   | `true` |
@@ -263,7 +280,8 @@ The chart deploys the following:
 ### External Dependencies (Required)
 
 - **PostgreSQL**: Managed database service
-- **S3 Storage**: Object storage for files and documents
+- **Object Storage**: S3 or Azure Blob Storage for files and documents
+  (bundled SeaweedFS can be used for testing)
 
 ## Database Management
 
@@ -336,7 +354,7 @@ helm upgrade probo . -f values-production.yaml
 helm uninstall probo
 ```
 
-**Note:** This does not delete your external PostgreSQL database or S3 bucket.
+**Note:** This does not delete your external PostgreSQL database, S3 bucket, or Azure Blob container.
 
 ## Troubleshooting
 
@@ -357,9 +375,9 @@ kubectl get secret probo -o yaml
 
 Check the Probo logs for database connection errors. The application will fail to start if it cannot connect to PostgreSQL.
 
-### Test S3 Connection
+### Test Object Storage Connection
 
-Check the Probo logs for S3 connection errors when uploading files.
+Check the Probo logs for S3 or Azure Blob errors when uploading files.
 
 ### `IP geolocation table is empty` warning
 

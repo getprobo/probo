@@ -22,6 +22,11 @@ package probod
 
 import "go.probo.inc/probo/pkg/probodconfig"
 
+const (
+	StorageProviderS3    = probodconfig.StorageProviderS3
+	StorageProviderAzure = probodconfig.StorageProviderAzure
+)
+
 type (
 	FullConfig                         = probodconfig.FullConfig
 	Config                             = probodconfig.Config
@@ -46,6 +51,8 @@ type (
 	PasswordConfig                     = probodconfig.PasswordConfig
 	PrivateKey                         = probodconfig.PrivateKey
 	RSAPrivateKey                      = probodconfig.RSAPrivateKey
+	StorageConfig                      = probodconfig.StorageConfig
+	StorageProvider                    = probodconfig.StorageProvider
 	AWSConfig                          = probodconfig.AWSConfig
 	ConnectorConfig                    = probodconfig.ConnectorConfig
 	ConnectorConfigOAuth2              = probodconfig.ConnectorConfigOAuth2

@@ -29,12 +29,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/objectstorage"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -223,7 +223,7 @@ func (s *Service) CreateFile(
 		},
 	)
 	if err != nil {
-		s.cleanupFileS3Object(ctx, scope, s3Key)
+		s.cleanupFileObject(ctx, scope, s3Key)
 		return nil, err
 	}
 
@@ -402,14 +402,14 @@ func (s *Service) uploadFile(
 		}
 	}
 
-	_, err = s.s3.PutObject(
+	err = s.store.PutObject(
 		ctx,
-		&s3.PutObjectInput{
-			Bucket:       new(s.bucket),
-			Key:          new(objectKey.String()),
-			Body:         fileContent,
-			ContentType:  new(contentType),
-			CacheControl: new("private, max-age=3600"),
+		s.bucket,
+		objectKey.String(),
+		fileContent,
+		objectstorage.PutOptions{
+			ContentType:  contentType,
+			CacheControl: "private, max-age=3600",
 			Metadata: map[string]string{
 				"type":                    "compliance-page-file",
 				"compliance-page-file-id": compliancePortalFileID.String(),
@@ -418,7 +418,7 @@ func (s *Service) uploadFile(
 		},
 	)
 	if err != nil {
-		return gid.GID{}, "", fmt.Errorf("cannot upload file to S3: %w", err)
+		return gid.GID{}, "", fmt.Errorf("cannot upload file to object storage: %w", err)
 	}
 
 	fileRecord := &coredata.File{
@@ -441,7 +441,7 @@ func (s *Service) uploadFile(
 	return fileID, objectKey.String(), nil
 }
 
-func (s *Service) cleanupFileS3Object(
+func (s *Service) cleanupFileObject(
 	ctx context.Context,
 	scope coredata.Scoper,
 	s3Key string,
@@ -450,11 +450,5 @@ func (s *Service) cleanupFileS3Object(
 		return
 	}
 
-	_, _ = s.s3.DeleteObject(
-		ctx,
-		&s3.DeleteObjectInput{
-			Bucket: new(s.bucket),
-			Key:    new(s3Key),
-		},
-	)
+	_ = s.store.DeleteObject(ctx, s.bucket, s3Key)
 }

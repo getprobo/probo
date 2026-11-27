@@ -14,7 +14,9 @@ Before deploying Probo, ensure you have:
 1. **Kubernetes Cluster** - Version 1.23+
 2. **Helm** - Version 3.8+
 3. **PostgreSQL Database** - Managed service (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
-4. **S3 Storage** - AWS S3 or S3-compatible storage (GCS, DigitalOcean Spaces, SeaweedFS, etc.)
+4. **Object Storage** (production) - AWS S3, S3-compatible storage (GCS,
+   DigitalOcean Spaces, SeaweedFS, etc.), or Azure Blob Storage. By default the
+   chart deploys bundled SeaweedFS for testing.
 
 ## Install
 
@@ -107,7 +109,7 @@ For production deployments, we recommend:
 2. **Edit the configuration:**
    - Set your domain name
    - Configure external PostgreSQL connection
-   - Configure S3 storage credentials
+   - Configure object storage (S3 or Azure Blob Storage)
    - Add SMTP settings for email
    - Enable ingress with TLS
    - Configure autoscaling
@@ -129,7 +131,8 @@ For production deployments, we recommend:
 ### External Dependencies (Required)
 
 - **PostgreSQL** - Managed database for compliance data
-- **S3 Storage** - Object storage for files and documents
+- **Object Storage** - S3 or Azure Blob Storage for files and documents
+  (bundled SeaweedFS can be used for testing)
 
 The chart is designed to work with managed cloud services, ensuring reliability and scalability.
 
@@ -183,8 +186,9 @@ All deployments require:
 - `postgresql.password` - Database password
 
 S3 credentials are conditionally required, and only when
-`seaweedfs.enabled=false`. The chart default (`seaweedfs.enabled=true`) deploys
-bundled SeaweedFS and does not read `s3.accessKeyId` or `s3.secretAccessKey`.
+`storage.provider=s3` and `seaweedfs.enabled=false`. The chart default
+(`seaweedfs.enabled=true`) deploys bundled SeaweedFS and does not read
+`s3.accessKeyId` or `s3.secretAccessKey`.
 On AWS, set `seaweedfs.enabled=false` and leave `s3.endpoint`,
 `s3.accessKeyId`, and `s3.secretAccessKey` blank to authenticate via EKS Pod
 Identity or IRSA. On other S3-compatible storage, set `s3.endpoint` and both
@@ -248,17 +252,22 @@ helm install my-probo ././charts/probo \
 
 ### Azure
 - PostgreSQL: Azure Database for PostgreSQL
-- Storage: Prefer native S3-compatible backends (Azure Blob via S3 proxies is
-  currently not officially supported)
+- Storage: Azure Blob Storage (native backend)
 - Kubernetes: Azure Kubernetes Service (AKS)
 
 #### Example
 
+The pod signs in to Blob Storage with `DefaultAzureCredential`, so no account
+key is needed. This example uses AKS workload identity: create a managed
+identity with a federated credential for the chart's service account. See the
+[Helm Chart Documentation](charts/probo/README.md) for the required roles,
+firewall rules and CORS rule.
 
 ```bash
 # Prerequisites:
 # - Azure Database for PostgreSQL instance
-# - Prefer AWS S3/GCS/Spaces (Azure Blob via S3 proxy is not officially supported)
+# - Storage account with a blob container
+# - AKS cluster with workload identity enabled
 helm install my-probo ././charts/probo \
   --set probo.encryptionKey="$ENCRYPTION_KEY" \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
@@ -267,16 +276,13 @@ helm install my-probo ././charts/probo \
   --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.host="mydb.postgres.database.azure.com" \
   --set postgresql.password="<azure-db-password>" \
-  --set s3.endpoint="https://<your-storage-account>.blob.core.windows.net" \
-  --set s3.bucket="my-probo-bucket" \
-  --set s3.accessKeyId="<azure-access-key>" \
-  --set s3.secretAccessKey="<azure-secret-key>" \
-  --set s3.usePathStyle=true
+  --set seaweedfs.enabled=false \
+  --set storage.provider=azure \
+  --set storage.bucket="my-probo-container" \
+  --set storage.azure.accountUrl="https://<your-storage-account>.blob.core.windows.net" \
+  --set-string serviceAccount.annotations."azure\.workload\.identity/client-id"="<client-id>" \
+  --set-string podLabels."azure\.workload\.identity/use"="true"
 ```
-
-> **Note:** `s3.usePathStyle=true` is necessary for some S3-compatible
-> providers, but it does not address known Azure Blob metadata incompatibilities
-> when used behind S3 proxies.
 
 ### DigitalOcean
 - PostgreSQL: Managed PostgreSQL Database
@@ -540,6 +546,9 @@ regenerate the config from all `PROBOD_*` env vars.
 | postgresql.auth.postgresUser                            | string  | `"probod"`                                         | PostgreSQL username                                                                                 |
 | postgresql.auth.postgresPassword                        | string  | `"probod"`                                         | PostgreSQL password                                                                                 |
 | postgresql.auth.database                                | string  | `"probod"`                                         | PostgreSQL database name                                                                            |
+| storage.provider                                        | string  | `"s3"`                                             | Object storage backend (`s3` or `azure`)                                                            |
+| storage.bucket                                          | string  | `""`                                               | S3 bucket or Azure container name (empty uses `s3.bucket`)                                          |
+| storage.azure.accountUrl                                | string  | `""`                                               | Azure Blob service endpoint, required when `storage.provider=azure`                                 |
 | s3.region                                               | string  | `"us-east-1"`                                      | S3 region                                                                                           |
 | s3.bucket                                               | string  | `"probod"`                                         | S3 bucket name                                                                                      |
 | s3.endpoint                                             | string  | `""`                                               | S3 endpoint (leave empty for AWS S3, set for S3-compatible storage)                                 |

@@ -23,8 +23,8 @@ package management
 import (
 	"io"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/objectstorage"
 )
 
 const (
@@ -35,7 +35,7 @@ const (
 type (
 	Service struct {
 		pg     *pg.Client
-		s3     *s3.Client
+		store  objectstorage.Store
 		bucket string
 	}
 
@@ -47,10 +47,10 @@ type (
 	}
 )
 
-func NewService(pgClient *pg.Client, s3Client *s3.Client, bucket string) *Service {
+func NewService(pgClient *pg.Client, store objectstorage.Store, bucket string) *Service {
 	return &Service{
 		pg:     pgClient,
-		s3:     s3Client,
+		store:  store,
 		bucket: bucket,
 	}
 }

@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/objectstorage"
 )
 
 func TestGenerateFileURL_PublicFile(t *testing.T) {
@@ -90,7 +91,12 @@ func TestGeneratePresignedURL_EscapesContentDispositionFilename(t *testing.T) {
 			Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
 		},
 	)
-	svc := filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
+	svc := filemanager.NewService(
+		nil,
+		nil,
+		objectstorage.NewS3Store(s3Client),
+		log.NewLogger(log.WithOutput(io.Discard)),
+	)
 	file := &coredata.File{
 		BucketName: "uploads",
 		FileKey:    "tenant/file",
@@ -126,7 +132,12 @@ func TestGeneratePresignedURL_DoesNotSignChecksumMode(t *testing.T) {
 			ResponseChecksumValidation: aws.ResponseChecksumValidationWhenSupported,
 		},
 	)
-	svc := filemanager.NewService(nil, nil, s3Client, log.NewLogger(log.WithOutput(io.Discard)))
+	svc := filemanager.NewService(
+		nil,
+		nil,
+		objectstorage.NewS3Store(s3Client),
+		log.NewLogger(log.WithOutput(io.Discard)),
+	)
 	file := &coredata.File{
 		BucketName: "uploads",
 		FileKey:    "tenant/file",

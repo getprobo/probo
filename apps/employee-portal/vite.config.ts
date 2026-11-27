@@ -171,11 +171,38 @@ function bucketIsVirtualHostable(bucket: string, https: boolean): boolean {
 }
 
 // Origin after private /api/files/v1/{id} 307s — mirrors
-// pkg/awsconfig.CSPFileStorageOrigin from PROBOD_AWS_*.
+// pkg/awsconfig storage origin helpers from PROBOD_AWS_* or Azure settings.
 function fileStorageOriginFromEnv(env: Record<string, string>): string {
+  const provider = env.PROBOD_STORAGE_PROVIDER?.trim() || "s3";
+  if (provider === "azure") {
+    const accountURL = env.PROBOD_AZURE_STORAGE_ACCOUNT_URL?.trim() ?? "";
+    if (!accountURL) {
+      return "";
+    }
+
+    const parsed = new URL(accountURL);
+    if (
+      parsed.protocol !== "https:"
+      || !parsed.host
+      || parsed.username
+      || parsed.password
+      || parsed.search
+      || parsed.hash
+      // Same characters as pkg/baseurl.CSPOrigin rejects.
+      || /[;,"'*]/.test(parsed.host)
+    ) {
+      return "";
+    }
+
+    return parsed.origin;
+  }
+
   const endpoint = env.PROBOD_AWS_ENDPOINT?.trim() ?? "";
   const region = env.PROBOD_AWS_REGION?.trim() || defaultAWSRegion;
-  const bucket = env.PROBOD_AWS_BUCKET?.trim() ?? "";
+  const bucket
+    = env.PROBOD_STORAGE_BUCKET?.trim()
+      || env.PROBOD_AWS_BUCKET?.trim()
+      || "";
   const usePathStyle = envBool(env.PROBOD_AWS_USE_PATH_STYLE, false);
 
   if (!bucket) {
