@@ -110,6 +110,37 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	return types.NewOrganization(org), nil
 }
 
+// ChangeEvents is the resolver for the changeEvents field.
+func (r *assetResolver) ChangeEvents(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetChangeEventOrderBy) (*types.AssetChangeEventConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAssetGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AssetChangeEventOrderField]{
+		Field:     coredata.AssetChangeEventOrderFieldObservedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetChangeEventOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	events, err := r.probo.Assets.ListChangeEvents(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list asset change events", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAssetChangeEventConnection(events, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *assetResolver) Permission(ctx context.Context, obj *types.Asset, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -270,6 +301,7 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			IdentityID:      callerIdentityID(ctx),
 		},
 	)
 	if err != nil {
@@ -304,6 +336,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			IdentityID:      callerIdentityID(ctx),
 		},
 	)
 	if err != nil {
@@ -328,7 +361,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 		return nil, err
 	}
 
-	if err := r.probo.Assets.Delete(ctx, scope, input.AssetID); err != nil {
+	if err := r.probo.Assets.Delete(ctx, scope, input.AssetID, callerIdentityID(ctx)); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete asset", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}

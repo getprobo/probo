@@ -2970,6 +2970,20 @@
       "delete": "Supprimer",
       "update": "Mettre à jour",
       "updating": "Mise à jour..."
+    },
+    "changeHistory": {
+      "title": "Historique des modifications",
+      "empty": "Aucune modification pour le moment.",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "before": "Avant",
+      "after": "Après",
+      "sync": "Synchronisation",
+      "types": {
+        "CREATED": "Créé",
+        "UPDATED": "Mis à jour",
+        "DEACTIVATED": "Désactivé"
+      }
     }
   },
   "assetsPage": {

@@ -734,6 +734,7 @@ func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, i
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			IdentityID:      callerIdentityID(ctx),
 		},
 	)
 	if err != nil {
@@ -763,6 +764,7 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			IdentityID:      callerIdentityID(ctx),
 		},
 	)
 	if err != nil {
@@ -5228,7 +5230,7 @@ func (r *Resolver) DeleteAssetTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
-	err = svc.Assets.Delete(ctx, scope, input.ID)
+	err = svc.Assets.Delete(ctx, scope, input.ID, callerIdentityID(ctx))
 	if err != nil {
 		return nil, types.DeleteAssetOutput{}, fmt.Errorf("failed to delete asset: %w", err)
 	}
@@ -9411,6 +9413,7 @@ func (r *Resolver) AddBusinessFunctionTool(ctx context.Context, req *mcp.CallToo
 			OwnerID:         input.OwnerID,
 			AssetIDs:        input.AssetIds,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			IdentityID:      callerIdentityID(ctx),
 		},
 	)
 	if err != nil {
@@ -9440,6 +9443,7 @@ func (r *Resolver) UpdateBusinessFunctionTool(ctx context.Context, req *mcp.Call
 		ImpactTolerance: UnwrapOmittable(input.ImpactTolerance),
 		Notes:           UnwrapOmittable(input.Notes),
 		OwnerID:         UnwrapOmittable(input.OwnerID),
+		IdentityID:      callerIdentityID(ctx),
 	}
 
 	if input.AssetIds != nil {
@@ -9468,7 +9472,7 @@ func (r *Resolver) DeleteBusinessFunctionTool(ctx context.Context, req *mcp.Call
 
 	svc := r.proboSvc
 
-	err = svc.BusinessFunctions.Delete(ctx, scope, input.ID)
+	err = svc.BusinessFunctions.Delete(ctx, scope, input.ID, callerIdentityID(ctx))
 	if err != nil {
 		return nil, types.DeleteBusinessFunctionOutput{}, fmt.Errorf("cannot delete business function: %w", err)
 	}
@@ -12796,5 +12800,57 @@ func (r *Resolver) DeleteThirdPartyAgreementTool(ctx context.Context, req *mcp.C
 
 	return nil, types.DeleteThirdPartyAgreementOutput{
 		DeletedThirdPartyAgreementID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) ListAssetChangeEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAssetChangeEventsInput) (*mcp.CallToolResult, types.ListAssetChangeEventsOutput, error) {
+	scope, err := r.Authorize(ctx, input.AssetID, probo.ActionAssetGet)
+	if err != nil {
+		return nil, types.ListAssetChangeEventsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AssetChangeEventOrderField]{
+		Field:     coredata.AssetChangeEventOrderFieldObservedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetChangeEventOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	eventPage, err := r.proboSvc.Assets.ListChangeEvents(ctx, scope, input.AssetID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list asset change events", log.Error(err))
+
+		return nil, types.ListAssetChangeEventsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListAssetChangeEventsOutput(eventPage), nil
+}
+
+func (r *Resolver) GetAssetChangeEventTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetChangeEventInput) (*mcp.CallToolResult, types.GetAssetChangeEventOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAssetGet)
+	if err != nil {
+		return nil, types.GetAssetChangeEventOutput{}, err
+	}
+
+	event, err := r.proboSvc.Assets.GetChangeEvent(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetAssetChangeEventOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get asset change event", log.Error(err))
+
+		return nil, types.GetAssetChangeEventOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.GetAssetChangeEventOutput{
+		AssetChangeEvent: types.NewAssetChangeEvent(event),
 	}, nil
 }

@@ -182,6 +182,7 @@ func (r *mutationResolver) CreateBusinessFunction(ctx context.Context, input typ
 		OwnerID:         input.OwnerID,
 		AssetIDs:        input.AssetIds,
 		ThirdPartyIDs:   input.ThirdPartyIds,
+		IdentityID:      callerIdentityID(ctx),
 	}
 
 	businessFunction, err := r.probo.BusinessFunctions.Create(ctx, scope, &req)
@@ -221,6 +222,7 @@ func (r *mutationResolver) UpdateBusinessFunction(ctx context.Context, input typ
 		ImpactTolerance: gqlx.UnwrapOmittable(input.ImpactTolerance),
 		Notes:           gqlx.UnwrapOmittable(input.Notes),
 		OwnerID:         gqlx.UnwrapOmittable(input.OwnerID),
+		IdentityID:      callerIdentityID(ctx),
 	}
 
 	if input.AssetIds != nil {
@@ -258,7 +260,7 @@ func (r *mutationResolver) DeleteBusinessFunction(ctx context.Context, input typ
 		return nil, err
 	}
 
-	if err := r.probo.BusinessFunctions.Delete(ctx, scope, input.BusinessFunctionID); err != nil {
+	if err := r.probo.BusinessFunctions.Delete(ctx, scope, input.BusinessFunctionID, callerIdentityID(ctx)); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete business function", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}

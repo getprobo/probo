@@ -87,6 +87,13 @@ type Asset implements Node & Taggable {
     assetType: AssetType!
     dataTypesStored: String
     organization: Organization! @goField(forceResolver: true)
+    changeEvents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetChangeEventOrder
+    ): AssetChangeEventConnection! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

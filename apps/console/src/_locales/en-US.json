@@ -1865,7 +1865,21 @@
     "validation": { "nameRequired": "Name is required", "amountRequired": "Amount is required", "dataTypesStoredRequired": "Data types stored is required", "ownerRequired": "Owner is required" },
     "assetTypes": { "physical": "Physical", "virtual": "Virtual" },
     "fields": { "name": "Name", "amount": "Amount", "assetType": "Asset Type", "dataTypesStored": "Data Types Stored", "owner": "Owner", "thirdParties": "Third parties" },
-    "actions": { "delete": "Delete", "update": "Update", "updating": "Updating..." }
+    "actions": { "delete": "Delete", "update": "Update", "updating": "Updating..." },
+    "changeHistory": {
+      "title": "Change history",
+      "empty": "No changes yet.",
+      "previous": "Previous",
+      "next": "Next",
+      "before": "Before",
+      "after": "After",
+      "sync": "Sync",
+      "types": {
+        "CREATED": "Created",
+        "UPDATED": "Updated",
+        "DEACTIVATED": "Deactivated"
+      }
+    }
   },
   "assetsPage": {
     "title": "Assets",

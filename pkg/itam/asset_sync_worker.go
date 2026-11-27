@@ -377,7 +377,22 @@ func (h *assetSyncHandler) store(
 			})
 		}
 
-		if err := assets.UpsertDiscovered(ctx, tx, scope); err != nil {
+		var existing coredata.Assets
+		if err := existing.LoadByDiscoveredIdentities(ctx, tx, scope, assets); err != nil {
+			return err
+		}
+
+		written, err := assets.UpsertDiscovered(ctx, tx, scope)
+		if err != nil {
+			return err
+		}
+
+		events, err := coredata.DiscoveredAssetChangeEvents(existing, written, sync.ID, now)
+		if err != nil {
+			return err
+		}
+
+		if err := events.Insert(ctx, tx, scope); err != nil {
 			return err
 		}
 

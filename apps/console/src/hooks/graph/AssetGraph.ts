@@ -79,6 +79,7 @@ export const assetNodeQuery = graphql`
         updatedAt
         canUpdate: permission(action: "core:asset:update")
         canDelete: permission(action: "core:asset:delete")
+        ...AssetChangeHistory_asset
       }
     }
   }
