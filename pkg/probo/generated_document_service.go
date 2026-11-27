@@ -820,16 +820,23 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	ownerIDs := make([]gid.GID, 0, len(assets))
 
 	ownerIDSet := make(map[gid.GID]struct{})
+
 	for _, a := range assets {
-		if _, ok := ownerIDSet[a.OwnerID]; !ok {
-			ownerIDs = append(ownerIDs, a.OwnerID)
-			ownerIDSet[a.OwnerID] = struct{}{}
+		if a.OwnerID == nil {
+			continue
+		}
+
+		if _, ok := ownerIDSet[*a.OwnerID]; !ok {
+			ownerIDs = append(ownerIDs, *a.OwnerID)
+			ownerIDSet[*a.OwnerID] = struct{}{}
 		}
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-		return docgen.AssetListData{}, fmt.Errorf("cannot load profiles: %w", err)
+	if len(ownerIDs) > 0 {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.AssetListData{}, fmt.Errorf("cannot load profiles: %w", err)
+		}
 	}
 
 	profileMap := make(map[gid.GID]*coredata.MembershipProfile, len(profiles))
@@ -840,8 +847,11 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	rows := make([]docgen.AssetListRow, 0, len(assets))
 	for _, a := range assets {
 		ownerName := "-"
-		if p, ok := profileMap[a.OwnerID]; ok && p.FullName != "" {
-			ownerName = p.FullName
+
+		if a.OwnerID != nil {
+			if p, ok := profileMap[*a.OwnerID]; ok && p.FullName != "" {
+				ownerName = p.FullName
+			}
 		}
 
 		thirdParties, err := page.LoadAll(
@@ -877,7 +887,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			Name:            a.Name,
 			AssetType:       formatAssetType(a.AssetType),
 			Amount:          a.Amount,
-			DataTypesStored: stringOrNotSpecified(a.DataTypesStored),
+			DataTypesStored: stringOrNotSpecified(stringOrEmpty(a.DataTypesStored)),
 			Owner:           ownerName,
 			ThirdParties:    thirdPartyStr,
 		})
@@ -3637,6 +3647,14 @@ func latestActiveThirdPartyRiskAssessment(
 	}
 
 	return latest
+}
+
+func stringOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+
+	return *s
 }
 
 func stringOrNotSpecified(s string) string {

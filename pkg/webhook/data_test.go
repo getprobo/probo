@@ -170,7 +170,7 @@ func insertTestOrganization(t *testing.T, client *pg.Client) gid.GID {
 		func(ctx context.Context, conn pg.Querier) error {
 			_, err := conn.Exec(
 				ctx,
-				`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+				`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled) VALUES ($1, $2, $3, $4, $5, false)`,
 				orgID.String(),
 				tenantID.String(),
 				"test-org-"+orgID.String(),

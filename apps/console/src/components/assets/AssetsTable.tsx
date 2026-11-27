@@ -65,15 +65,30 @@ type Props = {
   assets: AssetsPageFragment$data["assets"]["edges"][0]["node"][];
 };
 
-const schema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  amount: z.coerce.number().min(1, "Amount is required"),
-  assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
-  ownerId: z.string().trim().min(1, "Owner is required"),
-  thirdPartyIds: z.array(z.string()).optional(),
-  dataTypesStored: z.string().trim().min(1, "Data types stored is required"),
-  organizationId: z.string().trim().min(1, "Organization is required"),
-});
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    amount: z.coerce.number().min(1, "Amount is required"),
+    assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
+    ownerId: z.string(),
+    thirdPartyIds: z.array(z.string()).optional(),
+    dataTypesStored: z.string(),
+    organizationId: z.string().trim().min(1, "Organization is required"),
+  })
+  .transform((input) => {
+    const ownerId = input.ownerId.trim();
+    const dataTypesStored = input.dataTypesStored.trim();
+
+    return {
+      name: input.name,
+      amount: input.amount,
+      assetType: input.assetType,
+      organizationId: input.organizationId,
+      thirdPartyIds: input.thirdPartyIds,
+      ...(ownerId ? { ownerId } : {}),
+      ...(dataTypesStored ? { dataTypesStored } : {}),
+    };
+  });
 
 const defaultValue = {
   name: "",
@@ -149,7 +164,6 @@ export function AssetsTable(props: Props) {
           <TextCell
             name="dataTypesStored"
             defaultValue={item?.dataTypesStored ?? defaultValue.dataTypesStored}
-            required
           />
           <TextCell
             name="amount"
@@ -158,7 +172,7 @@ export function AssetsTable(props: Props) {
           />
           <PeopleCell
             name="ownerId"
-            defaultValue={item?.owner}
+            defaultValue={item?.owner ?? undefined}
             organizationId={organizationId}
           />
           <ThirdPartiesCell

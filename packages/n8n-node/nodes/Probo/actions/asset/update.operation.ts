@@ -61,11 +61,29 @@ export const description: INodeProperties[] = [
 		default: 0,
 		description: 'The amount of the asset',
 	},
+	{
+		displayName: 'Clear Owner',
+		name: 'clearOwner',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['asset'],
+				operation: ['update'],
+			},
+		},
+		default: false,
+		description: 'Whether to clear the asset owner instead of assigning one',
+	},
 	personLocator({
 		displayName: 'Owner',
-		resource: ['asset'],
-		operation: ['update'],
 		required: false,
+		displayOptions: {
+			show: {
+				resource: ['asset'],
+				operation: ['update'],
+				clearOwner: [false],
+			},
+		},
 	}),
 	{
 		displayName: 'Asset Type',
@@ -154,7 +172,7 @@ export async function execute(
 	const id = this.getNodeParameter('id', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const amount = this.getNodeParameter('amount', itemIndex, 0) as number;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
+	const clearOwner = this.getNodeParameter('clearOwner', itemIndex, false) as boolean;
 	const assetType = this.getNodeParameter('assetType', itemIndex, '') as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex, '') as string;
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;
@@ -200,10 +218,15 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string | number | string[]> = { id };
+	const input: Record<string, string | number | string[] | null> = { id };
 	if (name) input.name = name;
 	if (amount) input.amount = amount;
-	if (ownerId) input.ownerId = ownerId;
+	if (clearOwner) {
+		input.ownerId = null;
+	} else {
+		const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
+		if (ownerId) input.ownerId = ownerId;
+	}
 	if (assetType) input.assetType = assetType;
 	if (dataTypesStored) input.dataTypesStored = dataTypesStored;
 	if (thirdPartyIdsStr) {

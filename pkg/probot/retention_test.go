@@ -179,8 +179,8 @@ func TestRetentionHandlerPreservesReceiptsBeyondReplayState(t *testing.T) {
 			func(ctx context.Context, tx pg.Tx) error {
 				if _, err := tx.Exec(
 					ctx,
-					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
-					 VALUES ($1, $2, $3, $4, $4)`,
+					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled)
+					 VALUES ($1, $2, $3, $4, $4, false)`,
 					organizationID,
 					tenantID,
 					"retention-"+organizationID.String(),
