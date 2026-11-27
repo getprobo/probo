@@ -59,6 +59,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Owner',
 		resource: ['asset'],
 		operation: ['create'],
+		required: false,
 	}),
 	{
 		displayName: 'Asset Type',
@@ -96,7 +97,6 @@ export const description: INodeProperties[] = [
 		},
 		default: '',
 		description: 'The types of data stored in the asset',
-		required: true,
 	},
 	{
 		displayName: 'ThirdParty IDs',
@@ -204,9 +204,9 @@ export async function execute(
 			organizationId,
 			name,
 			amount,
-			ownerId,
 			assetType,
-			dataTypesStored,
+			...(ownerId ? { ownerId } : {}),
+			...(dataTypesStored ? { dataTypesStored } : {}),
 			...(thirdPartyIds && thirdPartyIds.length > 0 && { thirdPartyIds }),
 		},
 	};

@@ -3600,9 +3600,7 @@ components:
         - organization_id
         - name
         - amount
-        - owner_id
         - asset_type
-        - data_types_stored
         - created_at
         - updated_at
       properties:
@@ -3690,9 +3688,7 @@ components:
         - organization_id
         - name
         - amount
-        - owner_id
         - asset_type
-        - data_types_stored
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -3746,6 +3742,7 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
+          go.probo.inc/mcpgen/omittable: true
         asset_type:
           $ref: "#/components/schemas/AssetType"
           description: Asset type

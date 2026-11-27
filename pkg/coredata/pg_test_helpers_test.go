@@ -60,7 +60,7 @@ func insertIdleExecution(
 		func(ctx context.Context, tx pg.Tx) error {
 			if _, err := tx.Exec(
 				ctx,
-				`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+				`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled) VALUES ($1, $2, $3, $4, $5, false)`,
 				orgID.String(), tenantID.String(), "test-org-"+orgID.String(), now, now,
 			); err != nil {
 				return fmt.Errorf("cannot insert placeholder organization: %w", err)

@@ -146,7 +146,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 				if flagOwner == "" {
 					err := huh.NewInput().
-						Title("Owner profile ID").
+						Title("Owner profile ID (optional)").
 						Value(&flagOwner).
 						Run()
 					if err != nil {
@@ -156,7 +156,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 				if flagDataTypesStored == "" {
 					err := huh.NewInput().
-						Title("Data types stored").
+						Title("Data types stored (optional)").
 						Value(&flagDataTypesStored).
 						Run()
 					if err != nil {
@@ -177,21 +177,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("amount must be at least 1; pass --amount")
 			}
 
-			if flagOwner == "" {
-				return fmt.Errorf("owner is required; pass --owner or run interactively")
-			}
-
-			if flagDataTypesStored == "" {
-				return fmt.Errorf("data types stored is required; pass --data-types-stored or run interactively")
-			}
-
 			input := map[string]any{
-				"organizationId":  flagOrg,
-				"name":            flagName,
-				"assetType":       flagAssetType,
-				"amount":          flagAmount,
-				"ownerId":         flagOwner,
-				"dataTypesStored": flagDataTypesStored,
+				"organizationId": flagOrg,
+				"name":           flagName,
+				"assetType":      flagAssetType,
+				"amount":         flagAmount,
+			}
+
+			if flagOwner != "" {
+				input["ownerId"] = flagOwner
+			}
+
+			if flagDataTypesStored != "" {
+				input["dataTypesStored"] = flagDataTypesStored
 			}
 
 			if len(flagThirdPartyIDs) > 0 {
@@ -227,8 +225,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Asset name (required)")
 	cmd.Flags().StringVar(&flagAssetType, "asset-type", "", "Asset type: PHYSICAL, VIRTUAL (required)")
 	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount (required, at least 1)")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (required)")
-	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored (required)")
+	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
+	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored")
 	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "Third party IDs (comma-separated)")
 
 	return cmd

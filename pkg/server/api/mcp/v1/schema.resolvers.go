@@ -759,7 +759,7 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 			ID:              input.ID,
 			Name:            input.Name,
 			Amount:          input.Amount,
-			OwnerID:         input.OwnerID,
+			OwnerID:         UnwrapOmittable(input.OwnerID),
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,

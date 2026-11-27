@@ -150,7 +150,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Asset name")
 	cmd.Flags().StringVar(&flagAssetType, "asset-type", "", "Asset type: PHYSICAL, VIRTUAL")
 	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
+	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID. An empty value clears the owner.")
 	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored")
 	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "Third party IDs (comma-separated)")
 

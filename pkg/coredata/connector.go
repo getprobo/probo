@@ -969,3 +969,43 @@ ORDER BY
 
 	return nil
 }
+
+// LoadConnectorIDsByProvider lists every connector of provider. The asset
+// sync claim has no tenant scope, so this is not limited to one organization.
+func LoadConnectorIDsByProvider(
+	ctx context.Context,
+	conn pg.Querier,
+	provider ConnectorProvider,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    id
+FROM
+    connectors
+WHERE
+    provider = @provider
+ORDER BY
+    id
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"provider": provider})
+	if err != nil {
+		return nil, fmt.Errorf("cannot query connector ids: %w", err)
+	}
+
+	type connectorID struct {
+		ID gid.GID `db:"id"`
+	}
+
+	collected, err := pgx.CollectRows(rows, pgx.RowToStructByName[connectorID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect connector ids: %w", err)
+	}
+
+	ids := make([]gid.GID, len(collected))
+	for i, row := range collected {
+		ids[i] = row.ID
+	}
+
+	return ids, nil
+}

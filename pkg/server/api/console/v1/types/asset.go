@@ -66,16 +66,19 @@ func NewAssetEdge(asset *coredata.Asset, orderField coredata.AssetOrderField) *A
 }
 
 func NewAsset(asset *coredata.Asset) *Asset {
-	return &Asset{
-		ID:     asset.ID,
-		Name:   asset.Name,
-		Amount: asset.Amount,
-		Owner: &Profile{
-			ID: asset.OwnerID,
-		},
+	node := &Asset{
+		ID:              asset.ID,
+		Name:            asset.Name,
+		Amount:          asset.Amount,
 		AssetType:       asset.AssetType,
 		DataTypesStored: asset.DataTypesStored,
 		CreatedAt:       asset.CreatedAt,
 		UpdatedAt:       asset.UpdatedAt,
 	}
+
+	if asset.OwnerID != nil {
+		node.Owner = &Profile{ID: *asset.OwnerID}
+	}
+
+	return node
 }

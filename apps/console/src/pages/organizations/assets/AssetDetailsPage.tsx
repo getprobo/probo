@@ -66,11 +66,8 @@ export default function AssetDetailsPage(props: Props) {
     name: z.string().min(1, t("assetDetailsPage.validation.nameRequired")),
     amount: z.number().min(1, t("assetDetailsPage.validation.amountRequired")),
     assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
-    dataTypesStored: z.string().min(
-      1,
-      t("assetDetailsPage.validation.dataTypesStoredRequired"),
-    ),
-    ownerId: z.string().min(1, t("assetDetailsPage.validation.ownerRequired")),
+    dataTypesStored: z.string(),
+    ownerId: z.string().nullable(),
     thirdPartyIds: z.array(z.string()).optional(),
   });
 
@@ -90,7 +87,7 @@ export default function AssetDetailsPage(props: Props) {
         amount: assetEntry.amount || 0,
         assetType: assetEntry.assetType || "VIRTUAL",
         dataTypesStored: assetEntry.dataTypesStored || "",
-        ownerId: assetEntry.owner?.id || "",
+        ownerId: assetEntry.owner?.id ?? null,
         thirdPartyIds: thirdPartyIds,
       },
     });
@@ -98,11 +95,17 @@ export default function AssetDetailsPage(props: Props) {
   const updateAsset = useUpdateAsset();
 
   const onSubmit = handleSubmit(async (formData) => {
+    const saved = {
+      ...formData,
+      ownerId: formData.ownerId || null,
+      dataTypesStored: formData.dataTypesStored.trim(),
+    };
+
     await updateAsset({
       id: assetEntry.id!,
-      ...formData,
+      ...saved,
     });
-    reset(formData);
+    reset(saved);
   });
 
   return (
@@ -173,6 +176,7 @@ export default function AssetDetailsPage(props: Props) {
           control={control}
           name="ownerId"
           label={t("assetDetailsPage.fields.owner")}
+          optional
           disabled={!assetEntry.canUpdate}
         />
 

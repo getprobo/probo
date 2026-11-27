@@ -151,8 +151,8 @@ func insertRetentionOrganization(
 			func(ctx context.Context, tx pg.Tx) error {
 				_, err := tx.Exec(
 					ctx,
-					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
-					 VALUES ($1, $2, $3, $4, $5)`,
+					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled)
+					 VALUES ($1, $2, $3, $4, $5, false)`,
 					org.organizationID.String(),
 					org.tenantID.String(),
 					"audit-log-retention-"+org.organizationID.String(),
