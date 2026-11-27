@@ -42,6 +42,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -152,7 +153,11 @@ func NewMux(
 
 	r := chi.NewMux()
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
-	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
+	r.Use(
+		authn.NewIdentityPresenceMiddlewareWithMetadataURL(
+			baseURL.WithPath(oauth2.MCPProtectedResourceMetadataPath).MustString(),
+		),
+	)
 	r.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := gqlx.WithHTTPContext(req.Context(), w, req)
 

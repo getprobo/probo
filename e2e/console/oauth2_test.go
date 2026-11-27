@@ -133,11 +133,17 @@ func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
 
 	defer func() { _ = resp.Body.Close() }()
 
+	mcpMetadataURL, err := url.JoinPath(
+		owner.BaseURL(),
+		"/.well-known/oauth-protected-resource/api/mcp/v1",
+	)
+	require.NoError(t, err)
+
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-	assert.Contains(
+	assert.Equal(
 		t,
+		`Bearer resource_metadata="`+mcpMetadataURL+`"`,
 		resp.Header.Get("WWW-Authenticate"),
-		"/.well-known/oauth-protected-resource",
 	)
 
 	mcpMetadata, mcpRaw, err := testutil.OAuth2ProtectedResourceMetadataAt(

@@ -21,6 +21,7 @@
 package oauth2
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,24 @@ func TestMCPResource(t *testing.T) {
 	got, err := MCPResource("https://auth.example.com")
 	require.NoError(t, err)
 	assert.Equal(t, uri.URI("https://auth.example.com/api/mcp/v1"), got)
+}
+
+func TestMCPProtectedResourceMetadataPath(t *testing.T) {
+	t.Parallel()
+
+	resource, err := MCPResource("https://auth.example.com")
+	require.NoError(t, err)
+
+	parsed, err := url.Parse(resource.String())
+	require.NoError(t, err)
+
+	// RFC 9728 section 3.1: insert the well-known suffix between the host
+	// and the path of the resource identifier.
+	assert.Equal(
+		t,
+		"/.well-known/oauth-protected-resource"+parsed.Path,
+		MCPProtectedResourceMetadataPath,
+	)
 }
 
 func TestServiceProtectedResource(t *testing.T) {

@@ -25,6 +25,12 @@ import (
 	"go.probo.inc/probo/pkg/uri"
 )
 
+// MCPProtectedResourceMetadataPath is where the metadata for MCPResource is
+// published: the well-known suffix followed by the resource path, as RFC 9728
+// section 3.1 derives it. The MCP endpoint's 401 challenge must point here so
+// clients discover the same resource as RFC 9728 path-based lookup.
+const MCPProtectedResourceMetadataPath = "/.well-known/oauth-protected-resource/api/mcp/v1"
+
 // ProtectedResourceMetadata represents the RFC 9728 protected resource metadata
 // document published at /.well-known/oauth-protected-resource.
 type ProtectedResourceMetadata struct {
