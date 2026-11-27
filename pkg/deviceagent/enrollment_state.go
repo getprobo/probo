@@ -55,6 +55,24 @@ func EnrollmentRunDir(configDir string) string {
 	return filepath.Join(filepath.Dir(configDir), "run", filepath.Base(configDir))
 }
 
+// ConfigDirForRunDir maps a public run directory back to the state
+// directory that produced it. The default run directory maps to the
+// default state directory. A custom run directory uses the sibling
+// layout from EnrollmentRunDir. Any other layout returns an empty
+// string so the caller does not guess the production directory.
+func ConfigDirForRunDir(runDir string) string {
+	if runDir == "" || runDir == DefaultEnrollmentRunDir() {
+		return DefaultConfigDir()
+	}
+
+	parent := filepath.Dir(runDir)
+	if filepath.Base(parent) != "run" {
+		return ""
+	}
+
+	return filepath.Join(filepath.Dir(parent), filepath.Base(runDir))
+}
+
 func enrollmentMarkerPath(runDir string) string {
 	if runDir == "" {
 		runDir = DefaultEnrollmentRunDir()

@@ -106,6 +106,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newUninstallCmd())
 	root.AddCommand(newRunCmd())
 	root.AddCommand(newStatusCmd())
+	root.AddCommand(newDiagnosticsCmd())
 	root.AddCommand(newCollectCmd())
 	root.AddCommand(newUpdateCmd())
 	root.AddCommand(newEnrollURLCmd())
@@ -629,35 +630,12 @@ func newStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "Print the agent's local state",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dir := resolveDir(cmd)
-
-			cfg, err := deviceagent.LoadConfig(dir)
+			text, err := deviceagent.FormatStatus(resolveDir(cmd))
 			if err != nil {
-				return fmt.Errorf("cannot load config: %w", err)
+				return err
 			}
 
-			items, err := deviceagent.LoadEnrollments(dir)
-			if err != nil {
-				return fmt.Errorf("cannot load enrollments: %w", err)
-			}
-
-			if len(items) == 0 {
-				fmt.Printf("Enrollments:          0\n")
-			}
-
-			for i, item := range items {
-				fmt.Printf("Enrollment %d:\n", i+1)
-				fmt.Printf("  Server URL:           %s\n", item.ServerURL)
-				fmt.Printf("  Device ID:            %s\n", item.DeviceID)
-				fmt.Printf("  API key on disk:      %v\n", item.APIKey != "")
-			}
-
-			fmt.Printf("Heartbeat interval:   %s\n", cfg.HeartbeatInterval)
-			fmt.Printf("Posture interval:     %s\n", cfg.PostureInterval)
-			fmt.Printf("Update interval:      %s\n", cfg.UpdateInterval)
-			fmt.Printf("Auto-update enabled:  %v\n", !cfg.UpdatesDisabled)
-			fmt.Printf("Allow prereleases:    %v\n", cfg.AllowPrereleases)
-			fmt.Printf("Config directory:     %s\n", dir)
+			fmt.Print(text)
 
 			return nil
 		},

@@ -24,6 +24,7 @@ package tray
 
 import (
 	"fmt"
+	"os/exec"
 
 	"go.probo.inc/probo/pkg/deviceagent/win32"
 	"golang.org/x/sys/windows"
@@ -39,6 +40,19 @@ func showAbout(version string) {
 		message,
 		windows.MB_OK|windows.MB_ICONINFORMATION,
 	)
+}
+
+func showSupportBundleSaved(path string) {
+	message := path + "\r\n\r\nAttach this file to your support request."
+	_, _ = win32.MessageBox(
+		"Probo Device Posture Agent",
+		message,
+		windows.MB_OK|windows.MB_ICONINFORMATION,
+	)
+}
+
+func revealSupportBundle(path string) {
+	_ = exec.Command("explorer.exe", "/select,"+path).Start()
 }
 
 func showEnrollmentError(message string) {

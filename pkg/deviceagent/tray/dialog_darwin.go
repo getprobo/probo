@@ -40,6 +40,23 @@ func showAbout(version string) {
 	_ = exec.Command(path, "-e", script).Run()
 }
 
+func showSupportBundleSaved(path string) {
+	pathBin, ok := osascriptPath()
+	if !ok {
+		return
+	}
+
+	script := fmt.Sprintf(
+		`display alert "Probo Device Posture Agent" message %q buttons {"OK"} default button "OK"`,
+		path+"\n\nAttach this file to your support request.",
+	)
+	_ = exec.Command(pathBin, "-e", script).Run()
+}
+
+func revealSupportBundle(path string) {
+	_ = exec.Command("/usr/bin/open", "-R", path).Run()
+}
+
 func showEnrollmentError(message string) {
 	path, ok := osascriptPath()
 	if !ok {

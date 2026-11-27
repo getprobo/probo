@@ -5,6 +5,18 @@ documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `probo-agent diagnostics` writes `probo-support-<UTC timestamp>.txt`
+  to the signed-in user's Desktop, or to their home directory when
+  the Desktop cannot be used, and prints the path. The macOS and
+  Windows tray item "Save support bundle…" runs that command as the
+  signed-in user. The file records host identity, including the
+  hardware UUID and serial number, whether the enrollment marker
+  is present, whether the service unit is installed, and the last
+  200 service-log records. Heartbeat failures and posture summaries
+  stay in that log.
+
 ## [0.11.0-rc.1] - 2026-11-26
 
 ### Changed
