@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export type { Detector } from "./detector";
-export { CookieDetector } from "./cookie-detector";
-export { StorageDetector } from "./storage-detector";
+export type { Detector } from "./detector.js";
+export { CookieDetector } from "./cookie-detector.js";
+export { StorageDetector } from "./storage-detector.js";
 export {
   ResourceDetector,
   resolveResourceReportingEnabled,
   shouldStartResourceDetector,
-} from "./resource-detector";
-export { ReportQueue } from "./report-queue";
+} from "./resource-detector.js";
+export { ReportQueue } from "./report-queue.js";
 export type {
   CookieSource,
   DetectedCookieEntry,
@@ -34,4 +34,4 @@ export type {
   DetectedStorageEntry,
   ResourceType,
   StorageType,
-} from "./types";
+} from "./types.js";

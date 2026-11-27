@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getTCFRuntime } from "../addons";
-import { CookieBannerClient } from "../client";
-import { resolveGcmEnabled } from "../integrations";
-import { resolveLayout } from "../layout";
-import type { BannerConfig, BannerLayout, Regulation } from "../types";
-import { ProboElement } from "./base";
-import type { ProboState, ProboRootElement, ConsentDraft } from "./base";
+import { getTCFRuntime } from "../addons/index.js";
+import { CookieBannerClient } from "../client.js";
+import { resolveGcmEnabled } from "../integrations/index.js";
+import { resolveLayout } from "../layout.js";
+import type { BannerConfig, BannerLayout, Regulation } from "../types.js";
+import { ProboElement } from "./base.js";
+import type { ProboState, ProboRootElement, ConsentDraft } from "./base.js";
 
 function uiVisible(state: ProboState): boolean {
   return state === "banner" || state === "panel" || state === "privacy_choices";

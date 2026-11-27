@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Category } from "../types";
+import type { Category } from "../types.js";
 
 export interface ConsentIntegration {
   /** Called eagerly before config fetch to deny all tracking by default. */

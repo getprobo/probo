@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { interpolate } from "../../i18n";
-import { CHEVRON_DOWN } from "../../html";
-import type { BannerConfig } from "../../types";
+import { interpolate } from "../../i18n.js";
+import { CHEVRON_DOWN } from "../../html.js";
+import type { BannerConfig } from "../../types.js";
 
 export function esc(str: string): string {
   return str

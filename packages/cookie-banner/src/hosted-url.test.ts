@@ -20,7 +20,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { rewriteLegacyConsoleHost } from "./hosted-url";
+import { rewriteLegacyConsoleHost } from "./hosted-url.js";
 
 describe("rewriteLegacyConsoleHost", () => {
   it("rewrites the EU console host", () => {

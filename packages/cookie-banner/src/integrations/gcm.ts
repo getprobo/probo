@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Category } from "../types";
-import type { ConsentIntegration } from "./integration";
+import type { Category } from "../types.js";
+import type { ConsentIntegration } from "./integration.js";
 
 export class GoogleConsentModeIntegration implements ConsentIntegration {
   private hasMapping(categories: Category[]): boolean {

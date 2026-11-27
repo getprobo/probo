@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getSelfResourceUrls } from "./self-origin";
+import { getSelfResourceUrls } from "./self-origin.js";
 
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 const STACK_URL_RE =

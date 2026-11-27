@@ -20,9 +20,9 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { StorageDetector } from "./storage-detector";
-import type { ReportQueue } from "./report-queue";
-import type { DetectedStorageEntry } from "./types";
+import { StorageDetector } from "./storage-detector.js";
+import type { ReportQueue } from "./report-queue.js";
+import type { DetectedStorageEntry } from "./types.js";
 
 class MemoryStorage {
   private readonly data = new Map<string, string>();

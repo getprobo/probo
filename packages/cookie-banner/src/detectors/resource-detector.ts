@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig } from "../types";
-import type { Detector } from "./detector";
-import { isExtensionContext } from "./extension-context";
-import type { ReportQueue } from "./report-queue";
-import { getSelfResourceUrls } from "./self-origin";
-import type { ResourceType } from "./types";
+import type { BannerConfig } from "../types.js";
+import type { Detector } from "./detector.js";
+import { isExtensionContext } from "./extension-context.js";
+import type { ReportQueue } from "./report-queue.js";
+import { getSelfResourceUrls } from "./self-origin.js";
+import type { ResourceType } from "./types.js";
 
 let warnedResourceReporting = false;
 

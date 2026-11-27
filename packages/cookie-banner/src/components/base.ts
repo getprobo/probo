@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { CookieBannerClient } from "../client";
-import type { BannerConfig, BannerLayout, Regulation } from "../types";
+import type { CookieBannerClient } from "../client.js";
+import type { BannerConfig, BannerLayout, Regulation } from "../types.js";
 
 export type ProboState = "loading" | "banner" | "panel" | "privacy_choices" | "hidden";
 

@@ -20,7 +20,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ReportQueue } from "./report-queue";
+import { ReportQueue } from "./report-queue.js";
 
 describe("ReportQueue", () => {
   afterEach(() => {

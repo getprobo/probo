@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { COOKIE_NAME } from "./cookie";
-import { rewriteLegacyConsoleHost } from "./hosted-url";
-import { fetchJSON } from "./http";
+import { COOKIE_NAME } from "./cookie.js";
+import { rewriteLegacyConsoleHost } from "./hosted-url.js";
+import { fetchJSON } from "./http.js";
 const MAX_QUEUE_SIZE = 10;
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 

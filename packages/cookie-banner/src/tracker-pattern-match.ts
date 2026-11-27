@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Category } from "./types";
+import type { Category } from "./types.js";
 
 // globMatch follows the server's single-star tracker patterns: each * is one
 // wildcard, and a name without * is exact.

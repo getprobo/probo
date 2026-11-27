@@ -21,10 +21,10 @@
 import {
   deactivateElements,
   observeAndActivate,
-} from "./activation";
-import { getConsent } from "./consent";
-import { COOKIE_NAME, getConsentCookie, setConsentCookie, type ConsentCookie } from "./cookie";
-import type { Detector } from "./detectors";
+} from "./activation.js";
+import { getConsent } from "./consent.js";
+import { COOKIE_NAME, getConsentCookie, setConsentCookie, type ConsentCookie } from "./cookie.js";
+import type { Detector } from "./detectors/index.js";
 import {
   CookieDetector,
   ReportQueue,
@@ -32,18 +32,18 @@ import {
   resolveResourceReportingEnabled,
   shouldStartResourceDetector,
   StorageDetector,
-} from "./detectors";
-import { NotFoundError } from "./errors";
-import { rewriteLegacyConsoleHost } from "./hosted-url";
-import { fetchJSON } from "./http";
-import { detectLanguage } from "./i18n";
-import type { ConsentIntegration } from "./integrations";
-import { createDefaultIntegrations } from "./integrations";
-import { resolveLayout } from "./layout";
-import { enqueue, flush } from "./queue";
-import { getTCFRuntime } from "./addons";
-import { projectConsentFromTCF } from "./project-consent";
-import { selectTrackerCategory } from "./tracker-pattern-match";
+} from "./detectors/index.js";
+import { NotFoundError } from "./errors.js";
+import { rewriteLegacyConsoleHost } from "./hosted-url.js";
+import { fetchJSON } from "./http.js";
+import { detectLanguage } from "./i18n.js";
+import type { ConsentIntegration } from "./integrations/index.js";
+import { createDefaultIntegrations } from "./integrations/index.js";
+import { resolveLayout } from "./layout.js";
+import { enqueue, flush } from "./queue.js";
+import { getTCFRuntime } from "./addons/index.js";
+import { projectConsentFromTCF } from "./project-consent.js";
+import { selectTrackerCategory } from "./tracker-pattern-match.js";
 import type {
   BannerConfig,
   ConsentAction,
@@ -51,8 +51,8 @@ import type {
   CookieBannerClientOptions,
   Regulation,
   VisitorConsent,
-} from "./types";
-import { getOrCreateVisitorId, getVisitorId } from "./visitor";
+} from "./types.js";
+import { getOrCreateVisitorId, getVisitorId } from "./visitor.js";
 
 function tcfProjects(config: BannerConfig): boolean {
   return !!config.tcf?.gvl &&
@@ -68,7 +68,7 @@ export type {
   CookieItem,
   Regulation,
   VisitorConsent,
-} from "./types";
+} from "./types.js";
 
 // Normalize fields that older self-hosted backends may omit so the rest of the
 // client can read `layout` and `resource_reporting_enabled` without re-checking.

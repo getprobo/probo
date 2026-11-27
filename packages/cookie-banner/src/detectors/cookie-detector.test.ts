@@ -20,10 +20,10 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { COOKIE_NAME } from "../cookie";
-import { CookieDetector } from "./cookie-detector";
-import { ReportQueue } from "./report-queue";
-import type { DetectedCookieEntry } from "./types";
+import { COOKIE_NAME } from "../cookie.js";
+import { CookieDetector } from "./cookie-detector.js";
+import { ReportQueue } from "./report-queue.js";
+import type { DetectedCookieEntry } from "./types.js";
 
 interface CookieChangeLike {
   changed: Array<{ name: string; expires: number | null; domain: string | null }>;

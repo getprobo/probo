@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig, ConsentAction } from "../types";
+import type { BannerConfig, ConsentAction } from "../types.js";
 
 export interface TCFChoices {
   purposeConsents: number[];

@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BRANDING } from "../../html";
-import { getDismissLabel } from "../../i18n";
-import type { BannerConfig } from "../../types";
-import { esc, floatingCard } from "./shared";
+import { BRANDING } from "../../html.js";
+import { getDismissLabel } from "../../i18n.js";
+import type { BannerConfig } from "../../types.js";
+import { esc, floatingCard } from "./shared.js";
 
 // Notice-only (implied consent): trackers fire immediately; the visitor merely
 // acknowledges an informational banner. No reject, customize, or panel.
