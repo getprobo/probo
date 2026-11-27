@@ -885,7 +885,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 
 		rows = append(rows, docgen.AssetListRow{
 			Name:            a.Name,
-			AssetType:       formatAssetType(a.AssetType),
+			AssetType:       formatAssetType(a.Type),
 			Amount:          a.Amount,
 			DataTypesStored: stringOrNotSpecified(stringOrEmpty(a.DataTypesStored)),
 			Owner:           ownerName,

@@ -80,7 +80,7 @@ func TestAssetSync_RecordsDiscoveredRow(t *testing.T) {
 	sync := loadLatestSync(t, seeded)
 
 	assert.Equal(t, 1, asset.Amount)
-	assert.Equal(t, coredata.AssetTypeVirtual, asset.AssetType)
+	assert.Equal(t, coredata.AssetTypeVirtual, asset.Type)
 	assert.Equal(t, coredata.AssetStatusActive, asset.Status)
 	require.NotNil(t, asset.ConnectorID)
 	assert.Equal(t, seeded.account.ConnectorID, *asset.ConnectorID)

@@ -251,7 +251,7 @@ func (s AssetService) Update(
 		}
 
 		if req.AssetType != nil {
-			asset.AssetType = *req.AssetType
+			asset.Type = *req.AssetType
 		}
 
 		if req.DataTypesStored != nil {
@@ -313,7 +313,7 @@ func (s AssetService) Create(
 		Name:            req.Name,
 		Amount:          req.Amount,
 		OwnerID:         req.OwnerID,
-		AssetType:       req.AssetType,
+		Type:            req.AssetType,
 		DataTypesStored: blankToNil(req.DataTypesStored),
 		Status:          coredata.AssetStatusActive,
 		CreatedAt:       now,
