@@ -167,6 +167,10 @@ export const description: INodeProperties[] = [
 				type: 'options',
 				options: [
 					{
+						name: '(Unchanged)',
+						value: '',
+					},
+					{
 						name: 'Active',
 						value: 'ACTIVE',
 					},
@@ -175,8 +179,8 @@ export const description: INodeProperties[] = [
 						value: 'DEACTIVATED',
 					},
 				],
-				default: 'ACTIVE',
-				description: 'ACTIVE puts the asset back in search. DEACTIVATED removes it. Leave this unset to keep the current status.',
+				default: '',
+				description: 'ACTIVE puts the asset back in search. DEACTIVATED removes it. Unchanged keeps the current status.',
 			},
 		],
 	},
@@ -227,6 +231,7 @@ export async function execute(
 					amount
 					assetType
 					dataTypesStored
+					status
 					${ownerFragment}
 					${thirdPartiesFragment}
 					createdAt
