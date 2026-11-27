@@ -3573,6 +3573,13 @@ components:
         - VIRTUAL
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetType
 
+    AssetStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - DEACTIVATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetStatus
+
     AssetOrderField:
       type: string
       enum:
@@ -3601,6 +3608,7 @@ components:
         - name
         - amount
         - asset_type
+        - status
         - created_at
         - updated_at
       properties:
@@ -3625,6 +3633,9 @@ components:
         data_types_stored:
           type: string
           description: Data types stored
+        status:
+          $ref: "#/components/schemas/AssetStatus"
+          description: Asset status. ACTIVE assets are in the default list and the search index. DEACTIVATED assets stay loadable by ID.
         created_at:
           type: string
           format: date-time
@@ -3749,6 +3760,9 @@ components:
         data_types_stored:
           type: string
           description: Data types stored
+        status:
+          $ref: "#/components/schemas/AssetStatus"
+          description: Asset status. Omit it to keep the current status. ACTIVE restores the search row. DEACTIVATED removes it.
         third_party_ids:
           type: array
           items:

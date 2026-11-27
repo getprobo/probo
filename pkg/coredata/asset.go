@@ -841,6 +841,7 @@ SET
 	amount = @amount,
 	asset_type = @asset_type,
 	data_types_stored = @data_types_stored,
+	status = @status,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -874,6 +875,7 @@ RETURNING
 		"amount":            a.Amount,
 		"asset_type":        a.Type,
 		"data_types_stored": a.DataTypesStored,
+		"status":            a.Status,
 		"updated_at":        time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())

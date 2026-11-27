@@ -764,6 +764,7 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			Status:          input.Status,
 			IdentityID:      callerIdentityID(ctx),
 		},
 	)

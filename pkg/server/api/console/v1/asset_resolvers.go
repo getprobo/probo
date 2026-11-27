@@ -336,6 +336,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 			AssetType:       input.AssetType,
 			DataTypesStored: input.DataTypesStored,
 			ThirdPartyIDs:   input.ThirdPartyIds,
+			Status:          input.Status,
 			IdentityID:      callerIdentityID(ctx),
 		},
 	)

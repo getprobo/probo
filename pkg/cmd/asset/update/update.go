@@ -60,6 +60,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagAmount          int
 		flagOwner           string
 		flagDataTypesStored string
+		flagStatus          string
 		flagThirdPartyIDs   []string
 	)
 
@@ -114,6 +115,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["dataTypesStored"] = flagDataTypesStored
 			}
 
+			if cmd.Flags().Changed("status") {
+				input["status"] = flagStatus
+			}
+
 			if cmd.Flags().Changed("third-party-ids") {
 				input["thirdPartyIds"] = flagThirdPartyIDs
 			}
@@ -152,6 +157,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID. An empty value clears the owner.")
 	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored")
+	cmd.Flags().StringVar(&flagStatus, "status", "", "Asset status: ACTIVE, DEACTIVATED")
 	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "Third party IDs (comma-separated)")
 
 	return cmd

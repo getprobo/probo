@@ -57,6 +57,7 @@ type UpdateAssetRequest struct {
 	AssetType       *coredata.AssetType
 	DataTypesStored *string
 	ThirdPartyIDs   []gid.GID
+	Status          *coredata.AssetStatus
 	IdentityID      *gid.GID
 }
 
@@ -89,6 +90,7 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v.Check(uar.Amount, "amount", validator.Min(1))
 	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))
+	v.Check(uar.Status, "status", validator.OneOfSlice(coredata.AssetStatuses()))
 	v.Check(uar.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 
 	if uar.DataTypesStored != nil && strings.TrimSpace(*uar.DataTypesStored) != "" {
@@ -263,19 +265,16 @@ func (s AssetService) Update(
 			asset.DataTypesStored = blankToNil(req.DataTypesStored)
 		}
 
+		if req.Status != nil {
+			asset.Status = *req.Status
+		}
+
 		if err := asset.Update(ctx, conn, scope); err != nil {
 			return fmt.Errorf("cannot update asset: %w", err)
 		}
 
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			conn,
-			asset.ID,
-			asset.OrganizationID,
-			asset.Name,
-			asset.SearchText(),
-		); err != nil {
-			return fmt.Errorf("cannot sync search: %w", err)
+		if err := syncAssetSearch(ctx, conn, asset); err != nil {
+			return err
 		}
 
 		change := coredata.AssetChangeInput{}
@@ -511,6 +510,33 @@ func (s AssetService) CountChangeEvents(
 	}
 
 	return count, nil
+}
+
+func syncAssetSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	asset *coredata.Asset,
+) error {
+	if asset.Status == coredata.AssetStatusActive {
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			asset.ID,
+			asset.OrganizationID,
+			asset.Name,
+			asset.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
+		return nil
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, asset.ID); err != nil {
+		return fmt.Errorf("cannot sync search: %w", err)
+	}
+
+	return nil
 }
 
 func blankToNil(value *string) *string {

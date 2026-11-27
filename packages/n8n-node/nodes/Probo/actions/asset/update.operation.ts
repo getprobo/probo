@@ -161,6 +161,23 @@ export const description: INodeProperties[] = [
 				default: false,
 				description: 'Whether to include thirdParties in the response',
 			},
+			{
+				displayName: 'Status',
+				name: 'status',
+				type: 'options',
+				options: [
+					{
+						name: 'Active',
+						value: 'ACTIVE',
+					},
+					{
+						name: 'Deactivated',
+						value: 'DEACTIVATED',
+					},
+				],
+				default: 'ACTIVE',
+				description: 'ACTIVE puts the asset back in search. DEACTIVATED removes it. Leave this unset to keep the current status.',
+			},
 		],
 	},
 ];
@@ -179,6 +196,7 @@ export async function execute(
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;
 		includeThirdParties?: boolean;
+		status?: string;
 	};
 
 	const ownerFragment = options.includeOwner
@@ -229,6 +247,7 @@ export async function execute(
 	}
 	if (assetType) input.assetType = assetType;
 	if (dataTypesStored) input.dataTypesStored = dataTypesStored;
+	if (options.status) input.status = options.status;
 	if (thirdPartyIdsStr) {
 		const thirdPartyIds = thirdPartyIdsStr.split(',').map((vid) => vid.trim()).filter(Boolean);
 		if (thirdPartyIds.length > 0) input.thirdPartyIds = thirdPartyIds;
