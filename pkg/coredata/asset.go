@@ -46,7 +46,7 @@ type (
 		Amount          int             `db:"amount"`
 		OwnerID         *gid.GID        `db:"owner_profile_id"`
 		OrganizationID  gid.GID         `db:"organization_id"`
-		Type            AssetType       `db:"asset_type"`
+		AssetType       AssetType       `db:"asset_type"`
 		DataTypesStored *string         `db:"data_types_stored"`
 		Kind            *string         `db:"kind"`
 		ExternalID      *string         `db:"external_id"`
@@ -392,7 +392,7 @@ INSERT INTO assets (
 		"name":              a.Name,
 		"owner_profile_id":  a.OwnerID,
 		"amount":            a.Amount,
-		"asset_type":        a.Type,
+		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
 		"kind":              a.Kind,
 		"external_id":       a.ExternalID,
@@ -509,7 +509,7 @@ func upsertDiscoveredBatch(
 		ids[i] = asset.ID.String()
 		names[i] = asset.Name
 		organizationIDs[i] = asset.OrganizationID.String()
-		assetTypes[i] = string(asset.Type)
+		assetTypes[i] = string(asset.AssetType)
 		kinds[i] = *asset.Kind
 		externalIDs[i] = *asset.ExternalID
 		regions[i] = asset.Region
@@ -740,7 +740,7 @@ RETURNING
 		"name":              a.Name,
 		"owner_profile_id":  a.OwnerID,
 		"amount":            a.Amount,
-		"asset_type":        a.Type,
+		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
 		"updated_at":        time.Now(),
 	}

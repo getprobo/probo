@@ -363,7 +363,7 @@ func (h *assetSyncHandler) store(
 				OrganizationID: account.OrganizationID,
 				Name:           item.observation.Name,
 				Amount:         1,
-				Type:           coredata.AssetTypeVirtual,
+				AssetType:      coredata.AssetTypeVirtual,
 				Kind:           &item.kind,
 				ExternalID:     &item.observation.ExternalID,
 				Region:         item.observation.Region,

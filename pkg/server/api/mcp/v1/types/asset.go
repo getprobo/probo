@@ -32,7 +32,7 @@ func NewAsset(a *coredata.Asset) *Asset {
 		Amount:          a.Amount,
 		OwnerID:         a.OwnerID,
 		OrganizationID:  a.OrganizationID,
-		AssetType:       a.Type,
+		AssetType:       a.AssetType,
 		DataTypesStored: a.DataTypesStored,
 		CreatedAt:       a.CreatedAt,
 		UpdatedAt:       a.UpdatedAt,
