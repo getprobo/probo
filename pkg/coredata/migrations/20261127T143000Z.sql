@@ -19,11 +19,9 @@
 -- SOFTWARE.
 
 -- Asset inventory stays off until an operator turns it on in the database.
--- Existing organizations are backfilled false. The default is then dropped
--- so a new organization insert sets the column itself. There is no API for
--- this flag.
+-- Existing organizations are backfilled false. The DEFAULT stays: probod
+-- deploys blue/green, and pods still running the previous release insert
+-- organizations without this column until the rollout finishes. A later
+-- migration drops it. New inserts may still set the column explicitly.
 ALTER TABLE organizations
     ADD COLUMN asset_inventory_enabled BOOLEAN NOT NULL DEFAULT FALSE;
-
-ALTER TABLE organizations
-    ALTER COLUMN asset_inventory_enabled DROP DEFAULT;

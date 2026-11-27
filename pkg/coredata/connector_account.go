@@ -968,35 +968,21 @@ func (a *ConnectorAccount) LoadNextDueForAssetSyncForUpdateSkipLocked(
 		return ErrResourceNotFound
 	}
 
-	organizationIDs, err := LoadOrganizationIDsWithAssetInventoryEnabled(ctx, conn)
-	if err != nil {
-		return err
-	}
-
-	if len(organizationIDs) == 0 {
-		return ErrResourceNotFound
-	}
-
 	connectorIDText := make([]string, len(connectorIDs))
 	for i, id := range connectorIDs {
 		connectorIDText[i] = id.String()
 	}
 
-	organizationIDText := make([]string, len(organizationIDs))
-	for i, id := range organizationIDs {
-		organizationIDText[i] = id.String()
-	}
-
 	args := pgx.StrictNamedArgs{
-		"connector_ids":      connectorIDText,
-		"organization_ids":   organizationIDText,
-		"only_account_id":    onlyAccount,
-		"due_before":         dueBefore,
-		"stale_error":        staleError,
-		"max_stale_attempts": maxStaleAttempts,
-		"running_status":     AssetSyncStatusRunning,
-		"succeeded_status":   AssetSyncStatusSucceeded,
-		"failed_status":      AssetSyncStatusFailed,
+		"connector_ids":           connectorIDText,
+		"asset_inventory_enabled": true,
+		"only_account_id":         onlyAccount,
+		"due_before":              dueBefore,
+		"stale_error":             staleError,
+		"max_stale_attempts":      maxStaleAttempts,
+		"running_status":          AssetSyncStatusRunning,
+		"succeeded_status":        AssetSyncStatusSucceeded,
+		"failed_status":           AssetSyncStatusFailed,
 	}
 
 	q := `
@@ -1015,7 +1001,12 @@ FROM
     connector_accounts a
 WHERE
     a.connector_id = ANY(@connector_ids::text[])
-    AND a.organization_id = ANY(@organization_ids::text[])
+    AND EXISTS (
+        SELECT 1
+        FROM organizations o
+        WHERE o.id = a.organization_id
+            AND o.asset_inventory_enabled = @asset_inventory_enabled
+    )
     AND (
         @only_account_id::text IS NULL
         OR a.id = @only_account_id
