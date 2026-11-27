@@ -1,0 +1,45 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.bitwarden.eu
+        headers:
+            Accept:
+                - application/json
+        url: https://api.bitwarden.eu/public/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1552
+        body: '{"data":[{"collections":[],"email":"member1@example.com","externalId":null,"id":"00000000-0000-0000-0000-000000000001","name":null,"object":"member","permissions":null,"resetPasswordEnrolled":false,"ssoExternalId":null,"status":0,"twoFactorEnabled":false,"type":1,"userId":null},{"collections":[],"email":"member2@example.com","externalId":null,"id":"00000000-0000-0000-0000-000000000002","name":null,"object":"member","permissions":null,"resetPasswordEnrolled":false,"ssoExternalId":null,"status":-1,"twoFactorEnabled":false,"type":2,"userId":null},{"collections":[],"email":"member3@example.com","externalId":null,"id":"00000000-0000-0000-0000-000000000003","name":null,"object":"member","permissions":{"accessEventLogs":false,"accessImportExport":false,"accessReports":false,"createNewCollections":false,"deleteAnyCollection":false,"editAnyCollection":false,"manageAccessRules":false,"manageGroups":false,"managePolicies":false,"manageResetPassword":false,"manageScim":false,"manageSso":false,"manageUsers":true},"resetPasswordEnrolled":false,"ssoExternalId":null,"status":0,"twoFactorEnabled":false,"type":4,"userId":null},{"collections":[{"hidePasswords":false,"id":"00000000-0000-0000-0002-000000000001","manage":true,"readOnly":false}],"email":"member4@example.com","externalId":null,"id":"00000000-0000-0000-0000-000000000004","name":"Member 4","object":"member","permissions":null,"resetPasswordEnrolled":false,"ssoExternalId":null,"status":2,"twoFactorEnabled":false,"type":0,"userId":"00000000-0000-0000-0001-000000000004"}],"object":"list"}'
+        headers:
+            Accept-Ranges:
+                - bytes
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 12 Nov 2026 19:06:07 GMT
+            Strict-Transport-Security:
+                - max-age=31536000
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Rate-Limit-Limit:
+                - 1m
+            X-Rate-Limit-Remaining:
+                - "799"
+            X-Rate-Limit-Reset:
+                - "2026-11-12T19:07:00.0000000Z"
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 485.4475ms

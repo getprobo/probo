@@ -81,6 +81,11 @@ type (
 		Region    string `json:"region"`
 	}
 
+	BitwardenConnectorSettings struct {
+		Region         string `json:"region"`
+		OrganizationID string `json:"organization_id"`
+	}
+
 	GitLabConnectorSettings struct {
 		GroupID string `json:"group_id"`
 	}
