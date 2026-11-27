@@ -81,10 +81,6 @@ export async function execute(
 								capturedAt
 								name
 								note
-								actor {
-									id
-									fullName
-								}
 							}
 						}
 						pageInfo {

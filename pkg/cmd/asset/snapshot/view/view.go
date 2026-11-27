@@ -144,23 +144,29 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("asset snapshot %s not found", args[0])
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				assets, _, _, err := api.Paginate(
-					client,
-					assetsQuery,
-					map[string]any{"id": args[0]},
-					flagLimit,
-					flagAfter,
-					api.NodeConnection[copiedAsset]("assets", "AssetSnapshot", fmt.Sprintf("asset snapshot %s not found", args[0])),
-				)
-				if err != nil {
-					return err
-				}
+			assets, totalCount, nextCursor, err := api.Paginate(
+				client,
+				assetsQuery,
+				map[string]any{"id": args[0]},
+				flagLimit,
+				flagAfter,
+				api.NodeConnection[copiedAsset]("assets", "AssetSnapshot", fmt.Sprintf("asset snapshot %s not found", args[0])),
+			)
+			if err != nil {
+				return err
+			}
 
-				return cmdutil.PrintJSON(f.IOStreams.Out, map[string]any{
+			if *flagOutput == cmdutil.OutputJSON {
+				payload := map[string]any{
 					"snapshot": resp.Node,
 					"assets":   assets,
-				})
+					"total":    totalCount,
+				}
+				if nextCursor != "" {
+					payload["nextCursor"] = nextCursor
+				}
+
+				return cmdutil.PrintJSON(f.IOStreams.Out, payload)
 			}
 
 			name := ""
@@ -187,18 +193,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				note,
 				actorName,
 			)
-
-			assets, totalCount, nextCursor, err := api.Paginate(
-				client,
-				assetsQuery,
-				map[string]any{"id": args[0]},
-				flagLimit,
-				flagAfter,
-				api.NodeConnection[copiedAsset]("assets", "AssetSnapshot", fmt.Sprintf("asset snapshot %s not found", args[0])),
-			)
-			if err != nil {
-				return err
-			}
 
 			return cmdutil.PrintList(
 				f.IOStreams,

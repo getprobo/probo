@@ -86,10 +86,6 @@ export async function execute(
 					capturedAt
 					name
 					note
-					actor {
-						id
-						fullName
-					}
 				}
 			}
 		}
@@ -135,10 +131,6 @@ export async function execute(
 								thirdPartyIds
 								businessFunctionIds
 								tagIds
-								owner {
-									id
-									fullName
-								}
 							}
 						}
 						pageInfo {

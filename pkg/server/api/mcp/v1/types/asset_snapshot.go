@@ -21,8 +21,9 @@
 package types
 
 import (
+	"fmt"
+
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -37,7 +38,22 @@ func NewAssetSnapshot(snapshot *coredata.AssetSnapshot) *AssetSnapshot {
 	}
 }
 
-func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) *AssetSnapshotAsset {
+func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) (*AssetSnapshotAsset, error) {
+	thirdParties, err := asset.ThirdParties()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read snapshot third parties: %w", err)
+	}
+
+	businessFunctions, err := asset.BusinessFunctions()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read snapshot business functions: %w", err)
+	}
+
+	tags, err := asset.Tags()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read snapshot tags: %w", err)
+	}
+
 	return &AssetSnapshotAsset{
 		ID:                  asset.ID,
 		SnapshotID:          asset.SnapshotID,
@@ -56,12 +72,12 @@ func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) *AssetSnapshotAss
 		LastSeenAt:          asset.LastSeenAt,
 		Status:              asset.Status,
 		ConnectorID:         asset.ConnectorID,
-		ThirdPartyIds:       mustStoredGIDs(asset.ThirdPartyIDs),
-		BusinessFunctionIds: mustStoredGIDs(asset.BusinessFunctionIDs),
-		TagIds:              mustStoredGIDs(asset.TagIDs),
+		ThirdPartyIds:       thirdParties,
+		BusinessFunctionIds: businessFunctions,
+		TagIds:              tags,
 		AssetCreatedAt:      asset.AssetCreatedAt,
 		AssetUpdatedAt:      asset.AssetUpdatedAt,
-	}
+	}, nil
 }
 
 func NewListAssetSnapshotsOutput(
@@ -88,10 +104,15 @@ func NewListAssetSnapshotsOutput(
 func NewGetAssetSnapshotOutput(
 	snapshot *coredata.AssetSnapshot,
 	assetPage *page.Page[*coredata.AssetSnapshotAsset, coredata.AssetSnapshotAssetOrderField],
-) GetAssetSnapshotOutput {
+) (GetAssetSnapshotOutput, error) {
 	assets := make([]*AssetSnapshotAsset, 0, len(assetPage.Data))
 	for _, asset := range assetPage.Data {
-		assets = append(assets, NewAssetSnapshotAsset(asset))
+		row, err := NewAssetSnapshotAsset(asset)
+		if err != nil {
+			return GetAssetSnapshotOutput{}, err
+		}
+
+		assets = append(assets, row)
 	}
 
 	var nextCursor *page.CursorKey
@@ -105,18 +126,5 @@ func NewGetAssetSnapshotOutput(
 		AssetSnapshot: NewAssetSnapshot(snapshot),
 		Assets:        assets,
 		NextCursor:    nextCursor,
-	}
-}
-
-func mustStoredGIDs(values []string) []gid.GID {
-	if len(values) == 0 {
-		return []gid.GID{}
-	}
-
-	ids := make([]gid.GID, len(values))
-	for i, value := range values {
-		ids[i] = gid.MustParseGID(value)
-	}
-
-	return ids
+	}, nil
 }

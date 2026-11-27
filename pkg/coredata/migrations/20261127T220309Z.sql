@@ -21,7 +21,7 @@
 -- A publish copies the active assets at that moment. The copy is inserted
 -- and never updated. asset_id and the link id arrays are not foreign keys:
 -- a later edit, sync, deactivation, or delete of the live row leaves the
--- copy alone. Deleting the snapshot removes its copies.
+-- copy alone. Deleting the organization or the snapshot removes the copies.
 
 CREATE TABLE asset_snapshots (
     id TEXT PRIMARY KEY,
@@ -40,7 +40,8 @@ CREATE TABLE asset_snapshot_assets (
     tenant_id TEXT NOT NULL,
     snapshot_id TEXT NOT NULL REFERENCES asset_snapshots(id)
         ON UPDATE CASCADE ON DELETE CASCADE,
-    organization_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL REFERENCES organizations(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
     asset_id TEXT NOT NULL,
     name TEXT NOT NULL,
     amount INTEGER NOT NULL,

@@ -73,7 +73,14 @@ func (r *assetSnapshotResolver) Assets(ctx context.Context, obj *types.AssetSnap
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewAssetSnapshotAssetConnection(assets, r, obj.ID), nil
+	connection, err := types.NewAssetSnapshotAssetConnection(assets, r, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build asset snapshot assets", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return connection, nil
 }
 
 // Permission is the resolver for the permission field.

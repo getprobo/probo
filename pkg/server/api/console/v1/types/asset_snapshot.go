@@ -21,6 +21,7 @@
 package types
 
 import (
+	"fmt"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -145,11 +146,16 @@ func NewAssetSnapshotAssetConnection(
 	p *page.Page[*coredata.AssetSnapshotAsset, coredata.AssetSnapshotAssetOrderField],
 	parentType any,
 	parentID gid.GID,
-) *AssetSnapshotAssetConnection {
+) (*AssetSnapshotAssetConnection, error) {
 	edges := make([]*AssetSnapshotAssetEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewAssetSnapshotAssetEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edge, err := NewAssetSnapshotAssetEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		if err != nil {
+			return nil, err
+		}
+
+		edges[i] = edge
 	}
 
 	return &AssetSnapshotAssetConnection{
@@ -158,20 +164,40 @@ func NewAssetSnapshotAssetConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
-	}
+	}, nil
 }
 
 func NewAssetSnapshotAssetEdge(
 	asset *coredata.AssetSnapshotAsset,
 	orderBy coredata.AssetSnapshotAssetOrderField,
-) *AssetSnapshotAssetEdge {
+) (*AssetSnapshotAssetEdge, error) {
+	node, err := NewAssetSnapshotAsset(asset)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AssetSnapshotAssetEdge{
 		Cursor: asset.CursorKey(orderBy),
-		Node:   NewAssetSnapshotAsset(asset),
-	}
+		Node:   node,
+	}, nil
 }
 
-func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) *AssetSnapshotAsset {
+func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) (*AssetSnapshotAsset, error) {
+	thirdParties, err := asset.ThirdParties()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read snapshot third parties: %w", err)
+	}
+
+	businessFunctions, err := asset.BusinessFunctions()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read snapshot business functions: %w", err)
+	}
+
+	tags, err := asset.Tags()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read snapshot tags: %w", err)
+	}
+
 	node := &AssetSnapshotAsset{
 		ID:                  asset.ID,
 		AssetID:             asset.AssetID,
@@ -187,9 +213,9 @@ func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) *AssetSnapshotAss
 		LastSeenAt:          asset.LastSeenAt,
 		Status:              asset.Status,
 		ConnectorID:         asset.ConnectorID,
-		ThirdPartyIDs:       mustStoredGIDs(asset.ThirdPartyIDs),
-		BusinessFunctionIDs: mustStoredGIDs(asset.BusinessFunctionIDs),
-		TagIDs:              mustStoredGIDs(asset.TagIDs),
+		ThirdPartyIDs:       thirdParties,
+		BusinessFunctionIDs: businessFunctions,
+		TagIDs:              tags,
 		AssetCreatedAt:      asset.AssetCreatedAt,
 		AssetUpdatedAt:      asset.AssetUpdatedAt,
 	}
@@ -210,14 +236,5 @@ func NewAssetSnapshotAsset(asset *coredata.AssetSnapshotAsset) *AssetSnapshotAss
 		node.TagIDs = []gid.GID{}
 	}
 
-	return node
-}
-
-func mustStoredGIDs(values []string) []gid.GID {
-	ids := make([]gid.GID, len(values))
-	for i, value := range values {
-		ids[i] = gid.MustParseGID(value)
-	}
-
-	return ids
+	return node, nil
 }

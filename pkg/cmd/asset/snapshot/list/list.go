@@ -93,22 +93,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
-			if err != nil {
-				return err
-			}
-
-			_, hc, err := cfg.DefaultHost()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
-			if err != nil {
-				return err
-			}
-
-			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}

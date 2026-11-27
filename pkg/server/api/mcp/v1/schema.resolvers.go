@@ -12927,5 +12927,12 @@ func (r *Resolver) GetAssetSnapshotTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.GetAssetSnapshotOutput{}, fmt.Errorf("internal server error")
 	}
 
-	return nil, types.NewGetAssetSnapshotOutput(snapshot, assetPage), nil
+	output, err := types.NewGetAssetSnapshotOutput(snapshot, assetPage)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build asset snapshot", log.Error(err))
+
+		return nil, types.GetAssetSnapshotOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, output, nil
 }

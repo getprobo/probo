@@ -68,7 +68,7 @@ SELECT
 FROM
 	asset_snapshots
 WHERE
-	id = ANY(@resource_ids)
+	id = ANY(@resource_ids::text[])
 `
 
 	args := pgx.StrictNamedArgs{"resource_ids": resourceIDs}
