@@ -137,6 +137,7 @@ func recordBusinessFunctionAssetChanges(
 	}
 
 	links := &coredata.BusinessFunctionAssets{}
+
 	current, err := links.LoadBusinessFunctionIDsByAssetIDs(ctx, conn, scope, affected)
 	if err != nil {
 		return fmt.Errorf("cannot load asset business functions: %w", err)
@@ -163,6 +164,7 @@ func recordBusinessFunctionAssetChanges(
 			ID:             assetID,
 			OrganizationID: organizationID,
 		}
+
 		changeType, beforeJSON, afterJSON, write, err := coredata.DiffAssetChange(
 			asset,
 			asset,

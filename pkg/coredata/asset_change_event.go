@@ -759,6 +759,7 @@ func configEqual(left json.RawMessage, right json.RawMessage) bool {
 	}
 
 	var decodedLeft any
+
 	var decodedRight any
 
 	if json.Unmarshal(left, &decodedLeft) != nil || json.Unmarshal(right, &decodedRight) != nil {

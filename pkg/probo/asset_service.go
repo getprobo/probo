@@ -237,6 +237,7 @@ func (s AssetService) Update(
 		}
 
 		previous := *asset
+
 		asset.UpdatedAt = now
 		if req.Name != nil {
 			asset.Name = *req.Name

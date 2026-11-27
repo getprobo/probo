@@ -50,6 +50,7 @@ func NewListAssetChangeEventsOutput(
 	}
 
 	var nextCursor *page.CursorKey
+
 	if eventPage.Info.HasNext && len(eventPage.Data) > 0 {
 		cursorKey := eventPage.Data[len(eventPage.Data)-1].CursorKey(eventPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

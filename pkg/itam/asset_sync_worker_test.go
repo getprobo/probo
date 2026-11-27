@@ -598,7 +598,9 @@ func countAssetChangeEvents(t *testing.T, seeded seededAWS, assetID gid.GID) int
 
 	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
 		events := coredata.AssetChangeEvents{}
+
 		var err error
+
 		count, err = events.CountByAssetID(ctx, conn, seeded.scope, assetID)
 
 		return err
