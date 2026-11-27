@@ -498,6 +498,7 @@ func (s AssetService) CountChangeEvents(
 			var err error
 
 			events := coredata.AssetChangeEvents{}
+
 			count, err = events.CountByAssetID(ctx, conn, scope, assetID)
 			if err != nil {
 				return fmt.Errorf("cannot count asset change events: %w", err)

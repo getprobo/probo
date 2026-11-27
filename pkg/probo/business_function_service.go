@@ -700,6 +700,7 @@ func businessFunctionAssetIDs(
 	businessFunctionID gid.GID,
 ) ([]gid.GID, error) {
 	links := &coredata.BusinessFunctionAssets{}
+
 	ids, err := links.LoadAssetIDsByBusinessFunctionID(ctx, conn, scope, businessFunctionID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load business function assets: %w", err)
