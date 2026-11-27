@@ -4976,6 +4976,9 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 		input.OrganizationID,
 		input.ApproverIds,
 		input.Minor,
+		input.Name,
+		input.Note,
+		callerIdentityID(ctx),
 	)
 	if err != nil {
 		return nil, types.PublishAssetListOutput{}, fmt.Errorf("cannot publish asset list: %w", err)
@@ -12854,4 +12857,75 @@ func (r *Resolver) GetAssetChangeEventTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.GetAssetChangeEventOutput{
 		AssetChangeEvent: types.NewAssetChangeEvent(event),
 	}, nil
+}
+
+func (r *Resolver) ListAssetSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAssetSnapshotsInput) (*mcp.CallToolResult, types.ListAssetSnapshotsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAssetGet)
+	if err != nil {
+		return nil, types.ListAssetSnapshotsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AssetSnapshotOrderField]{
+		Field:     coredata.AssetSnapshotOrderFieldCapturedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetSnapshotOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	snapshotPage, err := r.proboSvc.Assets.ListSnapshots(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list asset snapshots", log.Error(err))
+
+		return nil, types.ListAssetSnapshotsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewListAssetSnapshotsOutput(snapshotPage), nil
+}
+
+func (r *Resolver) GetAssetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetSnapshotInput) (*mcp.CallToolResult, types.GetAssetSnapshotOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAssetGet)
+	if err != nil {
+		return nil, types.GetAssetSnapshotOutput{}, err
+	}
+
+	snapshot, err := r.proboSvc.Assets.GetSnapshot(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetAssetSnapshotOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get asset snapshot", log.Error(err))
+
+		return nil, types.GetAssetSnapshotOutput{}, fmt.Errorf("internal server error")
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AssetSnapshotAssetOrderField]{
+		Field:     coredata.AssetSnapshotAssetOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetSnapshotAssetOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	assetPage, err := r.proboSvc.Assets.ListSnapshotAssets(ctx, scope, snapshot.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list asset snapshot assets", log.Error(err))
+
+		return nil, types.GetAssetSnapshotOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.NewGetAssetSnapshotOutput(snapshot, assetPage), nil
 }

@@ -399,6 +399,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAssetChangeEvent(event), nil
 		}
+	case coredata.AssetSnapshotEntityType:
+		action = probo.ActionAssetGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			snapshot, err := r.probo.Assets.GetSnapshot(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAssetSnapshot(snapshot), nil
+		}
 	case coredata.DatumEntityType:
 		action = probo.ActionDatumList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

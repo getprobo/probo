@@ -514,6 +514,126 @@ func (s AssetService) CountChangeEvents(
 	return count, nil
 }
 
+func (s AssetService) GetSnapshot(
+	ctx context.Context,
+	scope coredata.Scoper,
+	snapshotID gid.GID,
+) (*coredata.AssetSnapshot, error) {
+	snapshot := &coredata.AssetSnapshot{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return snapshot.LoadByID(ctx, conn, scope, snapshotID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return snapshot, nil
+}
+
+func (s AssetService) ListSnapshots(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.AssetSnapshotOrderField],
+) (*page.Page[*coredata.AssetSnapshot, coredata.AssetSnapshotOrderField], error) {
+	var snapshots coredata.AssetSnapshots
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return snapshots.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(snapshots, cursor), nil
+}
+
+func (s AssetService) CountSnapshots(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			snapshots := coredata.AssetSnapshots{}
+
+			count, err = snapshots.CountByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot count asset snapshots: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s AssetService) ListSnapshotAssets(
+	ctx context.Context,
+	scope coredata.Scoper,
+	snapshotID gid.GID,
+	cursor *page.Cursor[coredata.AssetSnapshotAssetOrderField],
+) (*page.Page[*coredata.AssetSnapshotAsset, coredata.AssetSnapshotAssetOrderField], error) {
+	var assets coredata.AssetSnapshotAssets
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return assets.LoadBySnapshotID(ctx, conn, scope, snapshotID, cursor)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(assets, cursor), nil
+}
+
+func (s AssetService) CountSnapshotAssets(
+	ctx context.Context,
+	scope coredata.Scoper,
+	snapshotID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			assets := coredata.AssetSnapshotAssets{}
+
+			count, err = assets.CountBySnapshotID(ctx, conn, scope, snapshotID)
+			if err != nil {
+				return fmt.Errorf("cannot count asset snapshot assets: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func syncAssetSearch(
 	ctx context.Context,
 	conn pg.Querier,

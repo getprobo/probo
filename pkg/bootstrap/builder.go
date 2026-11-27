@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
 
@@ -299,6 +300,16 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Retention: b.resolver.getEnvIntOrDefault(
 					"PROBOD_AUDIT_LOG_RETENTION",
 					int(iam.DefaultAuditLogRetention/time.Second),
+				),
+			},
+			AssetHistoryRetention: probodconfig.AssetHistoryRetentionConfig{
+				Interval: b.resolver.getEnvIntOrDefault(
+					"PROBOD_ASSET_HISTORY_RETENTION_INTERVAL",
+					int(probo.DefaultAssetHistoryRetentionInterval/time.Second),
+				),
+				Retention: b.resolver.getEnvIntOrDefault(
+					"PROBOD_ASSET_HISTORY_RETENTION",
+					int(probo.DefaultAssetHistoryRetention/time.Second),
 				),
 			},
 			Agents: func() probodconfig.AgentsConfig {

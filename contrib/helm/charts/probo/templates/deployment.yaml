@@ -318,6 +318,11 @@ spec:
               value: {{ .Values.probo.auditLogRetention.interval | quote }}
             - name: PROBOD_AUDIT_LOG_RETENTION
               value: {{ .Values.probo.auditLogRetention.retention | quote }}
+            # Asset snapshot and change-event retention
+            - name: PROBOD_ASSET_HISTORY_RETENTION_INTERVAL
+              value: {{ .Values.probo.assetHistoryRetention.interval | quote }}
+            - name: PROBOD_ASSET_HISTORY_RETENTION
+              value: {{ .Values.probo.assetHistoryRetention.retention | quote }}
             # Weekly notification digest
             - name: PROBOD_NOTIFICATION_WEEKLY_WEEKDAY
               value: {{ .Values.probo.notificationWeekly.weekday | quote }}

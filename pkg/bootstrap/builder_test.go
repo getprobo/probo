@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
 
@@ -441,6 +442,8 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 300, cfg.Probod.TaskRecurrence.Interval)
 	assert.Equal(t, int(iam.DefaultAuditLogRetentionInterval/time.Second), cfg.Probod.AuditLogRetention.Interval)
 	assert.Equal(t, int(iam.DefaultAuditLogRetention/time.Second), cfg.Probod.AuditLogRetention.Retention)
+	assert.Equal(t, int(probo.DefaultAssetHistoryRetentionInterval/time.Second), cfg.Probod.AssetHistoryRetention.Interval)
+	assert.Equal(t, int(probo.DefaultAssetHistoryRetention/time.Second), cfg.Probod.AssetHistoryRetention.Retention)
 
 	// Agents tools — Firecrawl empty by default
 	assert.Empty(t, cfg.Probod.Agents.Tools.FirecrawlAPIKey)
@@ -595,6 +598,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_TASK_RECURRENCE_INTERVAL"] = "600"
 	env["PROBOD_AUDIT_LOG_RETENTION_INTERVAL"] = "120"
 	env["PROBOD_AUDIT_LOG_RETENTION"] = "3600"
+	env["PROBOD_ASSET_HISTORY_RETENTION_INTERVAL"] = "180"
+	env["PROBOD_ASSET_HISTORY_RETENTION"] = "7200"
 	env["PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY"] = "60"
 	env["PROBOD_NOTIFICATION_EMAIL_REMINDER_INTERVAL"] = "43200"
 	env["PROBOD_NOTIFICATION_WEEKLY_WEEKDAY"] = "3"
@@ -759,6 +764,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 600, cfg.Probod.TaskRecurrence.Interval)
 	assert.Equal(t, 120, cfg.Probod.AuditLogRetention.Interval)
 	assert.Equal(t, 3600, cfg.Probod.AuditLogRetention.Retention)
+	assert.Equal(t, 180, cfg.Probod.AssetHistoryRetention.Interval)
+	assert.Equal(t, 7200, cfg.Probod.AssetHistoryRetention.Retention)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Email.DebounceDelay)
 	assert.Equal(t, 43200, cfg.Probod.Notifications.Email.ReminderInterval)
 	assert.Equal(t, 3, cfg.Probod.Notifications.Weekly.Weekday)

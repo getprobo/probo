@@ -263,6 +263,37 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 	return types.NewDocument(doc), nil
 }
 
+// AssetSnapshots is the resolver for the assetSnapshots field.
+func (r *organizationResolver) AssetSnapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetSnapshotOrderBy) (*types.AssetSnapshotConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAssetGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AssetSnapshotOrderField]{
+		Field:     coredata.AssetSnapshotOrderFieldCapturedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetSnapshotOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	snapshots, err := r.probo.Assets.ListSnapshots(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list asset snapshots", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAssetSnapshotConnection(snapshots, r, obj.ID), nil
+}
+
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionAssetList)

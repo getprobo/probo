@@ -182,6 +182,8 @@ const (
 	ThirdPartyAgreementEntityType                    uint16 = 150
 	AssetSyncEntityType                              uint16 = 151
 	AssetChangeEventEntityType                       uint16 = 152
+	AssetSnapshotEntityType                          uint16 = 153
+	AssetSnapshotAssetEntityType                     uint16 = 154 // cursor key for a copied row, not a Node
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -458,6 +460,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AssetSync{ID: id}, true
 	case AssetChangeEventEntityType:
 		return &AssetChangeEvent{ID: id}, true
+	case AssetSnapshotEntityType:
+		return &AssetSnapshot{ID: id}, true
 	default:
 		return nil, false
 	}

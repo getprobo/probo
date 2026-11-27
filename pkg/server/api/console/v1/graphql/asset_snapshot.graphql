@@ -1,0 +1,132 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+enum AssetSnapshotOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetSnapshotOrderField") {
+    CAPTURED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AssetSnapshotOrderFieldCapturedAt"
+        )
+}
+
+input AssetSnapshotOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AssetSnapshotOrderField!
+}
+
+enum AssetSnapshotAssetOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AssetSnapshotAssetOrderField"
+    ) {
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AssetSnapshotAssetOrderFieldName"
+        )
+}
+
+input AssetSnapshotAssetOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotAssetOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AssetSnapshotAssetOrderField!
+}
+
+type AssetSnapshot implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshot"
+    ) {
+    id: ID!
+    capturedAt: Datetime!
+    actor: Profile @goField(forceResolver: true)
+    name: String
+    note: String
+    assets(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetSnapshotAssetOrder
+    ): AssetSnapshotAssetConnection! @goField(forceResolver: true)
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AssetSnapshotAsset
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotAsset"
+    ) {
+    id: ID!
+    assetId: ID!
+    name: String!
+    amount: Int!
+    owner: Profile @goField(forceResolver: true)
+    assetType: AssetType!
+    dataTypesStored: String
+    kind: String
+    externalId: String
+    region: String
+    configuration: String
+    schemaVersion: Int
+    lastSeenAt: Datetime
+    status: AssetStatus!
+    connectorId: ID
+    thirdPartyIds: [ID!]!
+    businessFunctionIds: [ID!]!
+    tagIds: [ID!]!
+    assetCreatedAt: Datetime!
+    assetUpdatedAt: Datetime!
+}
+
+type AssetSnapshotConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AssetSnapshotEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AssetSnapshotEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotEdge"
+    ) {
+    cursor: CursorKey!
+    node: AssetSnapshot!
+}
+
+type AssetSnapshotAssetConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotAssetConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AssetSnapshotAssetEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AssetSnapshotAssetEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetSnapshotAssetEdge"
+    ) {
+    cursor: CursorKey!
+    node: AssetSnapshotAsset!
+}
