@@ -362,7 +362,6 @@ func (h *assetSyncHandler) store(
 				ID:             gid.New(account.ID.TenantID(), coredata.AssetEntityType),
 				OrganizationID: account.OrganizationID,
 				Name:           item.observation.Name,
-				Amount:         1,
 				AssetType:      coredata.AssetTypeVirtual,
 				Kind:           &item.kind,
 				ExternalID:     &item.observation.ExternalID,
