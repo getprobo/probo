@@ -142,6 +142,11 @@ func onReady(opts Options, done <-chan struct{}) {
 
 	enrollMenu := setupEnrollmentMenu(opts, done)
 
+	supportItem := systray.AddMenuItem(
+		"Save support bundle…",
+		"Save a support file for this device",
+	)
+
 	aboutItem := systray.AddMenuItem(
 		"About Probo Device Posture Agent…",
 		"Probo device posture agent",
@@ -195,6 +200,24 @@ func onReady(opts Options, done <-chan struct{}) {
 	go func() {
 		for {
 			select {
+			case <-supportItem.ClickedCh:
+				supportItem.Disable()
+				supportItem.SetTitle("Saving support bundle…")
+
+				go func() {
+					path, err := saveSupportBundle(opts)
+
+					supportItem.SetTitle("Save support bundle…")
+					supportItem.Enable()
+
+					if err != nil {
+						showEnrollmentError(err.Error())
+						return
+					}
+
+					revealSupportBundle(path)
+					showSupportBundleSaved(path)
+				}()
 			case <-aboutItem.ClickedCh:
 				showAbout(opts.Version)
 			case <-done:

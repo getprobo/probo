@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 
@@ -181,7 +182,7 @@ func TestAgent_CollectOnce(t *testing.T) {
 func TestAgent_doPosturesDropsTruncatedRun(t *testing.T) {
 	t.Parallel()
 
-	dir := t.TempDir()
+	dir := filepath.Join(t.TempDir(), "agent")
 
 	var pushes atomic.Int32
 
@@ -225,7 +226,7 @@ func TestAgent_doPosturesDropsTruncatedRun(t *testing.T) {
 func TestAgent_doPosturesPushesCompleteRun(t *testing.T) {
 	t.Parallel()
 
-	dir := t.TempDir()
+	dir := filepath.Join(t.TempDir(), "agent")
 
 	var pushes atomic.Int32
 

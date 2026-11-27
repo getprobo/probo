@@ -87,6 +87,19 @@ func TestEnrollmentMarker(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, DefaultEnrollmentRunDir(), EnrollmentRunDir(""))
+			assert.Equal(t, DefaultConfigDir(), ConfigDirForRunDir(""))
+			assert.Equal(t, DefaultConfigDir(), ConfigDirForRunDir(DefaultEnrollmentRunDir()))
+		},
+	)
+
+	t.Run(
+		"custom run dir maps back and an unknown layout does not",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dir := filepath.Join(t.TempDir(), "agent")
+			assert.Equal(t, dir, ConfigDirForRunDir(EnrollmentRunDir(dir)))
+			assert.Empty(t, ConfigDirForRunDir(filepath.Join(t.TempDir(), "elsewhere")))
 		},
 	)
 
