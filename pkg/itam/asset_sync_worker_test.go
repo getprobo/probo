@@ -340,7 +340,7 @@ func TestAssetSync_SkipsOrganizationWhenInventoryDisabled(t *testing.T) {
 	assert.Equal(t, seeded.account.ID, claimed.ConnectorAccountID)
 }
 
-func TestAssetSync_ExistingListHidesDiscoveredRowsWhenDisabled(t *testing.T) {
+func TestAssetSync_ExistingListOmitsDiscoveredRows(t *testing.T) {
 	t.Parallel()
 
 	seeded := seedAWSAccount(t)
@@ -384,8 +384,8 @@ func TestAssetSync_ExistingListHidesDiscoveredRowsWhenDisabled(t *testing.T) {
 	)
 
 	visible := listOrganizationAssets(t, seeded)
-	assert.ElementsMatch(t, []string{"Laptop", "cdn"}, assetNames(visible))
-	assert.Equal(t, 2, countOrganizationAssets(t, seeded))
+	assert.Equal(t, []string{"Laptop"}, assetNames(visible))
+	assert.Equal(t, 1, countOrganizationAssets(t, seeded))
 
 	setAssetInventoryEnabled(t, seeded, false)
 
@@ -612,18 +612,12 @@ func listOrganizationAssets(t *testing.T, seeded seededAWS) coredata.Assets {
 	)
 
 	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
-		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, conn, seeded.scope, seeded.account.OrganizationID); err != nil {
-			return err
-		}
-
 		return assets.LoadByOrganizationID(
 			ctx,
 			conn,
 			seeded.scope,
 			seeded.account.OrganizationID,
 			cursor,
-			organization.AssetInventoryEnabled,
 		)
 	}))
 
@@ -636,11 +630,6 @@ func countOrganizationAssets(t *testing.T, seeded seededAWS) int {
 	var count int
 
 	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
-		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, conn, seeded.scope, seeded.account.OrganizationID); err != nil {
-			return err
-		}
-
 		var err error
 
 		assets := coredata.Assets{}
@@ -649,7 +638,6 @@ func countOrganizationAssets(t *testing.T, seeded seededAWS) int {
 			conn,
 			seeded.scope,
 			seeded.account.OrganizationID,
-			organization.AssetInventoryEnabled,
 		)
 
 		return err

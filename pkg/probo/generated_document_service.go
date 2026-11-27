@@ -797,14 +797,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.AssetOrderField]) ([]*coredata.Asset, error) {
 			var batch coredata.Assets
-			if err := batch.LoadByOrganizationID(
-				ctx,
-				conn,
-				scope,
-				organization.ID,
-				cursor,
-				organization.AssetInventoryEnabled,
-			); err != nil {
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
 				return nil, fmt.Errorf("cannot load assets: %w", err)
 			}
 

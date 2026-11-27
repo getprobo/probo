@@ -161,20 +161,6 @@ func (s AssetService) GetByOwnerID(
 	return asset, nil
 }
 
-func (s AssetService) includeDiscoveredAssets(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-) (bool, error) {
-	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
-		return false, fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	return organization.AssetInventoryEnabled, nil
-}
-
 func (s AssetService) CountForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
@@ -184,20 +170,9 @@ func (s AssetService) CountForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			includeDiscovered, err := s.includeDiscoveredAssets(ctx, conn, scope, organizationID)
-			if err != nil {
-				return err
-			}
-
 			assets := coredata.Assets{}
 
-			count, err = assets.CountByOrganizationID(
-				ctx,
-				conn,
-				scope,
-				organizationID,
-				includeDiscovered,
-			)
+			count, err = assets.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count assets: %w", err)
 			}
@@ -222,18 +197,12 @@ func (s AssetService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			includeDiscovered, err := s.includeDiscoveredAssets(ctx, conn, scope, organizationID)
-			if err != nil {
-				return err
-			}
-
 			return assets.LoadByOrganizationID(
 				ctx,
 				conn,
 				scope,
 				organizationID,
 				cursor,
-				includeDiscovered,
 			)
 		},
 	)
