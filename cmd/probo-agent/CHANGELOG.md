@@ -5,6 +5,8 @@ documented in this file.
 
 ## Unreleased
 
+## [0.11.0-rc.2] - 2026-11-27
+
 ### Added
 
 - `probo-agent diagnostics` writes `probo-support-<UTC timestamp>.txt`
