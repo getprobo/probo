@@ -36,14 +36,15 @@ import (
 
 type (
 	Organization struct {
-		ID                   gid.GID      `db:"id"`
-		TenantID             gid.TenantID `db:"tenant_id"`
-		Name                 string       `db:"name"`
-		LegalName            *string      `db:"legal_name"`
-		LogoFileID           *gid.GID     `db:"logo_file_id"`
-		HorizontalLogoFileID *gid.GID     `db:"horizontal_logo_file_id"`
-		CreatedAt            time.Time    `db:"created_at"`
-		UpdatedAt            time.Time    `db:"updated_at"`
+		ID                    gid.GID      `db:"id"`
+		TenantID              gid.TenantID `db:"tenant_id"`
+		Name                  string       `db:"name"`
+		LegalName             *string      `db:"legal_name"`
+		LogoFileID            *gid.GID     `db:"logo_file_id"`
+		HorizontalLogoFileID  *gid.GID     `db:"horizontal_logo_file_id"`
+		AssetInventoryEnabled bool         `db:"asset_inventory_enabled"`
+		CreatedAt             time.Time    `db:"created_at"`
+		UpdatedAt             time.Time    `db:"updated_at"`
 	}
 
 	Organizations []*Organization
@@ -114,6 +115,7 @@ SELECT
     legal_name,
     logo_file_id,
     horizontal_logo_file_id,
+    asset_inventory_enabled,
     created_at,
     updated_at
 FROM
@@ -162,6 +164,7 @@ SELECT
     legal_name,
     logo_file_id,
     horizontal_logo_file_id,
+    asset_inventory_enabled,
     created_at,
     updated_at
 FROM
@@ -222,6 +225,7 @@ SELECT
     legal_name,
     logo_file_id,
     horizontal_logo_file_id,
+    asset_inventory_enabled,
     created_at,
     updated_at
 FROM
@@ -282,6 +286,7 @@ SELECT
 	legal_name,
 	logo_file_id,
 	horizontal_logo_file_id,
+	asset_inventory_enabled,
 	created_at,
 	updated_at
 FROM
@@ -326,9 +331,10 @@ INSERT INTO organizations (
     legal_name,
     logo_file_id,
     horizontal_logo_file_id,
+    asset_inventory_enabled,
     created_at,
     updated_at
-) VALUES (@tenant_id, @id, @name, @legal_name, @logo_file_id, @horizontal_logo_file_id, @created_at, @updated_at)
+) VALUES (@tenant_id, @id, @name, @legal_name, @logo_file_id, @horizontal_logo_file_id, @asset_inventory_enabled, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -338,6 +344,7 @@ INSERT INTO organizations (
 		"legal_name":              o.LegalName,
 		"logo_file_id":            o.LogoFileID,
 		"horizontal_logo_file_id": o.HorizontalLogoFileID,
+		"asset_inventory_enabled": o.AssetInventoryEnabled,
 		"created_at":              o.CreatedAt,
 		"updated_at":              o.UpdatedAt,
 	}
@@ -407,4 +414,48 @@ WHERE id = @id
 	}
 
 	return nil
+}
+
+// LoadOrganizationIDsWithAssetInventoryEnabled lists every organization
+// whose asset inventory is on. The asset sync claim has no tenant scope,
+// so this is not limited to one organization.
+func LoadOrganizationIDsWithAssetInventoryEnabled(
+	ctx context.Context,
+	conn pg.Querier,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    id
+FROM
+    organizations
+WHERE
+    asset_inventory_enabled = @asset_inventory_enabled
+ORDER BY
+    id
+`
+
+	rows, err := conn.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{"asset_inventory_enabled": true},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query organization ids: %w", err)
+	}
+
+	type organizationID struct {
+		ID gid.GID `db:"id"`
+	}
+
+	collected, err := pgx.CollectRows(rows, pgx.RowToStructByName[organizationID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect organization ids: %w", err)
+	}
+
+	ids := make([]gid.GID, len(collected))
+	for i, row := range collected {
+		ids[i] = row.ID
+	}
+
+	return ids, nil
 }

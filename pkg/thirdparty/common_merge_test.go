@@ -126,7 +126,7 @@ func seedMergeTestOrganization(
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		_, err := tx.Exec(
 			ctx,
-			`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+			`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled) VALUES ($1, $2, $3, $4, $5, false)`,
 			organizationID.String(), tenantID.String(), "merge-test-org-"+organizationID.String(), now, now,
 		)
 

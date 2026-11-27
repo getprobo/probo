@@ -45,6 +45,7 @@ import (
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 )
 
 func TestAssetSync_RecordsDiscoveredRow(t *testing.T) {
@@ -321,6 +322,81 @@ func TestAssetSync_StaleFailureRetriesThenWaits(t *testing.T) {
 	assert.Equal(t, seeded.account.ID, retried.ConnectorAccountID)
 }
 
+func TestAssetSync_SkipsOrganizationWhenInventoryDisabled(t *testing.T) {
+	t.Parallel()
+
+	seeded := seedAWSAccount(t)
+	handler := itam.NewAssetSyncHandlerWithListersForTest(seeded.pg, seeded.opener, nil)
+
+	setAssetInventoryEnabled(t, seeded, false)
+
+	_, err := itam.ClaimAssetSyncForTest(handler, t.Context(), seeded.account.ID)
+	require.ErrorIs(t, err, worker.ErrNoTask)
+
+	setAssetInventoryEnabled(t, seeded, true)
+
+	claimed, err := itam.ClaimAssetSyncForTest(handler, t.Context(), seeded.account.ID)
+	require.NoError(t, err)
+	assert.Equal(t, seeded.account.ID, claimed.ConnectorAccountID)
+}
+
+func TestAssetSync_ExistingListHidesDiscoveredRowsWhenDisabled(t *testing.T) {
+	t.Parallel()
+
+	seeded := seedAWSAccount(t)
+	now := time.Now().UTC()
+	manual := &coredata.Asset{
+		ID:             gid.New(seeded.account.ID.TenantID(), coredata.AssetEntityType),
+		Name:           "Laptop",
+		Amount:         1,
+		OrganizationID: seeded.account.OrganizationID,
+		Type:           coredata.AssetTypePhysical,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, seeded.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		return manual.Insert(ctx, tx, seeded.scope)
+	}))
+
+	externalID := "arn:aws:cloudfront::222222222222:distribution/EHIDE"
+	region := "us-east-1"
+	syncAccount(
+		t,
+		seeded,
+		map[string]itam.AssetLister{
+			itam.CloudFrontDistributionKind: observations(
+				itam.AssetObservation{
+					ExternalID: externalID,
+					Name:       "cdn",
+					Region:     &region,
+					Configuration: itam.CloudFrontDistributionConfiguration{
+						DomainName:         "d.cloudfront.net",
+						Enabled:            true,
+						Status:             "Deployed",
+						PriceClass:         "PriceClass_100",
+						DefaultCertificate: true,
+					},
+					SchemaVersion: itam.CloudFrontDistributionSchemaVersion,
+				},
+			),
+		},
+	)
+
+	visible := listOrganizationAssets(t, seeded)
+	assert.ElementsMatch(t, []string{"Laptop", "cdn"}, assetNames(visible))
+	assert.Equal(t, 2, countOrganizationAssets(t, seeded))
+
+	setAssetInventoryEnabled(t, seeded, false)
+
+	hidden := listOrganizationAssets(t, seeded)
+	assert.Equal(t, []string{"Laptop"}, assetNames(hidden))
+	assert.Equal(t, 1, countOrganizationAssets(t, seeded))
+
+	kept := loadDiscovered(t, seeded, itam.CloudFrontDistributionKind, externalID)
+	assert.Equal(t, "cdn", kept.Name)
+}
+
 type seededAWS struct {
 	pg        *pg.Client
 	scope     coredata.Scoper
@@ -362,11 +438,12 @@ func seedAWSAccount(t *testing.T) seededAWS {
 
 	require.NoError(t, pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
 		org := &coredata.Organization{
-			ID:        organizationID,
-			TenantID:  tenantID,
-			Name:      "Asset sync test",
-			CreatedAt: now,
-			UpdatedAt: now,
+			ID:                    organizationID,
+			TenantID:              tenantID,
+			Name:                  "Asset sync test",
+			AssetInventoryEnabled: true,
+			CreatedAt:             now,
+			UpdatedAt:             now,
 		}
 		if err := org.Insert(ctx, tx); err != nil {
 			return err
@@ -500,6 +577,94 @@ func loadDiscovered(
 	}))
 
 	return asset
+}
+
+func setAssetInventoryEnabled(t *testing.T, seeded seededAWS, enabled bool) {
+	t.Helper()
+
+	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(
+			ctx,
+			`UPDATE organizations
+			 SET asset_inventory_enabled = $1
+			 WHERE id = $2`,
+			enabled,
+			seeded.account.OrganizationID,
+		)
+
+		return err
+	}))
+}
+
+func listOrganizationAssets(t *testing.T, seeded seededAWS) coredata.Assets {
+	t.Helper()
+
+	var assets coredata.Assets
+
+	cursor := page.NewCursor(
+		50,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.AssetOrderField]{
+			Field:     coredata.AssetOrderFieldCreatedAt,
+			Direction: page.OrderDirectionDesc,
+		},
+	)
+
+	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		organization := &coredata.Organization{}
+		if err := organization.LoadByID(ctx, conn, seeded.scope, seeded.account.OrganizationID); err != nil {
+			return err
+		}
+
+		return assets.LoadByOrganizationID(
+			ctx,
+			conn,
+			seeded.scope,
+			seeded.account.OrganizationID,
+			cursor,
+			organization.AssetInventoryEnabled,
+		)
+	}))
+
+	return assets
+}
+
+func countOrganizationAssets(t *testing.T, seeded seededAWS) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		organization := &coredata.Organization{}
+		if err := organization.LoadByID(ctx, conn, seeded.scope, seeded.account.OrganizationID); err != nil {
+			return err
+		}
+
+		var err error
+
+		assets := coredata.Assets{}
+		count, err = assets.CountByOrganizationID(
+			ctx,
+			conn,
+			seeded.scope,
+			seeded.account.OrganizationID,
+			organization.AssetInventoryEnabled,
+		)
+
+		return err
+	}))
+
+	return count
+}
+
+func assetNames(assets coredata.Assets) []string {
+	names := make([]string, len(assets))
+	for i, asset := range assets {
+		names[i] = asset.Name
+	}
+
+	return names
 }
 
 func loadLatestSync(t *testing.T, seeded seededAWS) *coredata.AssetSync {

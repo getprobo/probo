@@ -243,6 +243,7 @@ func (a *Assets) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	includeDiscovered bool,
 ) (int, error) {
 	q := `
 SELECT
@@ -252,11 +253,20 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND (
+		@include_discovered
+		OR connector_id IS NULL
+		OR kind IS NULL
+		OR external_id IS NULL
+	)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{
+		"organization_id":    organizationID,
+		"include_discovered": includeDiscovered,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -275,6 +285,7 @@ func (a *Assets) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AssetOrderField],
+	includeDiscovered bool,
 ) error {
 	q := `
 SELECT
@@ -300,12 +311,21 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND (
+		@include_discovered
+		OR connector_id IS NULL
+		OR kind IS NULL
+		OR external_id IS NULL
+	)
 	AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{
+		"organization_id":    organizationID,
+		"include_discovered": includeDiscovered,
+	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

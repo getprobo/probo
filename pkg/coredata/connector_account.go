@@ -945,10 +945,11 @@ FOR UPDATE SKIP LOCKED;
 }
 
 // LoadNextDueForAssetSyncForUpdateSkipLocked claims the next connector
-// account for provider whose latest finished asset sync is at least
-// dueBefore old, or that has no sync yet. A recent stale failure below
-// maxStaleAttempts is due immediately. The row is locked so two workers
-// cannot claim it. onlyAccount restricts the claim to one account.
+// account for provider whose organization has asset inventory enabled and
+// whose latest finished asset sync is at least dueBefore old, or that has
+// no sync yet. A recent stale failure below maxStaleAttempts is due
+// immediately. The row is locked so two workers cannot claim it.
+// onlyAccount restricts the claim to one account.
 func (a *ConnectorAccount) LoadNextDueForAssetSyncForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
@@ -967,13 +968,28 @@ func (a *ConnectorAccount) LoadNextDueForAssetSyncForUpdateSkipLocked(
 		return ErrResourceNotFound
 	}
 
+	organizationIDs, err := LoadOrganizationIDsWithAssetInventoryEnabled(ctx, conn)
+	if err != nil {
+		return err
+	}
+
+	if len(organizationIDs) == 0 {
+		return ErrResourceNotFound
+	}
+
 	connectorIDText := make([]string, len(connectorIDs))
 	for i, id := range connectorIDs {
 		connectorIDText[i] = id.String()
 	}
 
+	organizationIDText := make([]string, len(organizationIDs))
+	for i, id := range organizationIDs {
+		organizationIDText[i] = id.String()
+	}
+
 	args := pgx.StrictNamedArgs{
 		"connector_ids":      connectorIDText,
+		"organization_ids":   organizationIDText,
 		"only_account_id":    onlyAccount,
 		"due_before":         dueBefore,
 		"stale_error":        staleError,
@@ -999,6 +1015,7 @@ FROM
     connector_accounts a
 WHERE
     a.connector_id = ANY(@connector_ids::text[])
+    AND a.organization_id = ANY(@organization_ids::text[])
     AND (
         @only_account_id::text IS NULL
         OR a.id = @only_account_id
