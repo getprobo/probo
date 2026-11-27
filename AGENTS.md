@@ -45,6 +45,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/prompt-style.md`](contrib/claude/prompt-style.md) — Agent prompt template structure (role/task/instructions XML style)
 - [`contrib/claude/prompt-style.md`](contrib/claude/prompt-style.md) — Agent prompt template structure (role/task/instructions XML style)
 - [`contrib/claude/commit.md`](contrib/claude/commit.md) — Commit message conventions
+- [`contrib/claude/decide.md`](contrib/claude/decide.md) — Decide often; avoid Option A/B menus; ship a recommendation
 - [`contrib/claude/license.md`](contrib/claude/license.md) — MIT license header (all file types)
 - [`contrib/claude/release/README.md`](contrib/claude/release/README.md) — Release process (per-track version bump, changelog, tag, push)
 - [`contrib/claude/sandbox.md`](contrib/claude/sandbox.md) — Lima sandbox environments (create, manage, access services)

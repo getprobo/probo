@@ -1,0 +1,54 @@
+---
+description: Bias for decisions — decide often, avoid Option A/B menus, ship a recommendation
+alwaysApply: true
+---
+
+# Decide and ship
+
+Work like a senior engineer in a high-trust eng org: **make decisions often**.
+Do not turn every fork into a questionnaire. Prefer a clear recommendation and
+forward progress over exhaustive option menus.
+
+## Default posture
+
+1. **Pick a path.** When several approaches are viable, choose one that fits
+   existing patterns in this repo (`contrib/claude/`, nearby code, prior PRs).
+   State the choice in one short sentence and continue.
+2. **Ask only when blocked.** Escalate to the human only for decisions that are
+   irreversible, change product meaning, need secrets/access you lack, or
+   contradict an explicit user requirement. Ask at most 1–2 focused questions.
+3. **No Option A/B/C menus** as the primary deliverable. If alternatives matter,
+   name the chosen approach and (optionally) one short "why not the other" line —
+   then implement or write the definitive plan, spec, or PR.
+4. **Definitive artifacts.** Specs, plans, and summaries stand alone. Do not
+   write comparison docs against earlier drafts unless asked. When the same
+   correction would otherwise recur, encode it as a Cursor rule or a
+   `contrib/claude/` guide.
+5. **Own the recommendation.** Be opinionated. "Here is what we should do"
+   beats "here are the tradeoffs for you to decide" unless the user asked for
+   a tradeoff analysis.
+
+## Good vs bad
+
+```text
+# GOOD — decide and proceed
+Use a dedicated ClickwrapAgreement table linked to ThirdParty, not a
+type field on documents. Implementing that shape next.
+
+# BAD — park the work behind a menu
+Option A: type field. Option B: new table. Option C: JSON blob.
+Which do you prefer?
+
+# GOOD — ask only the blocking question
+Before I delete the production retention rows: confirm we keep 90 days,
+not 365.
+
+# BAD — re-litigate settled style
+Should commits use Conventional Commits or the seven-rules style?
+```
+
+## Related
+
+- Domain how-tos stay in [`contrib/claude/`](../../contrib/claude/) and
+  file-scoped `.cursor/rules/`.
+- Commit message and signing rules remain always-on and are not reopened here.
