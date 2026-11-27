@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { consoleMarkdownImageOrigins } from "#/lib/markdownImageOrigins";
 
 import { documentPreviewURL } from "./documentPreviewURL";
+import { formatJSONPreview } from "./formatJSONPreview";
 import { readTextPreview } from "./readTextPreview";
 
 const MAX_PREVIEW_BYTES = 512 * 1024;
@@ -32,7 +33,7 @@ interface TextPreviewProps {
   src: string;
   emptyMessage: string;
   errorMessage: string;
-  format: "markdown" | "text";
+  format: "json" | "markdown" | "text";
   retryLabel: string;
   truncatedMessage: string;
 }
@@ -126,20 +127,24 @@ export function TextPreview({
     );
   }
 
+  const content = format === "json" && !preview.truncated
+    ? formatJSONPreview(preview.content)
+    : preview.content;
+
   return (
     <div className="space-y-2">
       {format === "markdown"
         ? (
             <div className="max-h-[70vh] overflow-auto rounded-lg border border-border-low bg-tertiary p-6 [&_.prose]:max-w-none">
               <Markdown
-                content={preview.content}
+                content={content}
                 allowedImageOrigins={consoleMarkdownImageOrigins()}
               />
             </div>
           )
         : (
             <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border-low bg-tertiary p-4 font-mono text-sm text-txt-primary">
-              {preview.content}
+              {content}
             </pre>
           )}
       {preview.truncated && (
