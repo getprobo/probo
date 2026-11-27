@@ -1,0 +1,47 @@
+{
+  "hkdf_info": "probo-sign/identity/v1",
+  "algorithm": "HS256",
+  "key_derivation": "HKDF-SHA256",
+  "note": "To verify: derive a 32-byte key with HKDF-SHA256(ikm=orgSecret, salt=32-zero-bytes, info='probo-sign/identity/v1'), then verify the JWT with that key using HS256.",
+  "vectors": [
+    {
+      "description": "Minimal claims (sub + email only)",
+      "org_secret": "sk_live_example_secret_key_1",
+      "claims": {
+        "sub": "u_1001",
+        "email": "alice@example.com",
+        "iat": 1700000000,
+        "exp": 1700000600
+      },
+      "derived_key_hex": "51518430999b2748a5a63e5c0c15c9b5399f4cc7128b7e92414305ff0e41571a",
+      "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1XzEwMDEiLCJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDA2MDB9.xpYu43IJGVg69PpFPr5tyNTbqfzNq9_mwxh3KXxX4zM"
+    },
+    {
+      "description": "Full claims with optional name, account_id, and aud",
+      "org_secret": "sk_live_example_secret_key_2",
+      "claims": {
+        "sub": "u_2002",
+        "email": "bob@acme.com",
+        "name": "Bob Builder",
+        "account_id": "acme-corp",
+        "aud": "pk_live_cfg123",
+        "iat": 1700100000,
+        "exp": 1700100600
+      },
+      "derived_key_hex": "2fbcd77ed8121859861d4221142c0b982478a875913298b8cf97f723e1ee4838",
+      "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1XzIwMDIiLCJlbWFpbCI6ImJvYkBhY21lLmNvbSIsImlhdCI6MTcwMDEwMDAwMCwiZXhwIjoxNzAwMTAwNjAwLCJuYW1lIjoiQm9iIEJ1aWxkZXIiLCJhY2NvdW50X2lkIjoiYWNtZS1jb3JwIiwiYXVkIjoicGtfbGl2ZV9jZmcxMjMifQ.9tZz0Oww19674nXIhLcTUz2RzqY9zXx7TaPMVCIEdPk"
+    },
+    {
+      "description": "Same secret as vector 1, different user (derived key is identical)",
+      "org_secret": "sk_live_example_secret_key_1",
+      "claims": {
+        "sub": "u_3003",
+        "email": "carol@example.com",
+        "iat": 1700200000,
+        "exp": 1700200600
+      },
+      "derived_key_hex": "51518430999b2748a5a63e5c0c15c9b5399f4cc7128b7e92414305ff0e41571a",
+      "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1XzMwMDMiLCJlbWFpbCI6ImNhcm9sQGV4YW1wbGUuY29tIiwiaWF0IjoxNzAwMjAwMDAwLCJleHAiOjE3MDAyMDA2MDB9._YWqe9dtxevy8K127-vzxabTWQ_F65zHjMbTVLFnazI"
+    }
+  ]
+}
