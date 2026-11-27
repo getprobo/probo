@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/avatar"
 	"go.probo.inc/probo/pkg/imageutil"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -78,17 +79,12 @@ var SupportedIdentityLocales = []string{
 
 const (
 	TokenTypeEmailConfirmation = "email_confirmation"
-
-	// JPEG and PNG only.
-	maxAvatarFileSize = 5 << 20
-	// 512 covers 3× display of ~96px menu avatars.
-	avatarMaxEdge = 512
 )
 
 var (
 	avatarValidator = filevalidation.NewValidator(
 		filevalidation.WithMimeTypes(imageutil.ContentTypeJPEG, imageutil.ContentTypePNG),
-		filevalidation.WithMaxFileSize(maxAvatarFileSize),
+		filevalidation.WithMaxFileSize(avatar.MaxFileSize),
 	)
 
 	errAvatarTooLarge = errors.New("avatar file exceeds maximum size")
@@ -146,12 +142,12 @@ func (req UpdateLocaleRequest) Validate() error {
 }
 
 func readAvatarBytes(r io.Reader) ([]byte, error) {
-	payload, err := io.ReadAll(io.LimitReader(r, maxAvatarFileSize+1))
+	payload, err := io.ReadAll(io.LimitReader(r, avatar.MaxFileSize+1))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read avatar file: %w", err)
 	}
 
-	if int64(len(payload)) > maxAvatarFileSize {
+	if int64(len(payload)) > avatar.MaxFileSize {
 		return nil, errAvatarTooLarge
 	}
 
@@ -610,7 +606,7 @@ func (s AccountService) UpdateAvatar(
 		}
 	}
 
-	normalized, err := imageutil.Downscale(bytes.NewReader(payload), avatarMaxEdge)
+	normalized, err := imageutil.Downscale(bytes.NewReader(payload), avatar.MaxEdge)
 	if err != nil {
 		return nil, validator.ValidationErrors{
 			&validator.ValidationError{
@@ -713,6 +709,12 @@ func (s AccountService) DeleteAvatar(
 				}
 
 				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			// Forget the directory photo so the next SCIM sync sends it again.
+			scimPhoto := &coredata.SCIMProfilePhoto{}
+			if err := scimPhoto.DeleteByIdentityID(ctx, tx, identityID); err != nil {
+				return fmt.Errorf("cannot reset scim profile photos: %w", err)
 			}
 
 			if identity.AvatarFileID == nil {

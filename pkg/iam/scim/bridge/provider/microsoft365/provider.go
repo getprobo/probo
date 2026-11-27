@@ -78,6 +78,12 @@ func (p *Provider) Name() string {
 	return "microsoft-365"
 }
 
+// UserPhoto is never called: ListUsers leaves PhotoETagKnown unset, so the
+// bridge keeps the stored version without fetching a picture.
+func (p *Provider) UserPhoto(_ context.Context, _ scimclient.User) (provider.Photo, error) {
+	return provider.Photo{}, nil
+}
+
 func (p *Provider) isExcluded(email string) bool {
 	emailLower := strings.ToLower(email)
 	for _, excluded := range p.excludedUserNames {

@@ -21,7 +21,11 @@
 package scimclient_test
 
 import (
+	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -144,4 +148,71 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			assert.Equal(t, "", user.Title)
 		},
 	)
+}
+
+func TestClient_CreateUser_SendsPhotoWhenPresent(t *testing.T) {
+	t.Parallel()
+
+	var body []byte
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		body, err = io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/scim+json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = io.WriteString(w, `{"id": "profile-1"}`)
+	}))
+	t.Cleanup(server.Close)
+
+	client := scimclient.NewClient(server.Client(), server.URL, "token")
+	profileID, err := client.CreateUser(context.Background(), &scimclient.User{
+		UserName:  "ada@example.com",
+		PhotoETag: "etag-1",
+		Photo:     []byte("face"),
+		PhotoMIME: "image/png",
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "profile-1", profileID)
+
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal(body, &payload))
+
+	schemas, ok := payload["schemas"].([]any)
+	require.True(t, ok)
+	assert.NotContains(t, schemas, "urn:ietf:params:scim:schemas:extension:probo:2.0:User")
+	assert.NotContains(t, payload, "urn:ietf:params:scim:schemas:extension:probo:2.0:User")
+	assert.NotContains(t, string(body), "photoETag")
+
+	photos, ok := payload["photos"].([]any)
+	require.True(t, ok)
+	require.Len(t, photos, 1)
+
+	photo, ok := photos[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "data:image/png;base64,ZmFjZQ==", photo["value"])
+	assert.Equal(t, true, photo["primary"])
+}
+
+func TestClient_CreateUser_RequiresProfileID(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/scim+json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = io.WriteString(w, `{}`)
+	}))
+	t.Cleanup(server.Close)
+
+	client := scimclient.NewClient(server.Client(), server.URL, "token")
+	_, err := client.CreateUser(context.Background(), &scimclient.User{UserName: "ada@example.com"})
+
+	require.Error(t, err)
 }

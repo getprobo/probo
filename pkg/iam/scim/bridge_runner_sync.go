@@ -22,6 +22,7 @@ package scim
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -76,25 +77,39 @@ func (r *BridgeRunner) executeSync(
 	}
 
 	scimClient := r.createSCIMClient(logger, token)
+	photos := &bridgePhotoStore{
+		pg:             r.pg,
+		scope:          scope,
+		organizationID: scimBridge.OrganizationID,
+	}
+
+	photoETags, err := photos.PhotoETags(ctx)
+	if err != nil {
+		duration = time.Since(start)
+		return SyncStats{}, duration, dbConnector, fmt.Errorf("cannot load photo versions: %w", err)
+	}
+
 	syncer := bridge.NewBridge(
 		idp,
 		scimClient,
 		bridge.WithExcludedUserNames(scimBridge.ExcludedUserNames),
+		bridge.WithLogger(logger),
 	)
 
-	created, updated, deleted, deactivated, skipped, syncErr := syncer.Run(ctx)
+	result, syncErr := syncer.Run(ctx, photoETags)
+	saveErr := photos.SavePhotoETags(context.WithoutCancel(ctx), result.PhotoETags)
 	duration = time.Since(start)
 
-	if syncErr != nil {
-		return SyncStats{}, duration, dbConnector, fmt.Errorf("sync failed: %w", syncErr)
+	if err := errors.Join(syncErr, saveErr); err != nil {
+		return SyncStats{}, duration, dbConnector, fmt.Errorf("sync failed: %w", err)
 	}
 
 	stats = SyncStats{
-		Created:     created,
-		Updated:     updated,
-		Deleted:     deleted,
-		Deactivated: deactivated,
-		Skipped:     skipped,
+		Created:     result.Created,
+		Updated:     result.Updated,
+		Deleted:     result.Deleted,
+		Deactivated: result.Deactivated,
+		Skipped:     result.Skipped,
 	}
 
 	return stats, duration, dbConnector, nil

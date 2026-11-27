@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ import (
 	"github.com/elimity-com/scim/optional"
 	"github.com/prometheus/client_golang/prometheus"
 	scimfilter "github.com/scim2/filter-parser/v2"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
@@ -42,6 +44,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/crypto/rand"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/identityname"
 	"go.probo.inc/probo/pkg/mail"
@@ -55,6 +58,9 @@ const scimEventLogTimeout = 5 * time.Second
 type (
 	Service struct {
 		pg           *pg.Client
+		fm           *filemanager.Service
+		bucket       string
+		httpClient   *http.Client
 		logger       *log.Logger
 		bridgeRunner *BridgeRunner
 	}
@@ -65,6 +71,9 @@ type (
 		EncryptionKey     cipher.EncryptionKey
 		ConnectorRegistry *connectorprotocol.Registry
 		BridgeRunner      BridgeRunnerConfig
+		FileManager       *filemanager.Service
+		Bucket            string
+		HTTPClient        *http.Client
 	}
 )
 
@@ -83,8 +92,24 @@ func NewService(
 		cfg.BridgeRunner,
 	)
 
+	httpClient := cfg.HTTPClient
+	if httpClient == nil {
+		options := []httpclient.Option{
+			httpclient.WithLogger(logger),
+			httpclient.WithSSRFProtection(),
+		}
+		if cfg.TracerProvider != nil {
+			options = append(options, httpclient.WithTracerProvider(cfg.TracerProvider))
+		}
+
+		httpClient = httpclient.DefaultPooledClient(options...)
+	}
+
 	return &Service{
 		pg:           pg,
+		fm:           cfg.FileManager,
+		bucket:       cfg.Bucket,
+		httpClient:   httpClient,
 		logger:       logger,
 		bridgeRunner: bridgeRunner,
 	}
@@ -167,6 +192,13 @@ func (s *Service) CreateUser(
 	)
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+
+	staged, err := s.incomingPhoto(ctx, attrs.PhotoURI)
+	if err != nil {
+		return scim.Resource{}, fmt.Errorf("cannot stage avatar: %w", err)
+	}
+
+	var attached bool
 
 	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
@@ -361,6 +393,13 @@ func (s *Service) CreateUser(
 			previousUser = webhooktypes.NewUser(previousProfile, membership)
 		}
 
+		photoAttached, photoErr := s.syncProfilePhoto(ctx, tx, scope, profile, staged)
+		if photoErr != nil {
+			return photoErr
+		}
+
+		attached = photoAttached
+
 		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
@@ -371,6 +410,10 @@ func (s *Service) CreateUser(
 
 		return nil
 	})
+	if err != nil || !attached {
+		s.discardStagedPhoto(ctx, staged)
+	}
+
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -516,12 +559,19 @@ func (s *Service) updateUser(
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
 
+	staged, err := s.incomingPhoto(ctx, attrs.PhotoURI)
+	if err != nil {
+		return nil, fmt.Errorf("cannot stage avatar: %w", err)
+	}
+
+	var attached bool
+
 	var (
 		membership *coredata.Membership
 		profile    *coredata.MembershipProfile
 	)
 
-	err := s.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile = &coredata.MembershipProfile{}
@@ -832,6 +882,13 @@ func (s *Service) updateUser(
 				}
 			}
 
+			photoAttached, photoErr := s.syncProfilePhoto(ctx, tx, scope, profile, staged)
+			if photoErr != nil {
+				return photoErr
+			}
+
+			attached = photoAttached
+
 			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
@@ -845,6 +902,10 @@ func (s *Service) updateUser(
 			return nil
 		},
 	)
+	if err != nil || !attached {
+		s.discardStagedPhoto(ctx, staged)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -1150,6 +1211,7 @@ type scimUserAttributes struct {
 	EnterpriseOrganization string
 	Division               string
 	ManagerValue           string
+	PhotoURI               string
 }
 
 func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttributes {
@@ -1233,6 +1295,8 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 		}
 	}
 
+	attrs.PhotoURI = selectPhotoURI(attributes["photos"])
+
 	return attrs
 }
 
@@ -1260,6 +1324,7 @@ type scimReplaceAttributes struct {
 	EnterpriseOrganization *string
 	Division               *string
 	ManagerValue           *string
+	PhotoURI               string
 }
 
 func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimReplaceAttributes {
@@ -1366,6 +1431,8 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 			}
 		}
 	}
+
+	attrs.PhotoURI = selectPhotoURI(attributes["photos"])
 
 	return attrs
 }
@@ -1606,6 +1673,10 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 							}
 						}
 					}
+
+					if uri := selectPhotoURI(valueMap["photos"]); uri != "" {
+						attrs.PhotoURI = uri
+					}
 				}
 
 				continue
@@ -1770,6 +1841,8 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				if mv, ok := op.Value.(string); ok {
 					attrs.ManagerValue = &mv
 				}
+			case "photos":
+				attrs.PhotoURI = selectPhotoURI(op.Value)
 			}
 		}
 	}

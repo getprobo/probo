@@ -26,12 +26,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go.probo.inc/probo/pkg/iam/avatar"
 )
 
 func TestReadAvatarBytes_RejectsOversizedBody(t *testing.T) {
 	t.Parallel()
 
-	body := bytes.Repeat([]byte("a"), maxAvatarFileSize+1)
+	body := bytes.Repeat([]byte("a"), avatar.MaxFileSize+1)
 	payload, err := readAvatarBytes(bytes.NewReader(body))
 	require.ErrorIs(t, err, errAvatarTooLarge)
 	assert.Nil(t, payload)
@@ -40,8 +42,8 @@ func TestReadAvatarBytes_RejectsOversizedBody(t *testing.T) {
 func TestReadAvatarBytes_AllowsMaxSize(t *testing.T) {
 	t.Parallel()
 
-	body := bytes.Repeat([]byte("a"), maxAvatarFileSize)
+	body := bytes.Repeat([]byte("a"), avatar.MaxFileSize)
 	payload, err := readAvatarBytes(bytes.NewReader(body))
 	require.NoError(t, err)
-	assert.Len(t, payload, maxAvatarFileSize)
+	assert.Len(t, payload, avatar.MaxFileSize)
 }
