@@ -77,7 +77,7 @@ const thirdPartiesFragment = graphql`
     thirdPartiesDocument {
       id
       defaultApprovers {
-        id
+        ...PublishListDialog_approver
       }
     }
     thirdParties(
@@ -169,8 +169,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   const hasAnyAction = thirdParties.some(({ canDelete }) => canDelete);
 
   const thirdPartiesDocument = fragmentData.thirdPartiesDocument;
-  const defaultApproverIds
-    = thirdPartiesDocument?.defaultApprovers?.map(a => a.id) ?? [];
+  const defaultApprovers = thirdPartiesDocument?.defaultApprovers ?? [];
 
   return (
     <div className="space-y-6">
@@ -193,7 +192,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
           {fragmentData.canPublishThirdParty && (
             <PublishThirdPartyListDialog
               organizationId={organizationId}
-              defaultApproverIds={defaultApproverIds}
+              defaultApprovers={defaultApprovers}
               onPublished={documentId => void navigate(
                 `/organizations/${organizationId}/governance/documents/${documentId}`,
               )}

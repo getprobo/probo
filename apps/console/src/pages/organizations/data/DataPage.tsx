@@ -127,7 +127,7 @@ export default function DataPage(props: Props) {
 
   const dataEntries = pagination.data.data.edges.map(edge => edge.node);
   const connectionId = pagination.data.data.__id;
-  const defaultApproverIds = (data.dataListDocument?.defaultApprovers ?? []).map(a => a.id);
+  const defaultApprovers = data.dataListDocument?.defaultApprovers ?? [];
 
   const refetch = ({
     order,
@@ -167,7 +167,7 @@ export default function DataPage(props: Props) {
           {data.canPublishData && (
             <PublishDataListDialog
               organizationId={organizationId}
-              defaultApproverIds={defaultApproverIds}
+              defaultApprovers={defaultApprovers}
               onPublished={(documentId) => {
                 void navigate(
                   `/organizations/${organizationId}/governance/documents/${documentId}`,

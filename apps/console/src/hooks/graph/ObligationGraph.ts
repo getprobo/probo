@@ -39,7 +39,7 @@ export const obligationsQuery = graphql`
         obligationsDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         ...ObligationsPageFragment

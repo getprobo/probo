@@ -125,7 +125,7 @@ export default function AssetsPage(props: Props) {
   );
   const assets = pagination.data.assets?.edges.map(edge => edge.node);
   const connectionId = pagination.data.assets.__id;
-  const defaultApproverIds = (data.node.assetListDocument?.defaultApprovers ?? []).map(a => a.id);
+  const defaultApprovers = data.node.assetListDocument?.defaultApprovers ?? [];
 
   const canWrite = assets.some(asset => asset.canDelete || asset.canUpdate);
   usePageTitle(t("assetsPage.title"));
@@ -150,7 +150,7 @@ export default function AssetsPage(props: Props) {
           {data.node.canPublishAssets && (
             <PublishAssetListDialog
               organizationId={organizationId}
-              defaultApproverIds={defaultApproverIds}
+              defaultApprovers={defaultApprovers}
               onPublished={(documentId) => {
                 void navigate(
                   `/organizations/${organizationId}/governance/documents/${documentId}`,

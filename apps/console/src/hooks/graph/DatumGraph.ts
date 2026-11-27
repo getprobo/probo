@@ -35,7 +35,7 @@ export const dataQuery = graphql`
         dataListDocument {
           id
           defaultApprovers {
-            id
+            ...PublishListDialog_approver
           }
         }
         ...DataPageFragment

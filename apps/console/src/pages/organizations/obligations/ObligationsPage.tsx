@@ -121,7 +121,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   usePageTitle(t("obligationsPage.title"));
 
   const organization = usePreloadedQuery<ObligationGraphListQuery>(obligationsQuery, queryRef);
-  const defaultApproverIds = (organization.node.obligationsDocument?.defaultApprovers ?? []).map(a => a.id);
+  const defaultApprovers = organization.node.obligationsDocument?.defaultApprovers ?? [];
 
   const {
     data: obligationsData,
@@ -159,7 +159,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
           {organization.node.canPublishObligations && (
             <PublishObligationListDialog
               organizationId={organizationId}
-              defaultApproverIds={defaultApproverIds}
+              defaultApprovers={defaultApprovers}
               onPublished={(documentId) => {
                 void navigate(
                   `/organizations/${organizationId}/governance/documents/${documentId}`,

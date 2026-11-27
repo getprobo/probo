@@ -18,28 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-} from "@probo/ui";
-import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { PublishRiskAnalysisDialogMutation } from "#/__generated__/core/PublishRiskAnalysisDialogMutation.graphql";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  PublishListDialog,
+  type PublishListDialogApprovers,
+  type PublishListDialogInput,
+} from "#/components/dialogs/PublishListDialog";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { z } from "#/lib/zod";
 
 const publishMutation = graphql`
   mutation PublishRiskAnalysisDialogMutation(
@@ -56,128 +46,49 @@ const publishMutation = graphql`
 `;
 
 type Props = {
-  children: ReactNode;
+  children: ReactElement;
   riskAnalysisId: string;
-  defaultApproverIds?: string[];
+  defaultApprovers: PublishListDialogApprovers;
   onPublished?: (documentId: string) => void;
 };
 
 export function PublishRiskAnalysisDialog({
   children,
   riskAnalysisId,
-  defaultApproverIds = [],
+  defaultApprovers,
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const toast = useToast();
   const organizationId = useOrganizationId();
-  const dialogRef = useDialogRef();
-
-  const schema = useMemo(() => z.object({
-    approverIds: z.array(z.string()),
-  }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds,
-    },
-  });
-
   const [publish, isPublishing]
     = useMutation<PublishRiskAnalysisDialogMutation>(publishMutation);
 
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = (data: z.infer<typeof schema>) => {
-    const isMinor = minorRef.current;
-    const requestedApproval = !isMinor && data.approverIds.length > 0;
-
-    publish({
-      variables: {
-        input: {
-          minor: isMinor,
-          riskAnalysisId,
-          approverIds: requestedApproval ? data.approverIds : undefined,
+  const onPublish = ({ minor, approverIds }: PublishListDialogInput) =>
+    new Promise<string | null | undefined>((resolve, reject) => {
+      publish({
+        variables: {
+          input: { riskAnalysisId, minor, approverIds },
         },
-      },
-      onCompleted(response) {
-        const documentId = response.publishRiskAnalysis?.documentEdge?.node?.id;
-        if (documentId) {
-          toast.add({
-            title: t("publishRiskAnalysisDialog.messages.success"),
-            description: requestedApproval
-              ? t("publishRiskAnalysisDialog.messages.approvalRequested")
-              : t("publishRiskAnalysisDialog.messages.published"),
-            type: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onPublished?.(documentId);
-        }
-      },
-      onError(error) {
-        toast.add({
-          title: t("publishRiskAnalysisDialog.messages.error"),
-          description: formatError(
-            t("publishRiskAnalysisDialog.errors.publish"),
-            error,
-          ),
-          type: "error",
-        });
-      },
+        onCompleted: (response) => {
+          resolve(response.publishRiskAnalysis?.documentEdge?.node?.id);
+        },
+        onError: reject,
+      });
     });
-  };
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
+    <PublishListDialog
+      organizationId={organizationId}
+      defaultApprovers={defaultApprovers}
+      isPublishing={isPublishing}
+      onPublish={onPublish}
+      onPublished={onPublished}
       title={t("publishRiskAnalysisDialog.title")}
+      description={t("publishRiskAnalysisDialog.description")}
+      publishedMessage={t("publishRiskAnalysisDialog.messages.published")}
+      publishError={t("publishRiskAnalysisDialog.errors.publish")}
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishRiskAnalysisDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishRiskAnalysisDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishRiskAnalysisDialog.placeholders.approvers")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
-            disabled={isPublishing}
-          >
-            {t("publishRiskAnalysisDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers ? t("publishRiskAnalysisDialog.actions.requestApproval") : t("publishRiskAnalysisDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+      {children}
+    </PublishListDialog>
   );
 }

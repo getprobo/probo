@@ -3137,9 +3137,10 @@
     "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
     "fields": {
       "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
+      "approversDescription": "Kies wie deze versie moet goedkeuren, of laat de lijst leeg om direct te publiceren."
     },
     "actions": {
+      "cancel": "Annuleren",
       "publishMinor": "Publiceren als subversie",
       "requestApproval": "Goedkeuring aanvragen",
       "publish": "Publiceren"
@@ -3149,6 +3150,10 @@
       "error": "Fout",
       "approvalRequested": "Goedkeuring succesvol aangevraagd."
     }
+  },
+  "approversField": {
+    "add": "Goedkeurder toevoegen",
+    "remove": "{{name}} verwijderen"
   },
   "publishAiSystemListDialog": {
     "title": "AI-systemen publiceren",
@@ -4382,11 +4387,8 @@
   "publishRiskAnalysisDialog": {
     "title": "Risicobeoordeling publiceren",
     "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "fields": { "approvers": "Goedkeurders" },
-    "placeholders": { "approvers": "Goedkeurders toevoegen..." },
-    "messages": { "success": "Succes", "error": "Fout", "approvalRequested": "Goedkeuring succesvol aangevraagd.", "published": "Risicobeoordeling succesvol gepubliceerd." },
-    "errors": { "publish": "Publiceren van risicobeoordeling mislukt" },
-    "actions": { "publishMinor": "Publiceren als minor", "requestApproval": "Goedkeuring aanvragen", "publish": "Publiceren" }
+    "messages": { "published": "Risicobeoordeling succesvol gepubliceerd." },
+    "errors": { "publish": "Publiceren van risicobeoordeling mislukt" }
   },
   "riskRow": {
     "messages": {
@@ -5252,25 +5254,11 @@
   "publishStatementOfApplicabilityDialog": {
     "title": "Verklaring van toepasselijkheid publiceren",
     "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "fields": {
-      "approvers": "Goedkeurders"
-    },
-    "placeholders": {
-      "approvers": "Goedkeurders toevoegen..."
-    },
     "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
       "published": "Verklaring van toepasselijkheid succesvol gepubliceerd."
     },
     "errors": {
       "publish": "Publiceren van verklaring van toepasselijkheid mislukt"
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
     }
   },
   "statementOfApplicabilityControlsTab": {
