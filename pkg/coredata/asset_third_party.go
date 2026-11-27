@@ -23,6 +23,7 @@ package coredata
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -123,4 +124,38 @@ FROM third_party_ids
 	}
 
 	return nil
+}
+
+func (av *AssetThirdParties) LoadThirdPartyIDsByAssetID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	assetID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+	third_party_id
+FROM
+	asset_third_parties
+WHERE
+	%s
+	AND asset_id = @asset_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"asset_id": assetID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query asset third party ids: %w", err)
+	}
+
+	thirdPartyIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect asset third party ids: %w", err)
+	}
+
+	return thirdPartyIDs, nil
 }

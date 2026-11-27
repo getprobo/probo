@@ -23,6 +23,7 @@ package itam_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -274,6 +275,8 @@ func TestAssetSync_FailedKindDoesNotMoveLastSeen(t *testing.T) {
 		itam.EC2InstanceKind,
 		itam.RDSDBInstanceKind,
 	}, sync.CompletedKinds)
+	assert.Equal(t, 1, countAssetChangeEvents(t, seeded, distribution.ID))
+	assert.Equal(t, 2, countAssetChangeEvents(t, seeded, instance.ID))
 
 	_, err := itam.ClaimAssetSyncForTest(
 		itam.NewAssetSyncHandlerWithListersForTest(seeded.pg, seeded.opener, nil),
@@ -297,6 +300,7 @@ func TestAssetSync_StaleFailureRetriesThenWaits(t *testing.T) {
 
 	failed := loadLatestSync(t, seeded)
 	assert.Equal(t, coredata.AssetSyncStatusFailed, failed.Status)
+	assert.Equal(t, 0, countOrganizationChangeEvents(t, seeded))
 	require.NotNil(t, failed.Error)
 	assert.Equal(t, itam.AssetSyncStaleMessageForTest(), *failed.Error)
 
@@ -553,6 +557,104 @@ func syncAccount(t *testing.T, seeded seededAWS, listers map[string]itam.AssetLi
 	handler := itam.NewAssetSyncHandlerWithListersForTest(seeded.pg, seeded.opener, listers)
 	_, err := itam.SyncAccountForTest(handler, t.Context(), seeded.account.ID)
 	require.NoError(t, err)
+}
+
+func TestAssetSync_UnchangedListWritesChangeEvent(t *testing.T) {
+	t.Parallel()
+
+	seeded := seedAWSAccount(t)
+	externalID := "arn:aws:cloudfront::222222222222:distribution/E9"
+	region := "us-east-1"
+	observation := itam.AssetObservation{
+		ExternalID: externalID,
+		Name:       "cdn",
+		Region:     &region,
+		Configuration: itam.CloudFrontDistributionConfiguration{
+			DomainName: "d.cloudfront.net",
+		},
+		SchemaVersion: itam.CloudFrontDistributionSchemaVersion,
+	}
+	listers := map[string]itam.AssetLister{
+		itam.CloudFrontDistributionKind: observations(observation),
+	}
+
+	syncAccount(t, seeded, listers)
+	asset := loadDiscovered(t, seeded, itam.CloudFrontDistributionKind, externalID)
+	makeAccountDue(t, seeded)
+	syncAccount(t, seeded, listers)
+
+	events := loadAssetChangeEvents(t, seeded, asset.ID)
+	require.Len(t, events, 2)
+	assert.Equal(t, coredata.AssetChangeTypeCreated, events[0].ChangeType)
+	assert.Equal(t, coredata.AssetChangeTypeUpdated, events[1].ChangeType)
+	assert.Contains(t, string(events[1].After), "last_seen_at")
+	assert.NotContains(t, string(events[1].After), `"name"`)
+}
+
+func countAssetChangeEvents(t *testing.T, seeded seededAWS, assetID gid.GID) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		events := coredata.AssetChangeEvents{}
+
+		var err error
+
+		count, err = events.CountByAssetID(ctx, conn, seeded.scope, assetID)
+
+		return err
+	}))
+
+	return count
+}
+
+func countOrganizationChangeEvents(t *testing.T, seeded seededAWS) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return conn.QueryRow(
+			ctx,
+			`SELECT COUNT(*) FROM asset_change_events WHERE organization_id = $1`,
+			seeded.account.OrganizationID,
+		).Scan(&count)
+	}))
+
+	return count
+}
+
+func loadAssetChangeEvents(
+	t *testing.T,
+	seeded seededAWS,
+	assetID gid.GID,
+) coredata.AssetChangeEvents {
+	t.Helper()
+
+	var events coredata.AssetChangeEvents
+
+	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return events.LoadByAssetID(
+			ctx,
+			conn,
+			seeded.scope,
+			assetID,
+			page.NewCursor(
+				50,
+				nil,
+				page.Head,
+				page.OrderBy[coredata.AssetChangeEventOrderField]{
+					Field:     coredata.AssetChangeEventOrderFieldObservedAt,
+					Direction: page.OrderDirectionDesc,
+				},
+			),
+		)
+	}))
+
+	slices.Reverse(events)
+
+	return events
 }
 
 func loadDiscovered(

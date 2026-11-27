@@ -50,6 +50,7 @@ type (
 		OwnerID         *gid.GID
 		AssetIDs        []gid.GID
 		ThirdPartyIDs   []gid.GID
+		IdentityID      *gid.GID
 	}
 
 	UpdateBusinessFunctionRequest struct {
@@ -64,6 +65,7 @@ type (
 		OwnerID         **gid.GID
 		AssetIDs        *[]gid.GID
 		ThirdPartyIDs   *[]gid.GID
+		IdentityID      *gid.GID
 	}
 )
 
@@ -79,6 +81,7 @@ func (r *CreateBusinessFunctionRequest) Validate() error {
 	v.Check(r.ImpactTolerance, "impact_tolerance", validator.SafeText(ContentMaxLength))
 	v.Check(r.Notes, "notes", validator.SafeText(ContentMaxLength))
 	v.Check(r.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(r.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 	v.CheckEach(
 		r.AssetIDs,
 		"asset_ids",
@@ -109,6 +112,7 @@ func (r *UpdateBusinessFunctionRequest) Validate() error {
 	v.Check(r.ImpactTolerance, "impact_tolerance", validator.SafeText(ContentMaxLength))
 	v.Check(r.Notes, "notes", validator.SafeText(ContentMaxLength))
 	v.Check(r.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(r.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 	v.CheckEach(
 		r.AssetIDs,
 		"asset_ids",
@@ -259,6 +263,20 @@ func (s *BusinessFunctionService) Create(
 			}
 
 			if len(req.AssetIDs) > 0 {
+				if err := recordBusinessFunctionAssetChanges(
+					ctx,
+					conn,
+					scope,
+					req.OrganizationID,
+					businessFunction.ID,
+					nil,
+					req.AssetIDs,
+					req.IdentityID,
+					now,
+				); err != nil {
+					return err
+				}
+
 				businessFunctionAssets := coredata.BusinessFunctionAssets{}
 				if err := businessFunctionAssets.Insert(ctx, conn, scope, businessFunction.ID, req.OrganizationID, req.AssetIDs); err != nil {
 					return fmt.Errorf("cannot insert business function assets: %w", err)
@@ -344,6 +362,10 @@ func (s *BusinessFunctionService) Update(
 			}
 
 			if req.AssetIDs != nil {
+				if err := coredata.LockID(ctx, conn, scope, "business_functions", businessFunction.ID); err != nil {
+					return err
+				}
+
 				if len(*req.AssetIDs) > 0 {
 					assets := &coredata.Assets{}
 					if err := assets.LoadByIDs(ctx, conn, scope, *req.AssetIDs); err != nil {
@@ -355,6 +377,25 @@ func (s *BusinessFunctionService) Update(
 							return fmt.Errorf("cannot load asset: %w", coredata.ErrResourceNotFound)
 						}
 					}
+				}
+
+				currentAssetIDs, err := businessFunctionAssetIDs(ctx, conn, scope, businessFunction.ID)
+				if err != nil {
+					return err
+				}
+
+				if err := recordBusinessFunctionAssetChanges(
+					ctx,
+					conn,
+					scope,
+					businessFunction.OrganizationID,
+					businessFunction.ID,
+					currentAssetIDs,
+					*req.AssetIDs,
+					req.IdentityID,
+					time.Now(),
+				); err != nil {
+					return err
 				}
 
 				businessFunctionAssets := coredata.BusinessFunctionAssets{}
@@ -414,13 +455,41 @@ func (s BusinessFunctionService) Delete(
 	ctx context.Context,
 	scope coredata.Scoper,
 	businessFunctionID gid.GID,
+	identityID *gid.GID,
 ) error {
-	businessFunction := coredata.BusinessFunction{ID: businessFunctionID}
+	businessFunction := &coredata.BusinessFunction{}
 
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := coredata.LockID(ctx, tx, scope, "business_functions", businessFunction.ID); err != nil {
+			if err := coredata.LockID(ctx, tx, scope, "business_functions", businessFunctionID); err != nil {
+				return err
+			}
+
+			if err := businessFunction.LoadByID(ctx, tx, scope, businessFunctionID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load business function: %w", err)
+			}
+
+			assetIDs, err := businessFunctionAssetIDs(ctx, tx, scope, businessFunction.ID)
+			if err != nil {
+				return err
+			}
+
+			if err := recordBusinessFunctionAssetChanges(
+				ctx,
+				tx,
+				scope,
+				businessFunction.OrganizationID,
+				businessFunction.ID,
+				assetIDs,
+				nil,
+				identityID,
+				time.Now(),
+			); err != nil {
 				return err
 			}
 
@@ -622,4 +691,20 @@ func (s BusinessFunctionService) CountThirdParties(
 	}
 
 	return count, nil
+}
+
+func businessFunctionAssetIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	businessFunctionID gid.GID,
+) ([]gid.GID, error) {
+	links := &coredata.BusinessFunctionAssets{}
+
+	ids, err := links.LoadAssetIDsByBusinessFunctionID(ctx, conn, scope, businessFunctionID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load business function assets: %w", err)
+	}
+
+	return ids, nil
 }

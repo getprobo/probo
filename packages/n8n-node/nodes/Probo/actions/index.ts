@@ -23,6 +23,7 @@ import * as aiSystem from './aiSystem';
 import * as accessReview from './accessReview';
 import * as accessReviewSource from './accessReviewSource';
 import * as asset from './asset';
+import * as assetChangeEvent from './assetChangeEvent';
 import * as audit from './audit';
 import * as auditLog from './auditLog';
 import * as businessFunction from './businessFunction';
@@ -83,6 +84,7 @@ export const resources: Record<string, ResourceModule> = {
 	accessReview: accessReview as ResourceModule,
 	accessReviewSource: accessReviewSource as ResourceModule,
 	asset: asset as ResourceModule,
+	assetChangeEvent: assetChangeEvent as ResourceModule,
 	audit: audit as ResourceModule,
 	auditLog: auditLog as ResourceModule,
 	businessFunction: businessFunction as ResourceModule,

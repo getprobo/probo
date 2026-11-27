@@ -3,6 +3,16 @@ enum AssetType @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetType") {
     VIRTUAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypeVirtual")
 }
 
+enum AssetStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetStatus") {
+    ACTIVE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetStatusActive")
+    DEACTIVATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AssetStatusDeactivated"
+        )
+}
+
 enum AssetOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetOrderField") {
     CREATED_AT
@@ -86,7 +96,15 @@ type Asset implements Node & Taggable {
     ): ThirdPartyConnection! @goField(forceResolver: true)
     assetType: AssetType!
     dataTypesStored: String
+    status: AssetStatus!
     organization: Organization! @goField(forceResolver: true)
+    changeEvents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AssetChangeEventOrder
+    ): AssetChangeEventConnection! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -183,6 +201,7 @@ input UpdateAssetInput {
     ownerId: ID @goField(omittable: true)
     assetType: AssetType
     dataTypesStored: String
+    status: AssetStatus
     thirdPartyIds: [ID!]
 }
 

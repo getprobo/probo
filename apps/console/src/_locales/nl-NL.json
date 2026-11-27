@@ -2969,6 +2969,20 @@
       "delete": "Verwijderen",
       "update": "Bijwerken",
       "updating": "Bijwerken..."
+    },
+    "changeHistory": {
+      "title": "Wijzigingsgeschiedenis",
+      "empty": "Nog geen wijzigingen.",
+      "previous": "Vorige",
+      "next": "Volgende",
+      "before": "Voor",
+      "after": "Na",
+      "sync": "Synchronisatie",
+      "types": {
+        "CREATED": "Aangemaakt",
+        "UPDATED": "Bijgewerkt",
+        "DEACTIVATED": "Gedeactiveerd"
+      }
     }
   },
   "assetsPage": {

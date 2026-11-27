@@ -46,6 +46,7 @@ type CreateAssetRequest struct {
 	AssetType       coredata.AssetType
 	DataTypesStored *string
 	ThirdPartyIDs   []gid.GID
+	IdentityID      *gid.GID
 }
 
 type UpdateAssetRequest struct {
@@ -56,6 +57,8 @@ type UpdateAssetRequest struct {
 	AssetType       *coredata.AssetType
 	DataTypesStored *string
 	ThirdPartyIDs   []gid.GID
+	Status          *coredata.AssetStatus
+	IdentityID      *gid.GID
 }
 
 func (car *CreateAssetRequest) Validate() error {
@@ -66,6 +69,7 @@ func (car *CreateAssetRequest) Validate() error {
 	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
 	v.Check(car.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
+	v.Check(car.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 
 	if car.DataTypesStored != nil && strings.TrimSpace(*car.DataTypesStored) != "" {
 		v.Check(car.DataTypesStored, "data_types_stored", validator.SafeText(ContentMaxLength))
@@ -86,6 +90,8 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v.Check(uar.Amount, "amount", validator.Min(1))
 	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))
+	v.Check(uar.Status, "status", validator.OneOfSlice(coredata.AssetStatuses()))
+	v.Check(uar.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 
 	if uar.DataTypesStored != nil && strings.TrimSpace(*uar.DataTypesStored) != "" {
 		v.Check(uar.DataTypesStored, "data_types_stored", validator.SafeText(ContentMaxLength))
@@ -230,6 +236,8 @@ func (s AssetService) Update(
 			return fmt.Errorf("cannot load asset: %w", err)
 		}
 
+		previous := *asset
+
 		asset.UpdatedAt = now
 		if req.Name != nil {
 			asset.Name = *req.Name
@@ -258,22 +266,31 @@ func (s AssetService) Update(
 			asset.DataTypesStored = blankToNil(req.DataTypesStored)
 		}
 
+		if req.Status != nil {
+			asset.Status = *req.Status
+		}
+
 		if err := asset.Update(ctx, conn, scope); err != nil {
 			return fmt.Errorf("cannot update asset: %w", err)
 		}
 
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			conn,
-			asset.ID,
-			asset.OrganizationID,
-			asset.Name,
-			asset.SearchText(),
-		); err != nil {
-			return fmt.Errorf("cannot sync search: %w", err)
+		if err := syncAssetSearch(ctx, conn, asset); err != nil {
+			return err
 		}
 
+		change := coredata.AssetChangeInput{}
+
 		if req.ThirdPartyIDs != nil {
+			currentThirdPartyIDs, err := assetThirdParties.LoadThirdPartyIDsByAssetID(ctx, conn, scope, asset.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load asset thirdParties: %w", err)
+			}
+
+			change.ThirdParties = &coredata.AssetLinkChange{
+				Before: currentThirdPartyIDs,
+				After:  req.ThirdPartyIDs,
+			}
+
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
 				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
@@ -284,6 +301,10 @@ func (s AssetService) Update(
 			if err := assetThirdParties.Merge(ctx, conn, scope, asset.ID, asset.OrganizationID, req.ThirdPartyIDs); err != nil {
 				return fmt.Errorf("cannot update asset thirdParties: %w", err)
 			}
+		}
+
+		if err := insertAssetChange(ctx, conn, scope, &previous, asset, change, req.IdentityID, now); err != nil {
+			return fmt.Errorf("cannot record asset change: %w", err)
 		}
 
 		return nil
@@ -343,6 +364,8 @@ func (s AssetService) Create(
 			return fmt.Errorf("cannot sync search: %w", err)
 		}
 
+		change := coredata.AssetChangeInput{}
+
 		if len(req.ThirdPartyIDs) > 0 {
 			thirdParties := &coredata.ThirdParties{}
 			if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
@@ -352,6 +375,12 @@ func (s AssetService) Create(
 			if err := assetThirdParties.Insert(ctx, conn, scope, asset.ID, asset.OrganizationID, req.ThirdPartyIDs); err != nil {
 				return fmt.Errorf("cannot create asset thirdParties: %w", err)
 			}
+
+			change.ThirdParties = &coredata.AssetLinkChange{After: req.ThirdPartyIDs}
+		}
+
+		if err := insertAssetChange(ctx, conn, scope, nil, asset, change, req.IdentityID, now); err != nil {
+			return fmt.Errorf("cannot record asset change: %w", err)
 		}
 
 		return nil
@@ -364,21 +393,152 @@ func (s AssetService) Create(
 }
 
 func (s AssetService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	assetID gid.GID,
+	identityID *gid.GID,
 ) error {
 	asset := &coredata.Asset{ID: assetID}
 
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := asset.LoadByID(ctx, tx, scope, assetID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load asset: %w", err)
+			}
+
+			if asset.Status == coredata.AssetStatusDeactivated {
+				return nil
+			}
+
+			previous := *asset
+			now := time.Now()
+
+			if err := asset.Deactivate(ctx, tx, scope, now); err != nil {
+				return fmt.Errorf("cannot deactivate asset: %w", err)
+			}
+
 			if err := coredata.DeleteSearchResource(ctx, tx, asset.ID); err != nil {
 				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
-			return asset.Delete(ctx, tx, scope)
+			if err := insertAssetChange(
+				ctx,
+				tx,
+				scope,
+				&previous,
+				asset,
+				coredata.AssetChangeInput{},
+				identityID,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot record asset change: %w", err)
+			}
+
+			return nil
 		},
 	)
+}
+
+func (s AssetService) GetChangeEvent(
+	ctx context.Context,
+	scope coredata.Scoper,
+	eventID gid.GID,
+) (*coredata.AssetChangeEvent, error) {
+	event := &coredata.AssetChangeEvent{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return event.LoadByID(ctx, conn, scope, eventID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return event, nil
+}
+
+func (s AssetService) ListChangeEvents(
+	ctx context.Context,
+	scope coredata.Scoper,
+	assetID gid.GID,
+	cursor *page.Cursor[coredata.AssetChangeEventOrderField],
+) (*page.Page[*coredata.AssetChangeEvent, coredata.AssetChangeEventOrderField], error) {
+	var events coredata.AssetChangeEvents
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return events.LoadByAssetID(ctx, conn, scope, assetID, cursor)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(events, cursor), nil
+}
+
+func (s AssetService) CountChangeEvents(
+	ctx context.Context,
+	scope coredata.Scoper,
+	assetID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			events := coredata.AssetChangeEvents{}
+
+			count, err = events.CountByAssetID(ctx, conn, scope, assetID)
+			if err != nil {
+				return fmt.Errorf("cannot count asset change events: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func syncAssetSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	asset *coredata.Asset,
+) error {
+	if asset.Status == coredata.AssetStatusActive {
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			asset.ID,
+			asset.OrganizationID,
+			asset.Name,
+			asset.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
+		return nil
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, asset.ID); err != nil {
+		return fmt.Errorf("cannot sync search: %w", err)
+	}
+
+	return nil
 }
 
 func blankToNil(value *string) *string {

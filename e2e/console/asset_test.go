@@ -373,3 +373,188 @@ func TestAsset_Types(t *testing.T) {
 		})
 	}
 }
+
+func TestAsset_ChangeHistory(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	profileID := factory.CreateUser(owner)
+
+	const createQuery = `
+		mutation($input: CreateAssetInput!) {
+			createAsset(input: $input) {
+				assetEdge { node { id } }
+			}
+		}
+	`
+
+	var created struct {
+		CreateAsset struct {
+			AssetEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"assetEdge"`
+		} `json:"createAsset"`
+	}
+
+	err := owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId":  owner.GetOrganizationID().String(),
+			"name":            "Tracked asset",
+			"amount":          1,
+			"ownerId":         profileID,
+			"assetType":       "VIRTUAL",
+			"dataTypesStored": "None",
+		},
+	}, &created)
+	require.NoError(t, err)
+
+	assetID := created.CreateAsset.AssetEdge.Node.ID
+	events := listAssetChangeEvents(t, owner, assetID)
+	require.Len(t, events, 1)
+	assert.Equal(t, "CREATED", events[0].ChangeType)
+	require.NotNil(t, events[0].Actor)
+
+	const updateQuery = `
+		mutation($input: UpdateAssetInput!) {
+			updateAsset(input: $input) { asset { id name } }
+		}
+	`
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"id":   assetID,
+			"name": "Tracked asset renamed",
+		},
+	}, &struct{}{})
+	require.NoError(t, err)
+
+	events = listAssetChangeEvents(t, owner, assetID)
+	require.Len(t, events, 2)
+	assert.Equal(t, "UPDATED", events[0].ChangeType)
+	require.NotNil(t, events[0].After)
+	assert.Contains(t, *events[0].After, "Tracked asset renamed")
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"id":   assetID,
+			"name": "Tracked asset renamed",
+		},
+	}, &struct{}{})
+	require.NoError(t, err)
+	assert.Len(t, listAssetChangeEvents(t, owner, assetID), 2)
+
+	const deleteQuery = `
+		mutation($input: DeleteAssetInput!) {
+			deleteAsset(input: $input) { deletedAssetId }
+		}
+	`
+
+	err = owner.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{"assetId": assetID},
+	}, &struct{}{})
+	require.NoError(t, err)
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				__typename
+				... on Asset { id name }
+			}
+		}
+	`
+
+	var node struct {
+		Node struct {
+			Typename string `json:"__typename"`
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(nodeQuery, map[string]any{"id": assetID}, &node)
+	require.NoError(t, err)
+	assert.Equal(t, "Asset", node.Node.Typename)
+	assert.Equal(t, "Tracked asset renamed", node.Node.Name)
+
+	events = listAssetChangeEvents(t, owner, assetID)
+	require.NotEmpty(t, events)
+	assert.Equal(t, "DEACTIVATED", events[0].ChangeType)
+
+	const listQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					assets(first: 50) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`
+
+	var listed struct {
+		Node struct {
+			Assets struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"assets"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(listQuery, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &listed)
+	require.NoError(t, err)
+
+	for _, edge := range listed.Node.Assets.Edges {
+		assert.NotEqual(t, assetID, edge.Node.ID)
+	}
+}
+
+type assetChangeEventNode struct {
+	ChangeType string  `json:"changeType"`
+	After      *string `json:"after"`
+	Actor      *struct {
+		ID string `json:"id"`
+	} `json:"actor"`
+}
+
+func listAssetChangeEvents(t *testing.T, owner *testutil.Client, assetID string) []assetChangeEventNode {
+	t.Helper()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Asset {
+					changeEvents(first: 20) {
+						edges { node { changeType after actor { id } } }
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			ChangeEvents struct {
+				Edges []struct {
+					Node assetChangeEventNode `json:"node"`
+				} `json:"edges"`
+			} `json:"changeEvents"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{"id": assetID}, &result)
+	require.NoError(t, err)
+
+	events := make([]assetChangeEventNode, len(result.Node.ChangeEvents.Edges))
+	for i, edge := range result.Node.ChangeEvents.Edges {
+		events[i] = edge.Node
+	}
+
+	return events
+}

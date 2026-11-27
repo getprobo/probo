@@ -208,3 +208,53 @@ WHERE
 
 	return result, nil
 }
+
+func (bfa *BusinessFunctionAssets) LoadBusinessFunctionIDsByAssetIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	assetIDs []gid.GID,
+) (map[gid.GID][]gid.GID, error) {
+	result := make(map[gid.GID][]gid.GID)
+	if len(assetIDs) == 0 {
+		return result, nil
+	}
+
+	q := `
+SELECT
+	asset_id,
+	business_function_id
+FROM
+	business_function_assets
+WHERE
+	%s
+	AND asset_id = ANY(@asset_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"asset_ids": assetIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query asset business functions: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var assetID, businessFunctionID gid.GID
+		if err := rows.Scan(&assetID, &businessFunctionID); err != nil {
+			return nil, fmt.Errorf("cannot scan asset business function: %w", err)
+		}
+
+		result[assetID] = append(result[assetID], businessFunctionID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate asset business functions: %w", err)
+	}
+
+	return result, nil
+}

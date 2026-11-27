@@ -252,6 +252,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND status = @status
 	AND (
 		connector_id IS NULL
 		OR kind IS NULL
@@ -261,7 +262,10 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"status":          AssetStatusActive,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -305,6 +309,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND status = @status
 	AND (
 		connector_id IS NULL
 		OR kind IS NULL
@@ -315,7 +320,10 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"status":          AssetStatusActive,
+	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -425,21 +433,121 @@ func (assets Assets) UpsertDiscovered(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
-) error {
+) (Assets, error) {
 	deduped := dedupeDiscovered(assets)
 	if len(deduped) == 0 {
-		return nil
+		return nil, nil
 	}
+
+	written := make(Assets, 0, len(deduped))
 
 	for start := 0; start < len(deduped); start += discoveredUpsertBatchSize {
 		end := min(start+discoveredUpsertBatchSize, len(deduped))
 
-		if err := upsertDiscoveredBatch(ctx, conn, scope, deduped[start:end]); err != nil {
-			return err
+		batch, err := upsertDiscoveredBatch(ctx, conn, scope, deduped[start:end])
+		if err != nil {
+			return nil, err
 		}
+
+		written = append(written, batch...)
 	}
 
+	return written, nil
+}
+
+func (assets *Assets) LoadByDiscoveredIdentities(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	discovered Assets,
+) error {
+	deduped := dedupeDiscovered(discovered)
+	if len(deduped) == 0 {
+		*assets = nil
+		return nil
+	}
+
+	organizationIDs := make([]string, len(deduped))
+	connectorIDs := make([]string, len(deduped))
+	kinds := make([]string, len(deduped))
+	externalIDs := make([]string, len(deduped))
+
+	for i, asset := range deduped {
+		organizationIDs[i] = asset.OrganizationID.String()
+		connectorIDs[i] = asset.ConnectorID.String()
+		kinds[i] = *asset.Kind
+		externalIDs[i] = *asset.ExternalID
+	}
+
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
+	created_at,
+	updated_at
+FROM
+	assets
+WHERE
+	%s
+	AND (organization_id, connector_id, kind, external_id) IN (
+		SELECT
+			organization_id,
+			connector_id,
+			kind,
+			external_id
+		FROM unnest(
+			@organization_ids::text[],
+			@connector_ids::text[],
+			@kinds::text[],
+			@external_ids::text[]
+		) AS identity(organization_id, connector_id, kind, external_id)
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_ids": organizationIDs,
+		"connector_ids":    connectorIDs,
+		"kinds":            kinds,
+		"external_ids":     externalIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query discovered assets: %w", err)
+	}
+
+	loaded, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return fmt.Errorf("cannot collect discovered assets: %w", err)
+	}
+
+	*assets = loaded
+
 	return nil
+}
+
+func discoveredIdentityKey(asset *Asset) (string, bool) {
+	if asset == nil || asset.Kind == nil || asset.ExternalID == nil || asset.ConnectorID == nil {
+		return "", false
+	}
+
+	return asset.OrganizationID.String() + "\x00" + asset.ConnectorID.String() + "\x00" + *asset.Kind + "\x00" + *asset.ExternalID, true
 }
 
 func dedupeDiscovered(assets Assets) Assets {
@@ -447,12 +555,12 @@ func dedupeDiscovered(assets Assets) Assets {
 	deduped := make(Assets, 0, len(assets))
 
 	for _, asset := range assets {
-		if asset == nil || asset.Kind == nil || asset.ExternalID == nil || asset.ConnectorID == nil {
+		key, ok := discoveredIdentityKey(asset)
+		if !ok {
 			continue
 		}
 
-		key := asset.OrganizationID.String() + "\x00" + asset.ConnectorID.String() + "\x00" + *asset.Kind + "\x00" + *asset.ExternalID
-		if index, ok := indexByIdentity[key]; ok {
+		if index, exists := indexByIdentity[key]; exists {
 			deduped[index] = asset
 			continue
 		}
@@ -469,7 +577,7 @@ func upsertDiscoveredBatch(
 	conn pg.Tx,
 	scope Scoper,
 	assets Assets,
-) error {
+) (Assets, error) {
 	ids := make([]string, len(assets))
 	names := make([]string, len(assets))
 	organizationIDs := make([]string, len(assets))
@@ -605,6 +713,24 @@ SET
 	schema_version = EXCLUDED.schema_version,
 	last_seen_at = EXCLUDED.last_seen_at,
 	updated_at = EXCLUDED.updated_at
+RETURNING
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
+	created_at,
+	updated_at
 `
 
 	args := pgx.StrictNamedArgs{
@@ -625,11 +751,17 @@ SET
 		"updated_ats":      updatedAts,
 	}
 
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot upsert assets: %w", err)
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upsert assets: %w", err)
 	}
 
-	return nil
+	written, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect upserted assets: %w", err)
+	}
+
+	return written, nil
 }
 
 func (a *Asset) LoadByDiscoveredIdentity(
@@ -709,6 +841,7 @@ SET
 	amount = @amount,
 	asset_type = @asset_type,
 	data_types_stored = @data_types_stored,
+	status = @status,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -742,6 +875,7 @@ RETURNING
 		"amount":            a.Amount,
 		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
+		"status":            a.Status,
 		"updated_at":        time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -754,6 +888,68 @@ RETURNING
 	asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
 	if err != nil {
 		return fmt.Errorf("cannot collect updated asset: %w", err)
+	}
+
+	*a = asset
+
+	return nil
+}
+
+func (a *Asset) Deactivate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	updatedAt time.Time,
+) error {
+	q := `
+UPDATE assets
+SET
+	status = @status,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+RETURNING
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	kind,
+	external_id,
+	region,
+	configuration,
+	schema_version,
+	last_seen_at,
+	status,
+	connector_id,
+	created_at,
+	updated_at
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         a.ID,
+		"status":     AssetStatusDeactivated,
+		"updated_at": updatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot deactivate asset: %w", err)
+	}
+
+	asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect deactivated asset: %w", err)
 	}
 
 	*a = asset

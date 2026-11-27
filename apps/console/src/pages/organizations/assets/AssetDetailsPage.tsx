@@ -49,6 +49,8 @@ import {
   useUpdateAsset,
 } from "../../../hooks/graph/AssetGraph";
 
+import { AssetChangeHistory } from "./AssetChangeHistory";
+
 type Props = {
   queryRef: PreloadedQuery<AssetGraphNodeQuery>;
 };
@@ -199,6 +201,8 @@ export default function AssetDetailsPage(props: Props) {
           )}
         </div>
       </form>
+
+      <AssetChangeHistory asset={assetEntry} />
     </div>
   );
 }
