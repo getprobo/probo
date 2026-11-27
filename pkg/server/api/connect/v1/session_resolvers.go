@@ -475,7 +475,8 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 		if errSAMLAuthenticationRequired, ok := errors.AsType[*iam.ErrSAMLAuthenticationRequired](err); ok {
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.SAMLAuthenticationRequired{
-					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+					Reason:      types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+					SsoLoginURL: r.SSOLoginURL(errSAMLAuthenticationRequired.SAMLConfigurationID),
 				},
 			}, nil
 		}
@@ -525,7 +526,8 @@ func (r *mutationResolver) AssumeEmployeePortalSession(ctx context.Context, inpu
 			return &types.AssumeEmployeePortalSessionPayload{
 				OrganizationID: organizationID,
 				Result: types.SAMLAuthenticationRequired{
-					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+					Reason:      types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+					SsoLoginURL: r.SSOLoginURL(errSAMLAuthenticationRequired.SAMLConfigurationID),
 				},
 			}, nil
 		}
