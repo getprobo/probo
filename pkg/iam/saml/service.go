@@ -228,10 +228,7 @@ func (s *Service) HandleAssertion(
 				return NewInvalidAssertionError(assertion.ID, err)
 			}
 
-			expiresAt := now.Add(24 * time.Hour)
-			if assertion.Conditions.NotOnOrAfter.IsZero() {
-				expiresAt = assertion.Conditions.NotOnOrAfter
-			}
+			expiresAt := replayRecordExpiry(now, assertion.Conditions.NotOnOrAfter)
 
 			samlAssertion := coredata.SAMLAssertion{
 				ID:             assertion.ID,
@@ -420,9 +417,25 @@ func (s *Service) HandleAssertion(
 	return identity, membership, nil
 }
 
-func (s *Service) validateAssertion(assertion *saml.Assertion, config *coredata.SAMLConfiguration, now time.Time) error {
-	const clockSkewTolerance = 5 * time.Minute
+// clockSkewTolerance is the clock difference allowed between Probo and the
+// identity provider when checking an assertion's validity window.
+const clockSkewTolerance = 5 * time.Minute
 
+// replayRecordExpiry returns how long a used assertion is remembered for
+// replay protection: at least 24 hours, and never less than the assertion's
+// own NotOnOrAfter plus the clock skew validateAssertion allows, so an
+// assertion cannot be accepted again while it is still valid.
+func replayRecordExpiry(now time.Time, notOnOrAfter time.Time) time.Time {
+	expiresAt := now.Add(24 * time.Hour)
+
+	if until := notOnOrAfter.Add(clockSkewTolerance); until.After(expiresAt) {
+		expiresAt = until
+	}
+
+	return expiresAt
+}
+
+func (s *Service) validateAssertion(assertion *saml.Assertion, config *coredata.SAMLConfiguration, now time.Time) error {
 	if assertion.ID == "" {
 		return errors.New("assertion ID is required")
 	}
