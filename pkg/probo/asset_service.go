@@ -422,6 +422,10 @@ func (s AssetService) Delete(
 				return fmt.Errorf("cannot deactivate asset: %w", err)
 			}
 
+			if err := coredata.DeleteSearchResource(ctx, tx, asset.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := insertAssetChange(
 				ctx,
 				tx,

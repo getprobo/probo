@@ -362,6 +362,10 @@ func (s *BusinessFunctionService) Update(
 			}
 
 			if req.AssetIDs != nil {
+				if err := coredata.LockID(ctx, conn, scope, "business_functions", businessFunction.ID); err != nil {
+					return err
+				}
+
 				if len(*req.AssetIDs) > 0 {
 					assets := &coredata.Assets{}
 					if err := assets.LoadByIDs(ctx, conn, scope, *req.AssetIDs); err != nil {

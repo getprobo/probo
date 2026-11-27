@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestDiffAssetChange_Create(t *testing.T) {
@@ -68,6 +69,71 @@ func TestDiffAssetChange_RefreshRecordsLastSeen(t *testing.T) {
 	assert.Contains(t, string(before), "last_seen_at")
 	assert.Contains(t, string(after), "last_seen_at")
 	assert.NotContains(t, string(after), `"name"`)
+}
+
+func TestDiffAssetChange_FieldUpdate(t *testing.T) {
+	t.Parallel()
+
+	beforeAsset := sampleAsset()
+	afterAsset := *beforeAsset
+	afterAsset.Name = "edge"
+	afterAsset.Amount = 3
+
+	changeType, before, after, write, err := DiffAssetChange(
+		beforeAsset,
+		&afterAsset,
+		AssetChangeInput{},
+	)
+	require.NoError(t, err)
+	require.True(t, write)
+	assert.Equal(t, AssetChangeTypeUpdated, changeType)
+	assert.JSONEq(t, `{"amount":1,"name":"cdn"}`, string(before))
+	assert.JSONEq(t, `{"amount":3,"name":"edge"}`, string(after))
+}
+
+func TestDiffAssetChange_LinkSet(t *testing.T) {
+	t.Parallel()
+
+	asset := sampleAsset()
+	tenantID := gid.NewTenantID()
+	removed := gid.New(tenantID, ThirdPartyEntityType)
+	added := gid.New(tenantID, ThirdPartyEntityType)
+	kept := gid.New(tenantID, BusinessFunctionEntityType)
+	linked := gid.New(tenantID, BusinessFunctionEntityType)
+
+	changeType, before, after, write, err := DiffAssetChange(
+		asset,
+		asset,
+		AssetChangeInput{
+			ThirdParties: &AssetLinkChange{
+				Before: []gid.GID{removed},
+				After:  []gid.GID{added},
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.True(t, write)
+	assert.Equal(t, AssetChangeTypeUpdated, changeType)
+	assert.JSONEq(t, `{"third_party_ids":["`+removed.String()+`"]}`, string(before))
+	assert.JSONEq(t, `{"third_party_ids":["`+added.String()+`"]}`, string(after))
+
+	changeType, before, after, write, err = DiffAssetChange(
+		asset,
+		asset,
+		AssetChangeInput{
+			BusinessFunctions: &AssetLinkChange{
+				Before: []gid.GID{kept},
+				After:  []gid.GID{kept, linked},
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.True(t, write)
+	assert.Equal(t, AssetChangeTypeUpdated, changeType)
+	assert.Contains(t, string(before), kept.String())
+	assert.NotContains(t, string(before), linked.String())
+	assert.Contains(t, string(after), kept.String())
+	assert.Contains(t, string(after), linked.String())
 }
 
 func TestDiffAssetChange_Deactivate(t *testing.T) {

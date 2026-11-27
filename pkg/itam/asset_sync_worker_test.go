@@ -23,11 +23,11 @@ package itam_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
 	awssdk "github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
@@ -633,39 +633,24 @@ func loadAssetChangeEvents(
 	var events coredata.AssetChangeEvents
 
 	require.NoError(t, seeded.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
-		rows, err := conn.Query(
+		return events.LoadByAssetID(
 			ctx,
-			`SELECT
-				id,
-				organization_id,
-				asset_id,
-				observed_at,
-				asset_sync_id,
-				actor_profile_id,
-				change_type,
-				before,
-				after
-			FROM asset_change_events
-			WHERE asset_id = $1
-			ORDER BY observed_at ASC, id ASC`,
+			conn,
+			seeded.scope,
 			assetID,
+			page.NewCursor(
+				50,
+				nil,
+				page.Head,
+				page.OrderBy[coredata.AssetChangeEventOrderField]{
+					Field:     coredata.AssetChangeEventOrderFieldObservedAt,
+					Direction: page.OrderDirectionDesc,
+				},
+			),
 		)
-		if err != nil {
-			return err
-		}
-
-		collected, err := pgx.CollectRows(rows, pgx.RowToStructByName[coredata.AssetChangeEvent])
-		if err != nil {
-			return err
-		}
-
-		events = make(coredata.AssetChangeEvents, len(collected))
-		for i := range collected {
-			events[i] = &collected[i]
-		}
-
-		return nil
 	}))
+
+	slices.Reverse(events)
 
 	return events
 }

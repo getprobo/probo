@@ -20944,7 +20944,7 @@ tools:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listAssetChangeEvents
     title: List Asset Change Events
-    description: List change events for an asset, newest first
+    description: List change events for an asset, newest first by default; order_by can change the direction
     hints:
       readonly: true
       destructive: false

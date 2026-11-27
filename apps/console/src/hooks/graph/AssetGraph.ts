@@ -145,6 +145,7 @@ export const updateAssetMutation = graphql`
           }
         }
         updatedAt
+        ...AssetChangeHistory_asset
       }
     }
   }
