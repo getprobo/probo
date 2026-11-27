@@ -7,7 +7,7 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 - Kubernetes 1.23+
 - Helm 3.8+
 - External PostgreSQL database (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
-- Object storage: S3 or S3-compatible (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.), or Azure Blob Storage
+- Object storage (production): S3 or S3-compatible (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.), or Azure Blob Storage. By default the chart deploys bundled SeaweedFS for testing
 - OpenSSL installed (for generating secrets)
 
 > Azure Blob behind S3 compatibility proxies currently has known metadata
@@ -173,8 +173,9 @@ The following parameters **must** be configured:
 | `postgresql.password` | PostgreSQL password |
 
 S3 credentials are conditionally required, and only when
-`seaweedfs.enabled=false`. The chart default (`seaweedfs.enabled=true`) deploys
-bundled SeaweedFS and does not read `s3.accessKeyId` or `s3.secretAccessKey`.
+`storage.provider=s3` and `seaweedfs.enabled=false`. The chart default
+(`seaweedfs.enabled=true`) deploys bundled SeaweedFS and does not read
+`s3.accessKeyId` or `s3.secretAccessKey`.
 On AWS, set `seaweedfs.enabled=false` and leave `s3.endpoint`,
 `s3.accessKeyId`, and `s3.secretAccessKey` blank to authenticate via EKS Pod
 Identity or IRSA. In that mode, setting only one of the two keys fails at
@@ -280,6 +281,7 @@ The chart deploys the following:
 
 - **PostgreSQL**: Managed database service
 - **Object Storage**: S3 or Azure Blob Storage for files and documents
+  (bundled SeaweedFS can be used for testing)
 
 ## Database Management
 
