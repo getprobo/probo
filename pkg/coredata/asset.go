@@ -442,6 +442,11 @@ func (assets Assets) UpsertDiscovered(
 	return nil
 }
 
+// dedupeDiscovered keeps the last row for an organization, connector,
+// kind, and external id before the unnest statement is built.
+// PostgreSQL rejects INSERT ... ON CONFLICT DO UPDATE when one
+// statement would update the same row twice ("command cannot affect
+// row a second time").
 func dedupeDiscovered(assets Assets) Assets {
 	indexByIdentity := make(map[string]int, len(assets))
 	deduped := make(Assets, 0, len(assets))
