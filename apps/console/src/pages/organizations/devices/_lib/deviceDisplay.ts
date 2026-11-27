@@ -33,7 +33,16 @@ export function ownerLabel(
   return name && name.length > 0 ? name : unassignedLabel;
 }
 
-export const devicePlatforms = ["DARWIN", "LINUX", "FREEBSD", "WINDOWS"] as const;
+export const devicePlatforms = [
+  "DARWIN",
+  "LINUX",
+  "FREEBSD",
+  "WINDOWS",
+  "IOS",
+  "IPADOS",
+  "TVOS",
+  "ANDROID",
+] as const;
 
 export type DevicePlatformName = (typeof devicePlatforms)[number];
 
@@ -50,8 +59,47 @@ export function platformLabel(
       return t("devices.platforms.freebsd");
     case "WINDOWS":
       return t("devices.platforms.windows");
+    case "IOS":
+      return t("devices.platforms.ios");
+    case "IPADOS":
+      return t("devices.platforms.ipados");
+    case "TVOS":
+      return t("devices.platforms.tvos");
+    case "ANDROID":
+      return t("devices.platforms.android");
     default:
       return null;
+  }
+}
+
+export const deviceSources = ["AGENT", "MDM"] as const;
+
+export type DeviceSourceName = (typeof deviceSources)[number];
+
+export function sourceLabel(
+  t: Translator,
+  source: string | null | undefined,
+): string | null {
+  switch (source) {
+    case "AGENT":
+      return t("devices.sources.agent");
+    case "MDM":
+      return t("devices.sources.mdm");
+    default:
+      return null;
+  }
+}
+
+/** Brand name of the MDM a device is synced from. */
+export function mdmProviderLabel(provider: string | null | undefined): string | null {
+  switch (provider) {
+    case "IRU":
+      return "Iru";
+    case null:
+    case undefined:
+      return null;
+    default:
+      return provider;
   }
 }
 

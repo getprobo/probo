@@ -90,6 +90,9 @@ export function mapAPIKeyExtraSettingToField(
     case "UNIFI":
       if (settingKey === "consoleId") return "unifiConsoleId";
       break;
+    case "IRU":
+      if (settingKey === "apiUrl") return "iruApiUrl";
+      break;
   }
   return null;
 }

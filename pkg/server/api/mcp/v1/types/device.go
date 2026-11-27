@@ -63,12 +63,17 @@ func NewDevice(d *coredata.Device, postures coredata.DevicePostures, posturesInc
 		ID:               d.ID,
 		OrganizationID:   d.OrganizationID,
 		State:            d.State,
+		Source:           d.Source,
 		Hostname:         d.Hostname,
 		SerialNumber:     d.SerialNumber,
 		HardwareUUID:     d.HardwareUUID,
 		Platform:         d.Platform,
 		OsVersion:        d.OSVersion,
 		AgentVersion:     d.AgentVersion,
+		Model:            d.Model,
+		MdmProvider:      mdmProvider(d.MDMProvider),
+		MdmDeviceID:      d.MDMDeviceID,
+		MdmLastCheckInAt: d.MDMLastCheckInAt,
 		OwnerID:          d.OwnerID,
 		EnrolledAt:       d.EnrolledAt,
 		LastSeenAt:       d.LastSeenAt,
@@ -78,6 +83,14 @@ func NewDevice(d *coredata.Device, postures coredata.DevicePostures, posturesInc
 		CreatedAt:        d.CreatedAt,
 		UpdatedAt:        d.UpdatedAt,
 	}
+}
+
+func mdmProvider(p *coredata.ConnectorProvider) *string {
+	if p == nil {
+		return nil
+	}
+
+	return new(p.String())
 }
 
 func NewListDevicesOutput(

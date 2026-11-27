@@ -66,6 +66,7 @@ func seedDevicePostureFixture(t *testing.T, ctx context.Context, client *pg.Clie
 			ID:             deviceID,
 			OrganizationID: organizationID,
 			State:          coredata.DeviceStatePending,
+			Source:         coredata.DeviceSourceAgent,
 			APIKeyHash:     []byte("device-posture-test-" + deviceID.String()),
 			CreatedAt:      now,
 			UpdatedAt:      now,
@@ -251,6 +252,7 @@ func insertListedDevice(
 		ID:             deviceID,
 		OrganizationID: fx.organizationID,
 		State:          coredata.DeviceStatePending,
+		Source:         coredata.DeviceSourceAgent,
 		APIKeyHash:     []byte("device-list-test-" + deviceID.String()),
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -334,7 +336,7 @@ func loadOrganizationDeviceIDs(
 			fx.scope,
 			fx.organizationID,
 			cursor,
-			coredata.NewDeviceFilter(nil, nil, nil, nil, hasPostureWarning),
+			coredata.NewDeviceFilter(nil, nil, nil, nil, nil, hasPostureWarning),
 		); err != nil {
 			return err
 		}

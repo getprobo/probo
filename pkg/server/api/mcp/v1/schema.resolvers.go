@@ -8278,6 +8278,7 @@ func (r *Resolver) ListDevicesTool(ctx context.Context, req *mcp.CallToolRequest
 		coredata.NewDeviceFilter(
 			input.Query,
 			input.States,
+			input.Sources,
 			input.Platforms,
 			input.AgentVersions,
 			input.HasPostureWarning,

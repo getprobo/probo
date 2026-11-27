@@ -34,6 +34,7 @@ const connectorProviderAliases: Record<string, readonly string[]> = {
   ELASTIC_CLOUD: ["Elastic Cloud", "Elastic", "Elasticsearch"],
   OVHCLOUD: ["OVHcloud", "OVH"],
   UNIFI: ["UniFi", "Ubiquiti"],
+  IRU: ["Iru", "Kandji"],
   MICROSOFT_365: ["Microsoft 365", "Office 365"],
   GOOGLE_WORKSPACE: ["Google Workspace"],
 };

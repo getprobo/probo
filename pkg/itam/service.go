@@ -196,6 +196,7 @@ func (s *Service) CreateDevice(
 		ID:             gid.New(req.OrganizationID.TenantID(), coredata.DeviceEntityType),
 		OrganizationID: req.OrganizationID,
 		State:          coredata.DeviceStatePending,
+		Source:         coredata.DeviceSourceAgent,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -280,6 +281,7 @@ func (s *Service) EnrollDevice(
 		ID:             gid.New(req.OrganizationID.TenantID(), coredata.DeviceEntityType),
 		OrganizationID: req.OrganizationID,
 		State:          coredata.DeviceStatePending,
+		Source:         coredata.DeviceSourceAgent,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -478,7 +480,7 @@ func (s *Service) ListForOrganizationID(
 	filter *coredata.DeviceFilter,
 ) (*page.Page[*coredata.Device, coredata.DeviceOrderField], error) {
 	if filter == nil {
-		filter = coredata.NewDeviceFilter(nil, nil, nil, nil, nil)
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil, nil, nil)
 	}
 
 	var devices coredata.Devices
@@ -576,7 +578,7 @@ func (s *Service) CountForOrganizationID(
 	filter *coredata.DeviceFilter,
 ) (int, error) {
 	if filter == nil {
-		filter = coredata.NewDeviceFilter(nil, nil, nil, nil, nil)
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil, nil, nil)
 	}
 
 	var count int

@@ -28,7 +28,11 @@
       "serialNumber": "Numéro de série",
       "agentVersion": "Version de l’agent",
       "enrolledAt": "Enrôlé le",
-      "lastSeen": "Dernière connexion"
+      "lastSeen": "Dernière connexion",
+      "source": "Source",
+      "model": "Modèle",
+      "mdm": "MDM",
+      "mdmLastCheckIn": "Dernier contact avec le MDM"
     },
     "views": {
       "allRegistered": "Tous les appareils",
@@ -44,18 +48,28 @@
       "allPlatforms": "Toutes les plateformes",
       "selectedCount": "{{count}} sélectionnés",
       "search": "Rechercher par propriétaire",
-      "empty": "Aucun appareil ne correspond à ces filtres"
+      "empty": "Aucun appareil ne correspond à ces filtres",
+      "allSources": "Toutes les sources"
     },
     "platforms": {
       "darwin": "macOS",
       "linux": "Linux",
       "freebsd": "FreeBSD",
-      "windows": "Windows"
+      "windows": "Windows",
+      "ios": "iOS",
+      "ipados": "iPadOS",
+      "tvos": "tvOS",
+      "android": "Android"
+    },
+    "sources": {
+      "agent": "Agent",
+      "mdm": "MDM"
     },
     "values": {
       "pending": "(en attente)",
       "never": "Jamais",
-      "unassigned": "Non attribué"
+      "unassigned": "Non attribué",
+      "noAgent": "Aucun agent"
     },
     "messages": {
       "ownerUpdated": "Propriétaire de l’appareil mis à jour",

@@ -469,7 +469,11 @@ func TestCLI_FilesAndContext(t *testing.T) {
 		"--owner", session.profileID,
 	)
 	assert.Contains(t, session.must("device", "list", "--org", session.orgID, "--json"), deviceID)
-	assert.Contains(t, session.must("device", "view", deviceID, "--json"), deviceID)
+	assert.Contains(t, session.must("device", "list", "--org", session.orgID, "--source", "AGENT", "--json"), deviceID)
+	assert.NotContains(t, session.must("device", "list", "--org", session.orgID, "--source", "MDM", "--json"), deviceID)
+	view := session.must("device", "view", deviceID, "--json")
+	assert.Contains(t, view, deviceID)
+	assert.Contains(t, view, `"source": "AGENT"`)
 
 	_, stderr, err := session.run("device", "revoke", deviceID)
 	require.Error(t, err)
