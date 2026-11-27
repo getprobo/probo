@@ -28,6 +28,12 @@ const safeLinksReport
   = "Non-Error promise rejection captured with value: "
     + "Object Not Found Matching Id:8, MethodName:update, ParamCount:4";
 
+// message, name, and stack, in the order Faro joins them.
+const ethereumReport
+  = "Cannot redefine property: ethereum TypeError "
+    + "TypeError: Cannot redefine property: ethereum\n"
+    + "    at Object.defineProperty (<anonymous>)";
+
 function ignored(report: string): boolean {
   return ignoredErrorPatterns.some(pattern => pattern.test(report));
 }
@@ -37,9 +43,19 @@ describe("ignoredErrorPatterns", () => {
     expect(ignored(safeLinksReport)).toBe(true);
   });
 
+  it("matches a wallet extension redefining window.ethereum", () => {
+    expect(ignored(ethereumReport)).toBe(true);
+  });
+
   it("does not match a viewer error", () => {
     expect(ignored(
       "TypeError: Promise.try is not a function TypeError at DocumentRequestPanel",
+    )).toBe(false);
+  });
+
+  it("does not match redefining a property other than ethereum", () => {
+    expect(ignored(
+      "Cannot redefine property: foo TypeError TypeError: Cannot redefine property: foo",
     )).toBe(false);
   });
 });
