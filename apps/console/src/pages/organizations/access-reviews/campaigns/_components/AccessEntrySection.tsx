@@ -27,8 +27,7 @@ import { useParams } from "react-router";
 import type { AccessEntrySection_source$key } from "#/__generated__/core/AccessEntrySection_source.graphql";
 import type { AccessEntrySectionRetryFetchMutation } from "#/__generated__/core/AccessEntrySectionRetryFetchMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
-
-import { campaignSourceLabel } from "../../_lib/sourceLabel";
+import { campaignSourceLabel } from "#/pages/organizations/_lib/sourceLabel";
 
 import { accessEntrySection } from "./variants";
 

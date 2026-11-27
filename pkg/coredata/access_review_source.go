@@ -268,6 +268,88 @@ WHERE
 	return count, nil
 }
 
+func (sources *AccessReviewSources) LoadByConnectorID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    connector_account_id,
+    name,
+    csv_data,
+    created_at,
+    updated_at
+FROM
+    access_review_sources
+WHERE
+    %s
+    AND connector_account_id IN (
+        SELECT id
+        FROM connector_accounts
+        WHERE
+            %s
+            AND connector_id = @connector_id
+    )
+ORDER BY created_at, id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"connector_id": connectorID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_review_sources by connector ID: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessReviewSource])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_review_sources by connector ID: %w", err)
+	}
+
+	*sources = result
+
+	return nil
+}
+
+// DeleteByIDsAndConnectorID deletes the sources among ids that still read
+// connectorID.
+func (sources *AccessReviewSources) DeleteByIDsAndConnectorID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	ids []gid.GID,
+	connectorID gid.GID,
+) error {
+	q := `
+DELETE FROM access_review_sources
+WHERE
+    %s
+    AND id = ANY(@ids)
+    AND connector_account_id IN (
+        SELECT id
+        FROM connector_accounts
+        WHERE
+            %s
+            AND connector_id = @connector_id
+    )
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids, "connector_id": connectorID}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete access_review_sources by IDs and connector ID: %w", err)
+	}
+
+	return nil
+}
+
 // Insert reports whether a row was inserted. The partial unique index
 // on connector_account_id arbitrates: a source referencing an
 // already-taken connector account is skipped, making creation

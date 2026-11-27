@@ -514,6 +514,26 @@ func (s *Service) ListSourcesForOrganizationID(
 	return page.NewPage(sources, cursor), nil
 }
 
+func (s *Service) ListSourcesForConnectorID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (coredata.AccessReviewSources, error) {
+	var sources coredata.AccessReviewSources
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return sources.LoadByConnectorID(ctx, conn, scope, connectorID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list access review sources for connector: %w", err)
+	}
+
+	return sources, nil
+}
+
 func (s *Service) CountSourcesForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,

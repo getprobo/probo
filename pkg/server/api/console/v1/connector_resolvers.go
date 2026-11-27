@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -115,6 +116,28 @@ func (r *connectorResolver) DocumentationURL(ctx context.Context, obj *types.Con
 	}
 
 	return new(reg.DocumentationURL), nil
+}
+
+// AccessReviewSources is the resolver for the accessReviewSources field.
+func (r *connectorResolver) AccessReviewSources(ctx context.Context, obj *types.Connector) ([]*types.AccessReviewSource, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceList)
+	if err != nil {
+		return nil, err
+	}
+
+	sources, err := r.accessReview.ListSourcesForConnectorID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list connector access review sources", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	result := make([]*types.AccessReviewSource, 0, len(sources))
+	for _, source := range sources {
+		result = append(result, types.NewAccessReviewSource(source))
+	}
+
+	return result, nil
 }
 
 // InitialAccountExternalID is the resolver for the initialAccountExternalId field.
@@ -735,7 +758,25 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 		return nil, err
 	}
 
-	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
+	sources, err := r.accessReview.ListSourcesForConnectorID(ctx, scope, input.ConnectorID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list connector access review sources", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	sourceIDs := make([]gid.GID, 0, len(sources))
+	for _, source := range sources {
+		sourceIDs = append(sourceIDs, source.ID)
+	}
+
+	if len(sourceIDs) > 0 {
+		if _, err := r.batchAuthorize(ctx, accessreview.ActionSourceDelete, sourceIDs); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID, sourceIDs); err != nil {
 		if errors.Is(err, coredata.ErrResourceInUse) {
 			return nil, gqlx.Conflict(ctx, err)
 		}
@@ -746,7 +787,8 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 	}
 
 	return &types.DeleteConnectorPayload{
-		DeletedConnectorID: input.ConnectorID,
+		DeletedConnectorID:           input.ConnectorID,
+		DeletedAccessReviewSourceIds: sourceIDs,
 	}, nil
 }
 
@@ -878,8 +920,13 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 		return nil, err
 	}
 
-	if err := r.probo.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
+	if err := r.probo.Connectors.Delete(ctx, scope, input.SlackConnectionID, nil); err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlx.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 

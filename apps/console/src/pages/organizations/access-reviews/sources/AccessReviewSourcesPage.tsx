@@ -37,9 +37,9 @@ import type { AccessReviewSourcesPagePaginationQuery } from "#/__generated__/cor
 import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
 import { SearchField } from "#/components/SearchField/SearchField";
 import { NotFoundError } from "#/lib/relay/errors";
+import { accessReviewSourceLabel } from "#/pages/organizations/_lib/sourceLabel";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
-import { accessReviewSourceLabel } from "../_lib/sourceLabel";
 
 import { sourcesPage } from "./_components/variants";
 
