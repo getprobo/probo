@@ -120,3 +120,113 @@ func TestFindByRel(t *testing.T) {
 		assert.Empty(t, url)
 	})
 }
+
+func TestParse_EmbeddedDelimiters(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		header string
+		want   []rfc5988.Link
+	}{
+		{
+			name:   "comma in target",
+			header: `<https://api.example.com/items?cursor=a,b>; rel="next"`,
+			want: []rfc5988.Link{
+				{URL: "https://api.example.com/items?cursor=a,b", Params: map[string]string{"rel": "next"}},
+			},
+		},
+		{
+			name:   "semicolon in target",
+			header: `<https://api.example.com/items;v=2>; rel="next"`,
+			want: []rfc5988.Link{
+				{URL: "https://api.example.com/items;v=2", Params: map[string]string{"rel": "next"}},
+			},
+		},
+		{
+			name:   "comma in quoted title before rel",
+			header: `<https://api.example.com/items?page=2>; title="Page two, continued"; rel="next"`,
+			want: []rfc5988.Link{
+				{
+					URL:    "https://api.example.com/items?page=2",
+					Params: map[string]string{"title": "Page two, continued", "rel": "next"},
+				},
+			},
+		},
+		{
+			name:   "semicolon in quoted title",
+			header: `<https://api.example.com/items?page=2>; title="Q1; Q2"; rel="next"`,
+			want: []rfc5988.Link{
+				{
+					URL:    "https://api.example.com/items?page=2",
+					Params: map[string]string{"title": "Q1; Q2", "rel": "next"},
+				},
+			},
+		},
+		{
+			name:   "escaped quote in quoted title",
+			header: `<https://api.example.com/items?page=2>; title="say \"hi, there\""; rel="next"`,
+			want: []rfc5988.Link{
+				{
+					URL:    "https://api.example.com/items?page=2",
+					Params: map[string]string{"title": `say "hi, there"`, "rel": "next"},
+				},
+			},
+		},
+		{
+			name:   "delimiters in several entries",
+			header: `<https://api.example.com/items?c=a,b>; rel="next", <https://api.example.com/items?c=y;z>; title="A, B"; rel="last"`,
+			want: []rfc5988.Link{
+				{URL: "https://api.example.com/items?c=a,b", Params: map[string]string{"rel": "next"}},
+				{
+					URL:    "https://api.example.com/items?c=y;z",
+					Params: map[string]string{"title": "A, B", "rel": "last"},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, rfc5988.Parse(tt.header))
+		})
+	}
+}
+
+func TestFindByRel_EmbeddedDelimiters(t *testing.T) {
+	t.Parallel()
+
+	t.Run("comma in target", func(t *testing.T) {
+		t.Parallel()
+
+		header := `<https://api.example.com/items?cursor=a,b>; rel="next"`
+		assert.Equal(t, "https://api.example.com/items?cursor=a,b", rfc5988.FindByRel(header, "next"))
+	})
+
+	t.Run("comma in quoted title before rel", func(t *testing.T) {
+		t.Parallel()
+
+		header := `<https://api.example.com/items?page=2>; title="Page two, continued"; rel="next"`
+		assert.Equal(t, "https://api.example.com/items?page=2", rfc5988.FindByRel(header, "next"))
+	})
+}
+
+func TestParse_UnterminatedDelimiters(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unterminated quote in first entry", func(t *testing.T) {
+		t.Parallel()
+
+		header := `<https://api.example.com/a>; title="broken; rel="prev", <https://api.example.com/b>; rel="next"`
+		assert.Equal(t, "https://api.example.com/b", rfc5988.FindByRel(header, "next"))
+	})
+
+	t.Run("unterminated angle bracket in first entry", func(t *testing.T) {
+		t.Parallel()
+
+		header := `<https://api.example.com/a; rel="prev", <https://api.example.com/b>; rel="next"`
+		assert.Equal(t, "https://api.example.com/b", rfc5988.FindByRel(header, "next"))
+	})
+}
