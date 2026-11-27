@@ -49,8 +49,8 @@ func TestAgentExecution_QueueLifecycle(t *testing.T) {
 			func(ctx context.Context, conn pg.Querier) error {
 				_, err := conn.Exec(
 					ctx,
-					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled)
-					VALUES ($1, $2, $3, $4, $5, false)`,
+					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
+					VALUES ($1, $2, $3, $4, $5)`,
 					organizationID,
 					tenantID,
 					"agent-execution-"+organizationID.String(),
@@ -415,8 +415,8 @@ func TestDeadLetterAgentInputsForStaleExecutions_DeadLettersAllPendingOnTerminal
 			func(ctx context.Context, conn pg.Querier) error {
 				_, err := conn.Exec(
 					ctx,
-					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled)
-					VALUES ($1, $2, $3, $4, $5, false)`,
+					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
+					VALUES ($1, $2, $3, $4, $5)`,
 					organizationID,
 					tenantID,
 					"agent-execution-stale-"+organizationID.String(),
@@ -590,8 +590,8 @@ func TestLockStaleAgentExecutionIDs_BlocksHeartbeatUntilReset(t *testing.T) {
 			func(ctx context.Context, conn pg.Querier) error {
 				_, err := conn.Exec(
 					ctx,
-					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at, asset_inventory_enabled)
-					VALUES ($1, $2, $3, $4, $5, false)`,
+					`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
+					VALUES ($1, $2, $3, $4, $5)`,
 					organizationID,
 					tenantID,
 					"agent-execution-lock-"+organizationID.String(),
